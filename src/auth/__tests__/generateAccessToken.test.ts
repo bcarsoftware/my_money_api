@@ -112,13 +112,13 @@ describe("generateAccessToken", () => {
 
   describe("Cláusulas de Guarda do Payload", () => {
     it("deve lançar erro se o payload for nulo ou indefinido", async () => {
-      await expect(generateAccessToken(null as unknown as TokenPayload)).rejects.toThrow(
-        "Invalid token payload"
-      );
+      await expect(
+        generateAccessToken(null as unknown as TokenPayload)
+      ).rejects.toThrow("Invalid token payload");
 
-      await expect(generateAccessToken(undefined as unknown as TokenPayload)).rejects.toThrow(
-        "Invalid token payload"
-      );
+      await expect(
+        generateAccessToken(undefined as unknown as TokenPayload)
+      ).rejects.toThrow("Invalid token payload");
 
       expect(jwt.sign).not.toHaveBeenCalled();
     });

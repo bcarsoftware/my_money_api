@@ -1,8 +1,8 @@
 import { __prodLike__ } from "@/constants/constants";
+import { MyContext } from "@/context/MyContext";
 import { AppDataSource } from "@/data-source";
 import { ValidationError } from "@/errors/ValidationError";
 import { resolvers } from "@/resolvers/resolvers";
-import { MyContext } from "@/utils/MyContext";
 import { buildHttpContext } from "@/utils/buildHttpContext";
 import { setupHealthCheckEndpoint } from "@/utils/setupHealthCheckEndpoint";
 import { ApolloServer } from "@apollo/server";

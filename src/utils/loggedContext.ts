@@ -1,8 +1,8 @@
+import { USER_NOT_FOUND } from "@/constants/constants";
 import { AppDataSource } from "@/data-source";
 import { isUUID } from "class-validator";
 import { EntityManager } from "typeorm";
-import { MyContext } from "./MyContext";
-import { USER_NOT_FOUND } from "@/constants/constants";
+import { MyContext } from "../context/MyContext";
 
 export async function loggedContext<T>(
   { userId }: MyContext,

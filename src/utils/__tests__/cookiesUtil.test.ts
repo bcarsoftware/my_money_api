@@ -1,14 +1,14 @@
+import { MyContext } from "@/context/MyContext";
+import { User } from "@/entities/User";
 import {
   ACCESS_COOKIE,
   accessCookieName,
-  baseCookieOpts,
-  setAccessCookie,
-  clearCookies,
-  buildAuthUser,
   AuthUserData,
+  baseCookieOpts,
+  buildAuthUser,
+  clearCookies,
+  setAccessCookie,
 } from "@/utils/cookiesUtil";
-import { User } from "@/entities/User";
-import { MyContext } from "@/utils/MyContext";
 
 describe("Auth Utilities & Cookie Helpers", () => {
   let mockRes: {
