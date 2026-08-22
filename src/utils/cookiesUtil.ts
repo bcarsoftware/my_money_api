@@ -1,4 +1,8 @@
-import { __prodLike__, TOKEN_INVALID, USER_NOT_FOUND } from "@/constants/constants";
+import {
+  __prodLike__,
+  TOKEN_INVALID,
+  USER_NOT_FOUND,
+} from "@/constants/constants";
 import { User } from "@/entities/User";
 import { MyContext } from "./MyContext";
 
@@ -35,9 +39,7 @@ export function clearCookies(res: MyContext["res"]) {
   res!.clearCookie(accessCookieName(), baseCookieOpts);
 }
 
-export async function buildAuthUser(
-  user: User
-): Promise<AuthUserData> {
+export async function buildAuthUser(user: User): Promise<AuthUserData> {
   return {
     id: user.id,
     name: user.name,
