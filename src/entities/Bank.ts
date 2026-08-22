@@ -25,19 +25,19 @@ export class Bank extends BaseEntity {
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: User;
 
-  @Column({ length: 8 })
+  @Column({ type: "varchar", length: 8 })
   code: string;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
   @Column({ type: "enum", enum: AccountEnum, name: "account_type" })
   accountType: AccountEnum;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   accountNumber: string;
 
-  @Column({ length: 32 })
+  @Column({ type: "varchar", length: 32 })
   agency: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })

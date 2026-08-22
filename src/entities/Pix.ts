@@ -23,16 +23,16 @@ export class Pix extends BaseEntity {
   @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
   bank: Bank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   tag: string;
 
-  @Column({ length: 256 })
+  @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "enum", enum: PixEnum, name: "type_key" })
   typeKey: PixEnum;
 
-  @Column({ length: 512 })
+  @Column({ type: "varchar", length: 512 })
   key: string;
 
   @CreateDateColumn({ name: "created_at" })

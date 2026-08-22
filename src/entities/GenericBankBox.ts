@@ -22,7 +22,7 @@ export class GenericBankBox extends BaseEntity {
   @JoinColumn({ name: "generic_bank_id", referencedColumnName: "id" })
   genericBank: GenericBank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })

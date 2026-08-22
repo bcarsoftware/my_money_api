@@ -22,13 +22,13 @@ export class BankBox extends BaseEntity {
   @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
   bank: Bank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   tag: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
   objective?: number;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })

@@ -31,7 +31,7 @@ export class GenericBank extends BaseEntity {
   @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
   bank: Bank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
   @Column({ type: "enum", enum: CurrencyEnum })

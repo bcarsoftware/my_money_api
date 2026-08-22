@@ -22,10 +22,10 @@ export class GenericBankInfo extends BaseEntity {
   @JoinColumn({ name: "generic_bank_id", referencedColumnName: "id" })
   genericBank: GenericBank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
-  @Column({ length: 256 })
+  @Column({ type: "varchar", length: 256 })
   value: string;
 
   @CreateDateColumn({ name: "created_at" })

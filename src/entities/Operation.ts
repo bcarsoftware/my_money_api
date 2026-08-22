@@ -35,10 +35,10 @@ export class Operation extends BaseEntity {
   @Column({ type: "enum", enum: LocalEnum })
   local: LocalEnum;
 
-  @Column({ length: 256 })
+  @Column({ type: "varchar", length: 256 })
   description: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ type: "varchar", length: 256, nullable: true })
   note?: string;
 
   @Column({ type: "enum", enum: OriginEnum })

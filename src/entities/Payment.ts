@@ -25,10 +25,10 @@ export class Payment extends BaseEntity {
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: User;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "enum", enum: RepeatEnum })
