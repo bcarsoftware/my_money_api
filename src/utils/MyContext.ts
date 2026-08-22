@@ -4,4 +4,5 @@ export type MyContext = {
   req: Request;
   res: Response;
   accessToken?: string;
+  userId?: string;
 };
