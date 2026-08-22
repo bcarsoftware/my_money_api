@@ -1,3 +1,4 @@
+import { AccountEnum } from "@/enums/AccountEnum";
 import {
   Column,
   CreateDateColumn,
@@ -9,11 +10,17 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { User } from "./User";
-import { AccountEnum } from "@/enums/AccountEnum";
 
 @Entity("banks")
 export class Bank {
   @PrimaryGeneratedColumn("uuid") id: string;
+
+  @Column({ type: "uuid", name: "user_id" })
+  userId: string;
+
+  @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn({ name: "user_id", referencedColumnName: "id" })
+  user: User;
 
   @Column({ length: 8 })
   codigo: string;
@@ -32,13 +39,6 @@ export class Bank {
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: number;
-
-  @Column({ type: "uuid", name: "user_id" })
-  userId: string;
-
-  @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: "user_id", referencedColumnName: "id" })
-  user: User;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

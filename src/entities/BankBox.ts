@@ -14,6 +14,13 @@ import { Bank } from "./Bank";
 export class BankBox {
   @PrimaryGeneratedColumn("uuid") id: string;
 
+  @Column({ type: "uuid", name: "bank_id" })
+  bankId: string;
+
+  @ManyToOne(() => Bank, (bank) => bank.id)
+  @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
+  bank: Bank;
+
   @Column({ length: 64 })
   tag: string;
 
@@ -25,13 +32,6 @@ export class BankBox {
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: number;
-
-  @Column({ type: "uuid", name: "bank_id" })
-  bankId: string;
-
-  @ManyToOne(() => Bank, (bank) => bank.id)
-  @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
-  bank: Bank;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

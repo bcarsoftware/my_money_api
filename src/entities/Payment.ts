@@ -17,6 +17,13 @@ import { MonthEnum } from "@/enums/MonthEnum";
 export class Payment {
   @PrimaryGeneratedColumn("uuid") id: string;
 
+  @Column({ type: "uuid", name: "user_id" })
+  userId: string;
+
+  @ManyToOne(() => User, (user) => user.id)
+  @JoinColumn({ name: "user_id", referencedColumnName: "id" })
+  user: User;
+
   @Column({ length: 64 })
   name: string;
 
@@ -37,13 +44,6 @@ export class Payment {
 
   @Column({ type: "enum", enum: PaymentStatusEnum })
   status: PaymentStatusEnum;
-
-  @Column({ type: "uuid", name: "user_id" })
-  userId: string;
-
-  @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: "user_id", referencedColumnName: "id" })
-  user: User;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
