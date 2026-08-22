@@ -16,7 +16,9 @@ function checkPattern(value?: string): boolean {
   return regex.test(value);
 }
 
-
+export async function generateAccessToken(
+  payload: TokenPayload
+): Promise<string> {
   const expiresIn = process.env.EXPIRES_IN;
 
   if (!checkPattern(expiresIn)) {
