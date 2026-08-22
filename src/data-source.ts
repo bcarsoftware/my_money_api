@@ -4,6 +4,7 @@ import { DataSource } from "typeorm";
 
 import { Bank } from "./entities/Bank";
 import { BankBox } from "./entities/BankBox";
+import { Invoice } from "./entities/Invoice";
 import { Money } from "./entities/Money";
 import { Pix } from "./entities/Pix";
 import { User } from "./entities/User";
@@ -14,6 +15,7 @@ import { CreateMoney1787412195283 } from "./migration/1787412195283-CreateMoney"
 import { CreateBank1787412644065 } from "./migration/1787412644065-CreateBank";
 import { CreateBankBox1787412945271 } from "./migration/1787412945271-CreateBankBox";
 import { CreatePix1787413263792 } from "./migration/1787413263792-CreatePix";
+import { CreateInvoice1787414231023 } from "./migration/1787414231023-CreateInvoice";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -24,7 +26,7 @@ export const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DB,
   synchronize: true,
   logging: false,
-  entities: [User, Money, Bank, BankBox, Pix],
+  entities: [User, Money, Bank, BankBox, Pix, Invoice],
   migrations: [
     Starting1787411777403,
     CreateUser1787412038436,
@@ -32,6 +34,7 @@ export const AppDataSource = new DataSource({
     CreateBank1787412644065,
     CreateBankBox1787412945271,
     CreatePix1787413263792,
+    CreateInvoice1787414231023,
   ],
   migrationsTransactionMode: "each",
   extra: {
