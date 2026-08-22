@@ -7,6 +7,8 @@ declare global {
       POSTGRES_TIMEZONE: string;
       POSTGRES_PORT: string;
       PORT: string;
+      ACCESS_SECRET: string;
+      EXPIRES_IN: string;
     }
   }
 }
