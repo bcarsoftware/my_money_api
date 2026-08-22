@@ -6,6 +6,7 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "reflect-metadata": "^0.2.2",
     "tsc": "^2.0.4",
     "tsx": "^4.23.12",
