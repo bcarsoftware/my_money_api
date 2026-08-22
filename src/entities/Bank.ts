@@ -14,7 +14,7 @@ import {
 import { User } from "./User";
 
 @Entity("banks")
-@Index("IDX_banks_user_id_code", ["user_id", "code"], { unique: true })
+@Index("IDX_banks_user_id_code", ["userId", "code"], { unique: true })
 export class Bank extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
