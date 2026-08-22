@@ -28,7 +28,7 @@ export class GenericBankBox extends BaseEntity {
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
   objective?: number;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
