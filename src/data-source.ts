@@ -6,6 +6,7 @@ import { Bank } from "./entities/Bank";
 import { BankBox } from "./entities/BankBox";
 import { GenericBank } from "./entities/GenericBank";
 import { GenericBankBox } from "./entities/GenericBankBox";
+import { GenericBankInfo } from "./entities/GenericBankInfo";
 import { Invoice } from "./entities/Invoice";
 import { Money } from "./entities/Money";
 import { Payment } from "./entities/Payment";
@@ -22,6 +23,7 @@ import { CreateInvoice1787414231023 } from "./migration/1787414231023-CreateInvo
 import { CreatePayment1787414478068 } from "./migration/1787414478068-CreatePayment";
 import { CreateGenericBank1787414685365 } from "./migration/1787414685365-CreateGenericBank";
 import { CreateGenericBankBox1787415068662 } from "./migration/1787415068662-CreateGenericBankBox";
+import { CreateGenericBankInfo1787415282084 } from "./migration/1787415282084-CreateGenericBankInfo";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -42,6 +44,7 @@ export const AppDataSource = new DataSource({
     Payment,
     GenericBank,
     GenericBankBox,
+    GenericBankInfo,
   ],
   migrations: [
     Starting1787411777403,
@@ -54,6 +57,7 @@ export const AppDataSource = new DataSource({
     CreatePayment1787414478068,
     CreateGenericBank1787414685365,
     CreateGenericBankBox1787415068662,
+    CreateGenericBankInfo1787415282084,
   ],
   migrationsTransactionMode: "each",
   extra: {
