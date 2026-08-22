@@ -3,11 +3,13 @@ import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 
 export interface TokenPayload extends JwtPayload {
   userId: string;
-  emaill: string;
+  email: string;
   username: string;
 }
 
-function checkPattern(value: string): boolean {
+function checkPattern(value?: string): boolean {
+  if (!value || typeof value !== "string") return false;
+
   const regex =
     /^-?\d+\s*(?:ms|s(?:ec(?:ond)?s?)?|m(?:in(?:ute)?s?)?|h(?:r|our)?s?|d(?:ays?)?|w(?:eeks?)?|y(?:ears?)?)$/;
 
@@ -29,27 +31,20 @@ export function generateAccessToken(payload: TokenPayload): string {
     throw new Error(SECRET_KEY_INVALID);
   }
 
-  if (!payload || typeof payload !== "object" || !payload.userId) {
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Invalid token payload");
+  }
+
+  if (!payload.userId || typeof payload.userId !== "string") {
     throw new Error("Invalid token payload: userId is required");
   }
 
-  if (!payload.emaill || typeof payload.emaill !== "string") {
-    throw new Error("Invalid token payload: emaill is required");
+  if (!payload.email || typeof payload.email !== "string") {
+    throw new Error("Invalid token payload: email is required");
   }
 
   if (!payload.username || typeof payload.username !== "string") {
     throw new Error("Invalid token payload: username is required");
-  }
-
-  if (
-    expiresIn === undefined ||
-    expiresIn === null ||
-    (typeof expiresIn === "number" && expiresIn <= 0) ||
-    (typeof expiresIn === "string" && expiresIn.trim() === "")
-  ) {
-    throw new Error(
-      "Expiration time must be a valid positive number or non-empty string"
-    );
   }
 
   const options: SignOptions = {
