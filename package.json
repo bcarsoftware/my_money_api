@@ -4,9 +4,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "migration:run": "yarn typeorm migration:run --dataSource ./src/data-source.ts",
-    "migration:revert": "yarn typeorm migration:revert --dataSource ./src/data-source.ts",
-    "migration:generate": "yarn typeorm migration:generate --dataSource ./src/data-source.ts"
+    "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d ./src/data-source.ts",
+    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d ./src/data-source.ts",
+    "migration:generate": "tsx ./node_modules/typeorm/cli.js migration:generate -d ./src/data-source.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

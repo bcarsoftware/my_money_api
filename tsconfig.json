@@ -5,8 +5,8 @@
     "types": ["node"],
 
     "target": "es6",
-    "module": "commonjs",
-    "lib": ["dom", "es6", "es2019", "esnext.asynciterable"],
+    "module": "preserve",
+    "lib": ["dom", "es6", "es2019", "ES2023", "esnext.asynciterable"],
 
     "sourceMap": true,
     "declaration": true,
