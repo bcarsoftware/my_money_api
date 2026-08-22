@@ -1,10 +1,10 @@
 import "dotenv/config";
-import path from "path";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+
 import { User } from "./entities/User";
 
-const migrationsDir = path.join(__dirname, "migrations");
+import { Starting1787411777403 } from "./migration/1787411777403-Starting";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -16,7 +16,7 @@ export const AppDataSource = new DataSource({
   synchronize: true,
   logging: false,
   entities: [User],
-  migrations: [`${migrationsDir}/*.{ts,js}`],
+  migrations: [Starting1787411777403],
   migrationsTransactionMode: "each",
   extra: {
     max: 10,
