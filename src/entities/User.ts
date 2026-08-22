@@ -1,40 +1,47 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { GenderEnum } from "../enums/GenderEnum";
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm"
+import { GenderEnum } from "@/enums/GenderEnum"
 
 @Entity("users")
 export class User {
-  @PrimaryGeneratedColumn("uuid") id: string;
+  @PrimaryGeneratedColumn("uuid") id: string
 
   @Column({ length: 64 })
-  name: string;
+  name: string
 
   @Column({ type: "date", name: "date_born" })
-  dateBorn: Date;
+  dateBorn: Date
 
   @Column({ type: "enum", enum: GenderEnum })
-  gender: GenderEnum;
+  gender: GenderEnum
 
   @Column({ length: 256, unique: true })
-  email: string;
+  email: string
 
   @Column({ length: 128, unique: true })
-  username: string;
+  username: string
 
   @Column({ length: 256 })
-  password: string;
+  password: string
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
-  salary?: number;
+  salary?: number
 
   @Column({ length: 32, nullable: true })
-  phone?: string;
+  phone?: string
 
   @CreateDateColumn({ name: "created_at" })
-  createdAt: Date;
+  createdAt: Date
 
   @UpdateDateColumn({ name: "updated_at" })
-  updateAt: Date;
+  updateAt: Date
 
   @DeleteDateColumn({ name: "deleted_at" })
-  deletedAt: Date;
+  deletedAt: Date
 }
