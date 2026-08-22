@@ -1,3 +1,4 @@
+import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
   BaseEntity,
   Column,
@@ -10,9 +11,10 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Bank } from "./Bank";
+import { InvoiceStatusEnum } from "@/enums/InvoiceStatusEnum";
 
-@Entity("bank_boxes")
-export class BankBox extends BaseEntity {
+@Entity("invoices")
+export class Invoice extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "bank_id" })
@@ -23,16 +25,28 @@ export class BankBox extends BaseEntity {
   bank: Bank;
 
   @Column({ type: "varchar", length: 64 })
-  tag: string;
-
-  @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
-  objective?: number;
+  name: string;
 
   @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
+  @Column({ type: "enum", enum: RepeatEnum })
+  repeat: RepeatEnum;
+
+  @Column({ type: "int", default: 1 })
+  installments: number;
+
+  @Column({ type: "int", default: 0, name: "paid_installments" })
+  paidInstallments: number;
+
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: number;
+
+  @Column({ type: "decimal", precision: 10, scale: 2 })
+  total: number;
+
+  @Column({ type: "enum", enum: InvoiceStatusEnum })
+  status: InvoiceStatusEnum;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

@@ -1,5 +1,7 @@
+import { MonthEnum } from "@/enums/MonthEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -11,10 +13,9 @@ import {
 } from "typeorm";
 import { PaymentStatusEnum } from "../enums/PaymentStatusEnum";
 import { User } from "./User";
-import { MonthEnum } from "@/enums/MonthEnum";
 
 @Entity("payments")
-export class Payment {
+export class Payment extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })
@@ -24,10 +25,10 @@ export class Payment {
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: User;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "enum", enum: RepeatEnum })

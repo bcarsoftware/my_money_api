@@ -1,4 +1,5 @@
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -11,7 +12,7 @@ import {
 import { User } from "./User";
 
 @Entity("money")
-export class Money {
+export class Money extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })
@@ -21,13 +22,13 @@ export class Money {
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: User;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   tag: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
   objective?: number;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })

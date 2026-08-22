@@ -1,4 +1,5 @@
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -11,7 +12,7 @@ import {
 import { GenericBank } from "./GenericBank";
 
 @Entity("generic_bank_info")
-export class GenericBankInfo {
+export class GenericBankInfo extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "generic_bank_id" })
@@ -21,10 +22,10 @@ export class GenericBankInfo {
   @JoinColumn({ name: "generic_bank_id", referencedColumnName: "id" })
   genericBank: GenericBank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
-  @Column({ length: 256 })
+  @Column({ type: "varchar", length: 256 })
   value: string;
 
   @CreateDateColumn({ name: "created_at" })

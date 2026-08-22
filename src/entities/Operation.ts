@@ -3,6 +3,7 @@ import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
 import { OriginEnum } from "@/enums/OriginEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -13,15 +14,16 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Bank } from "./Bank";
-import { User } from "./User";
 import { BankBox } from "./BankBox";
 import { GenericBank } from "./GenericBank";
 import { GenericBankBox } from "./GenericBankBox";
 import { Money } from "./Money";
 import { Payment } from "./Payment";
+import { User } from "./User";
+import { Invoice } from "./Invoice";
 
 @Entity("operations")
-export class Operation {
+export class Operation extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })
@@ -34,10 +36,10 @@ export class Operation {
   @Column({ type: "enum", enum: LocalEnum })
   local: LocalEnum;
 
-  @Column({ length: 256 })
+  @Column({ type: "varchar", length: 256 })
   description: string;
 
-  @Column({ length: 256, nullable: true })
+  @Column({ type: "varchar", length: 256, nullable: true })
   note?: string;
 
   @Column({ type: "enum", enum: OriginEnum })
@@ -108,9 +110,16 @@ export class Operation {
   @Column({ type: "uuid", name: "payment_id", nullable: true })
   paymentId?: string;
 
-  @ManyToOne(() => Payment, (paymt) => paymt.id)
+  @ManyToOne(() => Payment, (payment) => payment.id)
   @JoinColumn({ name: "payment_id", referencedColumnName: "id" })
   payment?: Payment;
+
+  @Column({ type: "uuid", name: "invoice_id", nullable: true })
+  invoiceId?: string;
+
+  @ManyToOne(() => Invoice, (invoice) => invoice.id)
+  @JoinColumn({ name: "invoice_id", referencedColumnName: "id" })
+  invoice?: Invoice;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

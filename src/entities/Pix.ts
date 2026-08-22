@@ -1,4 +1,6 @@
+import { PixEnum } from "@/enums/PixEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -9,10 +11,9 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Bank } from "./Bank";
-import { PixEnum } from "@/enums/PixEnum";
 
 @Entity("pix")
-export class Pix {
+export class Pix extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "bank_id" })
@@ -22,16 +23,16 @@ export class Pix {
   @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
   bank: Bank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   tag: string;
 
-  @Column({ length: 256 })
+  @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "enum", enum: PixEnum, name: "type_key" })
   typeKey: PixEnum;
 
-  @Column({ length: 512 })
+  @Column({ type: "varchar", length: 512 })
   key: string;
 
   @CreateDateColumn({ name: "created_at" })

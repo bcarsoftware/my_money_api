@@ -1,5 +1,6 @@
 import { CurrencyEnum } from "@/enums/CurrencyEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -13,7 +14,7 @@ import { Bank } from "./Bank";
 import { User } from "./User";
 
 @Entity("generic_banks")
-export class GenericBank {
+export class GenericBank extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })
@@ -30,7 +31,7 @@ export class GenericBank {
   @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
   bank: Bank;
 
-  @Column({ length: 64 })
+  @Column({ type: "varchar", length: 64 })
   name: string;
 
   @Column({ type: "enum", enum: CurrencyEnum })
