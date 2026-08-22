@@ -1,6 +1,6 @@
-import jwt from "jsonwebtoken";
-import { verifyAccessToken, TokenPayload } from "@/auth/verifyAccessToken";
+import { TokenPayload, verifyAccessToken } from "@/auth/verifyAccessToken";
 import { SECRET_KEY_INVALID, TOKEN_INVALID } from "@/constants/constants";
+import jwt from "jsonwebtoken";
 
 jest.mock("jsonwebtoken");
 
