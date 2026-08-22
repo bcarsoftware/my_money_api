@@ -1,8 +1,14 @@
 {
+  "scripts": {
+    "prettier": "prettier --write \"src/**/*.ts\""
+  },
   "dependencies": {
     "tsc": "^2.0.4",
     "tsx": "^4.23.12",
     "typeorm": "^1.1.0",
     "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6"
   }
 }
