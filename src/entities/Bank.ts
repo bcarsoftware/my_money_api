@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -12,6 +13,7 @@ import {
 import { User } from "./User";
 
 @Entity("banks")
+@Index("IDX_banks_user_id_code", ["user_id", "code"], { unique: true })
 export class Bank {
   @PrimaryGeneratedColumn("uuid") id: string;
 
@@ -23,7 +25,7 @@ export class Bank {
   user: User;
 
   @Column({ length: 8 })
-  codigo: string;
+  code: string;
 
   @Column({ length: 64 })
   name: string;
