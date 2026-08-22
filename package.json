@@ -3,7 +3,10 @@
     "prettier": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage"
+    "test:cov": "jest --coverage",
+    "migration:run": "yarn typeorm migration:run --dataSource ./src/data-source.ts",
+    "migration:revert": "yarn typeorm migration:revert --dataSource ./src/data-source.ts",
+    "migration:generate": "yarn typeorm migration:generate --dataSource ./src/data-source.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
