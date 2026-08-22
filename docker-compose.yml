@@ -1,0 +1,17 @@
+services:
+  database_prod:
+    image: postgres:18-alpine
+    container_name: money_db_container
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      PGTZ: ${POSTGRES_TIMEZONE}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pg_data_prod:/var/lib/postgresql/18/docker
+
+volumes:
+  pg_data_prod:
