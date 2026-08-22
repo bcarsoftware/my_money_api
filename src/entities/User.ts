@@ -1,4 +1,6 @@
+import { GenderEnum } from "@/enums/GenderEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -6,10 +8,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { GenderEnum } from "@/enums/GenderEnum";
 
 @Entity("users")
-export class User {
+export class User extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ length: 64 })

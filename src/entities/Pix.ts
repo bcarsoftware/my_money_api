@@ -1,4 +1,6 @@
+import { PixEnum } from "@/enums/PixEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -9,10 +11,9 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Bank } from "./Bank";
-import { PixEnum } from "@/enums/PixEnum";
 
 @Entity("pix")
-export class Pix {
+export class Pix extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "bank_id" })

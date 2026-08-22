@@ -1,4 +1,5 @@
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -11,7 +12,7 @@ import {
 import { GenericBank } from "./GenericBank";
 
 @Entity("generic_bank_boxes")
-export class GenericBankBox {
+export class GenericBankBox extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "generic_bank_id" })

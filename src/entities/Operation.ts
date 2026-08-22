@@ -3,6 +3,7 @@ import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
 import { OriginEnum } from "@/enums/OriginEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -13,15 +14,15 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 import { Bank } from "./Bank";
-import { User } from "./User";
 import { BankBox } from "./BankBox";
 import { GenericBank } from "./GenericBank";
 import { GenericBankBox } from "./GenericBankBox";
 import { Money } from "./Money";
 import { Payment } from "./Payment";
+import { User } from "./User";
 
 @Entity("operations")
-export class Operation {
+export class Operation extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })

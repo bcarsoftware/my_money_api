@@ -1,5 +1,6 @@
 import { AccountEnum } from "@/enums/AccountEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -14,7 +15,7 @@ import { User } from "./User";
 
 @Entity("banks")
 @Index("IDX_banks_user_id_code", ["user_id", "code"], { unique: true })
-export class Bank {
+export class Bank extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })

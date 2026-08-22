@@ -1,5 +1,7 @@
+import { MonthEnum } from "@/enums/MonthEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
@@ -11,10 +13,9 @@ import {
 } from "typeorm";
 import { PaymentStatusEnum } from "../enums/PaymentStatusEnum";
 import { User } from "./User";
-import { MonthEnum } from "@/enums/MonthEnum";
 
 @Entity("payments")
-export class Payment {
+export class Payment extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })
