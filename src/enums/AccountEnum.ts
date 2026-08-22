@@ -1,0 +1,6 @@
+export enum AccountEnum {
+  SAVING = "SAVING",
+  CHECKING = "CHECKING",
+  INVESTMENT = "INVESTMENT",
+  PAYMENT = "PAYMENT",
+}
