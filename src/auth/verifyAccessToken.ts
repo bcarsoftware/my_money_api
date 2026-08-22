@@ -5,7 +5,7 @@ export interface TokenPayload extends JwtPayload {
   userId: string;
 }
 
-export function verifyAccessToken(token: string): TokenPayload {
+export async function verifyAccessToken(token: string): Promise<TokenPayload> {
   const secret = process.env.ACCESS_SECRET;
 
   if (!secret) throw new Error(SECRET_KEY_INVALID);

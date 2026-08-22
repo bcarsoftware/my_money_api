@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { MyContext } from "./MyContext";
 import { accessCookieName } from "./cookiesUtil";
+import { verifyAccessToken } from "@/auth/verifyAccessToken";
 
 export async function buildHttpContext(
   req: Request,
@@ -9,8 +10,7 @@ export async function buildHttpContext(
   const cookies = req.cookies as Record<string, string> | undefined;
   const token = cookies?.[accessCookieName()] ?? "token";
 
-  // TODO: create a function to verify the token and return claims, instead of using a dummy value
-  const claims = (() => "token")();
+  const claims = await verifyAccessToken(token);
 
   return {
     req,
