@@ -1,0 +1,8 @@
+export enum OriginEnum {
+  BANK = "BANK",
+  BANK_BOX = "BANK_BOX",
+  GENERIC_BANK = "GENERIC_BANK",
+  GENERIC_BANK_BOX = "GENERIC_BANK_BOX",
+  MONEY = "MONEY",
+  PAYMENT = "PAYMENT",
+}

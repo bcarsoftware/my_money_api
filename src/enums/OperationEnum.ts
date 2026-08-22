@@ -1,0 +1,9 @@
+export enum OperationEnum {
+  TRANSFER = "TRANSFER",
+  PIX = "PIX",
+  DEPOSIT = "DEPOSIT",
+  WITHDRAWAL = "WITHDRAWAL",
+  PAYMENT = "PAYMENT",
+  SEND = "SEND",
+  RECEIVE = "RECEIVE",
+}
