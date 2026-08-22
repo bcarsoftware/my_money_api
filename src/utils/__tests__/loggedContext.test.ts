@@ -1,7 +1,5 @@
 import { USER_NOT_FOUND } from "@/constants/constants";
-import { MyContext } from "@/context/MyContext";
-import { AppDataSource } from "@/data-source";
-import { loggedContext } from "@/utils/loggedContext";
+
 import { EntityManager } from "typeorm";
 
 jest.mock("@/data-source", () => ({

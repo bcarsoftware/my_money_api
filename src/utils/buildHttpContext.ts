@@ -2,6 +2,7 @@ import { verifyAccessToken } from "@/auth/verifyAccessToken";
 import { Request, Response } from "express";
 import { MyContext } from "../context/MyContext";
 import { accessCookieName } from "./cookiesUtil";
+import { verifyAccessToken } from "@/auth/verifyAccessToken";
 
 export async function buildHttpContext(
   req: Request,
