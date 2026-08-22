@@ -6,6 +6,7 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
+    "reflect-metadata": "^0.2.2",
     "tsc": "^2.0.4",
     "tsx": "^4.23.12",
     "typeorm": "^1.1.0",
@@ -15,7 +16,9 @@
     "@swc/core": "^1.16.1",
     "@swc/jest": "^0.2.39",
     "@types/jest": "^30.0.0",
+    "@types/node": "^26.2.0",
     "jest": "^30.4.2",
-    "prettier": "3.9.6"
+    "prettier": "3.9.6",
+    "ts-node": "^10.9.2"
   }
 }
