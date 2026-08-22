@@ -1,10 +1,6 @@
-import {
-  __prodLike__,
-  TOKEN_INVALID,
-  USER_NOT_FOUND,
-} from "@/constants/constants";
+import { __prodLike__ } from "@/constants/constants";
 import { User } from "@/entities/User";
-import { MyContext } from "./MyContext";
+import { MyContext } from "../context/MyContext";
 
 export interface AuthUserData {
   id: string;
