@@ -14,18 +14,18 @@ import { Payment } from "./entities/Payment";
 import { Pix } from "./entities/Pix";
 import { User } from "./entities/User";
 
-import { Starting1787411777403 } from "./migration/1787411777403-Starting";
-import { CreateUser1787412038436 } from "./migration/1787412038436-CreateUser";
-import { CreateMoney1787412195283 } from "./migration/1787412195283-CreateMoney";
-import { CreateBank1787412644065 } from "./migration/1787412644065-CreateBank";
-import { CreateBankBox1787412945271 } from "./migration/1787412945271-CreateBankBox";
-import { CreatePix1787413263792 } from "./migration/1787413263792-CreatePix";
-import { CreateInvoice1787414231023 } from "./migration/1787414231023-CreateInvoice";
-import { CreatePayment1787414478068 } from "./migration/1787414478068-CreatePayment";
-import { CreateGenericBank1787414685365 } from "./migration/1787414685365-CreateGenericBank";
-import { CreateGenericBankBox1787415068662 } from "./migration/1787415068662-CreateGenericBankBox";
-import { CreateGenericBankInfo1787415282084 } from "./migration/1787415282084-CreateGenericBankInfo";
-import { CreateOperation1787415560149 } from "./migration/1787415560149-CreateOperation";
+import { Starting1787411777403 } from "./migrations/1787411777403-Starting";
+import { CreateUser1787412038436 } from "./migrations/1787412038436-CreateUser";
+import { CreateMoney1787412195283 } from "./migrations/1787412195283-CreateMoney";
+import { CreateBank1787412644065 } from "./migrations/1787412644065-CreateBank";
+import { CreateBankBox1787412945271 } from "./migrations/1787412945271-CreateBankBox";
+import { CreatePix1787413263792 } from "./migrations/1787413263792-CreatePix";
+import { CreateInvoice1787414231023 } from "./migrations/1787414231023-CreateInvoice";
+import { CreatePayment1787414478068 } from "./migrations/1787414478068-CreatePayment";
+import { CreateGenericBank1787414685365 } from "./migrations/1787414685365-CreateGenericBank";
+import { CreateGenericBankBox1787415068662 } from "./migrations/1787415068662-CreateGenericBankBox";
+import { CreateGenericBankInfo1787415282084 } from "./migrations/1787415282084-CreateGenericBankInfo";
+import { CreateOperation1787415560149 } from "./migrations/1787415560149-CreateOperation";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
