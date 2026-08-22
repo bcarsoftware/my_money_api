@@ -1,20 +1,18 @@
+import express from "express";
+import http from "http";
+
 import { AppDataSource } from "./data-source";
-import { User } from "./entities/User";
+import { mainApp } from "./server/apollo";
 
-AppDataSource.initialize()
-  .then(async () => {
-    console.log("Inserting a new user into the database...");
-    const user = new User();
-    user.name = "Timber Saw";
-    await AppDataSource.manager.save(user);
-    console.log("Saved a new user with id: " + user.id);
+async function starting() {
+  console.log("Starting the application...");
 
-    console.log("Loading users from the database...");
-    const users = await AppDataSource.manager.find(User);
-    console.log("Loaded users: ", users);
+  try {
+    await mainApp();
+  } catch (error) {
+    console.error("Error during App initialization", error);
+    process.exit(1);
+  }
+}
 
-    console.log(
-      "Here you can setup and run express / fastify / any other framework."
-    );
-  })
-  .catch((error) => console.log(error));
+starting();

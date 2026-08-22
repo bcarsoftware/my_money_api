@@ -6,6 +6,7 @@ declare global {
       POSTGRES_DB: string;
       POSTGRES_TIMEZONE: string;
       POSTGRES_PORT: string;
+      PORT: string;
     }
   }
 }
