@@ -20,6 +20,7 @@ import { GenericBankBox } from "./GenericBankBox";
 import { Money } from "./Money";
 import { Payment } from "./Payment";
 import { User } from "./User";
+import { Invoice } from "./Invoice";
 
 @Entity("operations")
 export class Operation extends BaseEntity {
@@ -109,9 +110,16 @@ export class Operation extends BaseEntity {
   @Column({ type: "uuid", name: "payment_id", nullable: true })
   paymentId?: string;
 
-  @ManyToOne(() => Payment, (paymt) => paymt.id)
+  @ManyToOne(() => Payment, (payment) => payment.id)
   @JoinColumn({ name: "payment_id", referencedColumnName: "id" })
   payment?: Payment;
+
+  @Column({ type: "uuid", name: "invoice_id", nullable: true })
+  invoiceId?: string;
+
+  @ManyToOne(() => Invoice, (invoice) => invoice.id)
+  @JoinColumn({ name: "invoice_id", referencedColumnName: "id" })
+  invoice?: Invoice;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
