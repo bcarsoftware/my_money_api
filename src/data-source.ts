@@ -2,9 +2,12 @@ import "dotenv/config";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 
+import { Money } from "./entities/Money";
 import { User } from "./entities/User";
 
 import { Starting1787411777403 } from "./migration/1787411777403-Starting";
+import { CreateUser1787412038436 } from "./migration/1787412038436-CreateUser";
+import { CreateMoney1787412195283 } from "./migration/1787412195283-CreateMoney";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -15,8 +18,12 @@ export const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DB,
   synchronize: true,
   logging: false,
-  entities: [User],
-  migrations: [Starting1787411777403],
+  entities: [User, Money],
+  migrations: [
+    Starting1787411777403,
+    CreateUser1787412038436,
+    CreateMoney1787412195283,
+  ],
   migrationsTransactionMode: "each",
   extra: {
     max: 10,
