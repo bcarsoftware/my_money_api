@@ -31,10 +31,10 @@ describe("generateAccessToken", () => {
   });
 
   describe("Cenários de Sucesso", () => {
-    it("deve gerar e retornar o token assinado quando payload e envs forem válidos", () => {
+    it("deve gerar e retornar o token assinado quando payload e envs forem válidos", async () => {
       (jwt.sign as jest.Mock).mockReturnValue(mockToken);
 
-      const result = generateAccessToken(validPayload);
+      const result = await generateAccessToken(validPayload);
 
       expect(jwt.sign).toHaveBeenCalledTimes(1);
       expect(jwt.sign).toHaveBeenCalledWith(validPayload, mockSecret, {
@@ -45,11 +45,11 @@ describe("generateAccessToken", () => {
 
     it.each(["100ms", "30s", "15m", "2h", "7d", "4w", "1y"])(
       "deve aceitar diferentes formatos válidos de tempo no EXPIRES_IN: %s",
-      (expiryFormat) => {
+      async (expiryFormat) => {
         process.env.EXPIRES_IN = expiryFormat;
         (jwt.sign as jest.Mock).mockReturnValue(mockToken);
 
-        const result = generateAccessToken(validPayload);
+        const result = await generateAccessToken(validPayload);
 
         expect(result).toBe(mockToken);
         expect(jwt.sign).toHaveBeenCalledWith(validPayload, mockSecret, {
@@ -61,28 +61,28 @@ describe("generateAccessToken", () => {
 
   describe("Validação de Variáveis de Ambiente", () => {
     describe("EXPIRES_IN (checkPattern)", () => {
-      it("deve lançar erro se EXPIRES_IN for undefined", () => {
+      it("deve lançar erro se EXPIRES_IN for undefined", async () => {
         process.env.EXPIRES_IN = undefined as unknown as string;
 
-        expect(() => generateAccessToken(validPayload)).toThrow(
+        await expect(generateAccessToken(validPayload)).rejects.toThrow(
           "Invalid expiration time format. It should be a number or a string with a valid time unit."
         );
         expect(jwt.sign).not.toHaveBeenCalled();
       });
 
-      it("deve lançar erro se EXPIRES_IN for uma string vazia", () => {
+      it("deve lançar erro se EXPIRES_IN for uma string vazia", async () => {
         process.env.EXPIRES_IN = "";
 
-        expect(() => generateAccessToken(validPayload)).toThrow(
+        await expect(generateAccessToken(validPayload)).rejects.toThrow(
           "Invalid expiration time format. It should be a number or a string with a valid time unit."
         );
         expect(jwt.sign).not.toHaveBeenCalled();
       });
 
-      it("deve lançar erro se EXPIRES_IN tiver formato ou unidade inválida", () => {
+      it("deve lançar erro se EXPIRES_IN tiver formato ou unidade inválida", async () => {
         process.env.EXPIRES_IN = "15invalid";
 
-        expect(() => generateAccessToken(validPayload)).toThrow(
+        await expect(generateAccessToken(validPayload)).rejects.toThrow(
           "Invalid expiration time format. It should be a number or a string with a valid time unit."
         );
         expect(jwt.sign).not.toHaveBeenCalled();
@@ -90,19 +90,19 @@ describe("generateAccessToken", () => {
     });
 
     describe("ACCESS_SECRET", () => {
-      it("deve lançar SECRET_KEY_INVALID se ACCESS_SECRET for undefined", () => {
+      it("deve lançar SECRET_KEY_INVALID se ACCESS_SECRET for undefined", async () => {
         process.env.ACCESS_SECRET = undefined as unknown as string;
 
-        expect(() => generateAccessToken(validPayload)).toThrow(
+        await expect(generateAccessToken(validPayload)).rejects.toThrow(
           SECRET_KEY_INVALID
         );
         expect(jwt.sign).not.toHaveBeenCalled();
       });
 
-      it("deve lançar SECRET_KEY_INVALID se ACCESS_SECRET for uma string vazia", () => {
+      it("deve lançar SECRET_KEY_INVALID se ACCESS_SECRET for uma string vazia", async () => {
         process.env.ACCESS_SECRET = "";
 
-        expect(() => generateAccessToken(validPayload)).toThrow(
+        await expect(generateAccessToken(validPayload)).rejects.toThrow(
           SECRET_KEY_INVALID
         );
         expect(jwt.sign).not.toHaveBeenCalled();
@@ -111,62 +111,62 @@ describe("generateAccessToken", () => {
   });
 
   describe("Cláusulas de Guarda do Payload", () => {
-    it("deve lançar erro se o payload for nulo ou indefinido", () => {
-      expect(() =>
-        generateAccessToken(null as unknown as TokenPayload)
-      ).toThrow("Invalid token payload");
+    it("deve lançar erro se o payload for nulo ou indefinido", async () => {
+      await expect(generateAccessToken(null as unknown as TokenPayload)).rejects.toThrow(
+        "Invalid token payload"
+      );
 
-      expect(() =>
-        generateAccessToken(undefined as unknown as TokenPayload)
-      ).toThrow("Invalid token payload");
+      await expect(generateAccessToken(undefined as unknown as TokenPayload)).rejects.toThrow(
+        "Invalid token payload"
+      );
 
       expect(jwt.sign).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro se payload.userId for ausente, vazio ou não for string", () => {
+    it("deve lançar erro se payload.userId for ausente, vazio ou não for string", async () => {
       const invalidPayloads = [
         { ...validPayload, userId: "" },
         { ...validPayload, userId: undefined as unknown as string },
         { ...validPayload, userId: 12345 as unknown as string },
       ];
 
-      invalidPayloads.forEach((payload) => {
-        expect(() => generateAccessToken(payload)).toThrow(
+      for (const payload of invalidPayloads) {
+        await expect(generateAccessToken(payload)).rejects.toThrow(
           "Invalid token payload: userId is required"
         );
-      });
+      }
 
       expect(jwt.sign).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro se payload.email for ausente, vazio ou não for string", () => {
+    it("deve lançar erro se payload.email for ausente, vazio ou não for string", async () => {
       const invalidPayloads = [
         { ...validPayload, email: "" },
         { ...validPayload, email: undefined as unknown as string },
         { ...validPayload, email: 123 as unknown as string },
       ];
 
-      invalidPayloads.forEach((payload) => {
-        expect(() => generateAccessToken(payload)).toThrow(
+      for (const payload of invalidPayloads) {
+        await expect(generateAccessToken(payload)).rejects.toThrow(
           "Invalid token payload: email is required"
         );
-      });
+      }
 
       expect(jwt.sign).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro se payload.username for ausente, vazio ou não for string", () => {
+    it("deve lançar erro se payload.username for ausente, vazio ou não for string", async () => {
       const invalidPayloads = [
         { ...validPayload, username: "" },
         { ...validPayload, username: undefined as unknown as string },
         { ...validPayload, username: true as unknown as string },
       ];
 
-      invalidPayloads.forEach((payload) => {
-        expect(() => generateAccessToken(payload)).toThrow(
+      for (const payload of invalidPayloads) {
+        await expect(generateAccessToken(payload)).rejects.toThrow(
           "Invalid token payload: username is required"
         );
-      });
+      }
 
       expect(jwt.sign).not.toHaveBeenCalled();
     });
