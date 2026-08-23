@@ -4,7 +4,7 @@ export class CreateGenericBank1787414685365 implements MigrationInterface {
   name = "CreateGenericBank1787414685365";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
 
     await queryRunner.query(
       `CREATE TYPE "public"."generic_banks_currency_enum" AS ENUM('BRL', 'COP', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD')`

@@ -4,7 +4,7 @@ export class CreatePix1787413263792 implements MigrationInterface {
   name = "CreatePix1787413263792";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
 
     await queryRunner.query(
       `CREATE TYPE "public"."pix_type_key_enum" AS ENUM('RANDOM', 'CPF', 'CNPJ', 'PHONE', 'EMAIL')`

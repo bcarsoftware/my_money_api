@@ -4,7 +4,7 @@ export class CreateBank1787412644065 implements MigrationInterface {
   name = "CreateBank1787412644065";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
 
     await queryRunner.query(
       `CREATE TYPE "public"."banks_account_type_enum" AS ENUM('SAVING', 'CHECKING', 'INVESTMENT', 'PAYMENT')`

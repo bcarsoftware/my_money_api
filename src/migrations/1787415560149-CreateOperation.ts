@@ -4,7 +4,7 @@ export class CreateOperation1787415560149 implements MigrationInterface {
   name = "CreateOperation1787415560149";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
 
     await queryRunner.query(
       `CREATE TYPE "public"."operations_local_enum" AS ENUM('INTERNAL', 'EXTERNAL')`

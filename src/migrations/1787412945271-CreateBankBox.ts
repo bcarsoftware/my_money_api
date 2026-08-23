@@ -4,7 +4,7 @@ export class CreateBankBox1787412945271 implements MigrationInterface {
   name = "CreateBankBox1787412945271";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
 
     await queryRunner.query(
       `CREATE TABLE "bank_boxes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "bank_id" uuid NOT NULL, "tag" character varying(64) NOT NULL, "objective" numeric(10,2), "description" character varying(256), "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_773a4b96609c57770510ea22399" PRIMARY KEY ("id"))`

@@ -4,7 +4,7 @@ export class CreatePayment1787414478068 implements MigrationInterface {
   name = "CreatePayment1787414478068";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
 
     await queryRunner.query(
       `CREATE TYPE "public"."payments_repeat_enum" AS ENUM('REPEAT', 'NO_REPEAT')`
