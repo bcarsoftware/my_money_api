@@ -8,3 +8,5 @@ export const TOKEN_INVALID = "token invalid";
 export const SECRET_KEY_INVALID = "secret key invalid";
 
 export const USER_NOT_FOUND = "user not found";
+
+export const SALT_ROUNTS_INVALID = "salt rounds invalid";
