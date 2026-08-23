@@ -4,8 +4,6 @@ export class CreateGenericBankInfo1787415282084 implements MigrationInterface {
   name = "CreateGenericBankInfo1787415282084";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
-
     await queryRunner.query(
       `CREATE TABLE "generic_bank_info" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "generic_bank_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "value" character varying(256) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_8427c04656ce5e88e7981dc9d95" PRIMARY KEY ("id"))`
     );
@@ -26,15 +24,15 @@ export class CreateGenericBankInfo1787415282084 implements MigrationInterface {
 
     await queryRunner.query(`
       CREATE POLICY select_generic_bank_info_logged_user ON generic_bank_info
-      FOR SELECT USING (${loggedUser})
+      FOR SELECT USING (is_user_logged())
     `);
     await queryRunner.query(`
       CREATE POLICY insert_generic_bank_info_logged_user ON generic_bank_info
-      FOR INSERT WITH CHECK (${loggedUser})
+      FOR INSERT WITH CHECK (is_user_logged())
     `);
     await queryRunner.query(`
       CREATE POLICY update_generic_bank_info_logged_user ON generic_bank_info
-      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+      FOR UPDATE USING (is_user_logged()) WITH CHECK (is_user_logged())
     `);
   }
 

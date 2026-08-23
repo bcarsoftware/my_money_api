@@ -4,8 +4,6 @@ export class CreatePix1787413263792 implements MigrationInterface {
   name = "CreatePix1787413263792";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
-
     await queryRunner.query(
       `CREATE TYPE "public"."pix_type_key_enum" AS ENUM('RANDOM', 'CPF', 'CNPJ', 'PHONE', 'EMAIL')`
     );
@@ -25,15 +23,15 @@ export class CreatePix1787413263792 implements MigrationInterface {
 
     await queryRunner.query(`
       CREATE POLICY select_pix_logged_user ON pix
-      FOR SELECT USING (${loggedUser})
+      FOR SELECT USING (is_user_logged())
     `);
     await queryRunner.query(`
       CREATE POLICY insert_pix_logged_user ON pix
-      FOR INSERT WITH CHECK (${loggedUser})
+      FOR INSERT WITH CHECK (is_user_logged())
     `);
     await queryRunner.query(`
       CREATE POLICY update_pix_logged_user ON pix
-      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+      FOR UPDATE USING (is_user_logged()) WITH CHECK (is_user_logged())
     `);
   }
 

@@ -4,8 +4,6 @@ export class CreateInvoice1787414231023 implements MigrationInterface {
   name = "CreateInvoice1787414231023";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    const loggedUser = `"user_id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
-
     await queryRunner.query(
       `CREATE TYPE "public"."invoices_repeat_enum" AS ENUM('REPEAT', 'NO_REPEAT')`
     );
@@ -28,15 +26,15 @@ export class CreateInvoice1787414231023 implements MigrationInterface {
 
     await queryRunner.query(`
       CREATE POLICY select_invoice_logged_user ON invoices
-      FOR SELECT USING (${loggedUser})
+      FOR SELECT USING (is_user_logged())
     `);
     await queryRunner.query(`
       CREATE POLICY insert_invoice_logged_user ON invoices
-      FOR INSERT WITH CHECK (${loggedUser})
+      FOR INSERT WITH CHECK (is_user_logged())
     `);
     await queryRunner.query(`
       CREATE POLICY update_invoice_logged_user ON invoices
-      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+      FOR UPDATE USING (is_user_logged()) WITH CHECK (is_user_logged())
     `);
   }
 
