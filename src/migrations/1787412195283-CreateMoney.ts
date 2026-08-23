@@ -35,6 +35,16 @@ export class CreateMoney1787412195283 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS select_money_logged_user ON money`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS insert_money_logged_user ON money`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS update_money_logged_user ON money`
+    );
+
     await queryRunner.query(`ALTER TABLE money DISABLE ROW LEVEL SECURITY`);
 
     await queryRunner.query(

@@ -35,6 +35,16 @@ export class CreateUser1787412038436 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS select_user_logged_user ON users`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS insert_user_logged_user ON users`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS update_user_logged_user ON users`
+    );
+
     await queryRunner.query(`ALTER TABLE users DISABLE ROW LEVEL SECURITY`);
 
     await queryRunner.query(`DROP TABLE "users"`);

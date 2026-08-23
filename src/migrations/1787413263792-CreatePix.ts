@@ -38,6 +38,16 @@ export class CreatePix1787413263792 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS select_pix_logged_user ON pix`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS insert_pix_logged_user ON pix`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS update_pix_logged_user ON pix`
+    );
+
     await queryRunner.query(`ALTER TABLE pix DISABLE ROW LEVEL SECURITY`);
 
     await queryRunner.query(

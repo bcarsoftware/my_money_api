@@ -41,6 +41,16 @@ export class CreateInvoice1787414231023 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS select_invoice_logged_user ON invoices`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS insert_invoice_logged_user ON invoices`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS update_invoice_logged_user ON invoices`
+    );
+
     await queryRunner.query(`ALTER TABLE invoices DISABLE ROW LEVEL SECURITY`);
 
     await queryRunner.query(

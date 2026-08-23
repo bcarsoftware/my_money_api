@@ -69,6 +69,16 @@ export class CreateOperation1787415560149 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
+      `DROP POLICY IF EXISTS select_operation_logged_user ON operations`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS insert_operation_logged_user ON operations`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS update_operation_logged_user ON operations`
+    );
+
+    await queryRunner.query(
       `ALTER TABLE operations DISABLE ROW LEVEL SECURITY`
     );
 

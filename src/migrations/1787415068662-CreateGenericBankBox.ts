@@ -40,6 +40,16 @@ export class CreateGenericBankBox1787415068662 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
+      `DROP POLICY IF EXISTS select_generic_bank_box_logged_user ON generic_bank_boxes`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS insert_generic_bank_box_logged_user ON generic_bank_boxes`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS update_generic_bank_box_logged_user ON generic_bank_boxes`
+    );
+
+    await queryRunner.query(
       `ALTER TABLE generic_bank_boxes DISABLE ROW LEVEL SECURITY`
     );
 

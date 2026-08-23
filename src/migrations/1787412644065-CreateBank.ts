@@ -41,6 +41,16 @@ export class CreateBank1787412644065 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS select_bank_logged_user ON banks`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS insert_bank_logged_user ON banks`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS update_bank_logged_user ON banks`
+    );
+
     await queryRunner.query(`ALTER TABLE banks DISABLE ROW LEVEL SECURITY`);
 
     await queryRunner.query(
