@@ -4,6 +4,8 @@ export class CreateBank1787412644065 implements MigrationInterface {
   name = "CreateBank1787412644065";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TYPE "public"."banks_account_type_enum" AS ENUM('SAVING', 'CHECKING', 'INVESTMENT', 'PAYMENT')`
     );
@@ -23,6 +25,19 @@ export class CreateBank1787412644065 implements MigrationInterface {
 
     await queryRunner.query(`ALTER TABLE banks ENABLE ROW LEVEL SECURITY`);
     await queryRunner.query(`ALTER TABLE banks FORCE ROW LEVEL SECURITY`);
+
+    await queryRunner.query(`
+      CREATE POLICY select_bank_logged_user ON banks
+      FOR SELECT USING (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_bank_logged_user ON banks
+      FOR INSERT WITH CHECK (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY update_bank_logged_user ON banks
+      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

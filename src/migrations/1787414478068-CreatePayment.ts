@@ -4,6 +4,8 @@ export class CreatePayment1787414478068 implements MigrationInterface {
   name = "CreatePayment1787414478068";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TYPE "public"."payments_repeat_enum" AS ENUM('REPEAT', 'NO_REPEAT')`
     );
@@ -26,6 +28,19 @@ export class CreatePayment1787414478068 implements MigrationInterface {
 
     await queryRunner.query(`ALTER TABLE payments ENABLE ROW LEVEL SECURITY`);
     await queryRunner.query(`ALTER TABLE payments FORCE ROW LEVEL SECURITY`);
+
+    await queryRunner.query(`
+      CREATE POLICY select_payment_logged_user ON payments
+      FOR SELECT USING (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_payment_logged_user ON payments
+      FOR INSERT WITH CHECK (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY update_payment_logged_user ON payments
+      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

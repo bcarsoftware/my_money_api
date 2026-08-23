@@ -4,6 +4,8 @@ export class CreateInvoice1787414231023 implements MigrationInterface {
   name = "CreateInvoice1787414231023";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TYPE "public"."invoices_repeat_enum" AS ENUM('REPEAT', 'NO_REPEAT')`
     );
@@ -23,6 +25,19 @@ export class CreateInvoice1787414231023 implements MigrationInterface {
 
     await queryRunner.query(`ALTER TABLE invoices ENABLE ROW LEVEL SECURITY`);
     await queryRunner.query(`ALTER TABLE invoices FORCE ROW LEVEL SECURITY`);
+
+    await queryRunner.query(`
+      CREATE POLICY select_invoice_logged_user ON invoices
+      FOR SELECT USING (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_invoice_logged_user ON invoices
+      FOR INSERT WITH CHECK (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY update_invoice_logged_user ON invoices
+      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

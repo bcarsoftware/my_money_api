@@ -4,6 +4,8 @@ export class CreateOperation1787415560149 implements MigrationInterface {
   name = "CreateOperation1787415560149";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TYPE "public"."operations_local_enum" AS ENUM('INTERNAL', 'EXTERNAL')`
     );
@@ -50,6 +52,19 @@ export class CreateOperation1787415560149 implements MigrationInterface {
 
     await queryRunner.query(`ALTER TABLE operations ENABLE ROW LEVEL SECURITY`);
     await queryRunner.query(`ALTER TABLE operations FORCE ROW LEVEL SECURITY`);
+
+    await queryRunner.query(`
+      CREATE POLICY select_operation_logged_user ON operations
+      FOR SELECT USING (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_operation_logged_user ON operations
+      FOR INSERT WITH CHECK (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY update_operation_logged_user ON operations
+      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -4,6 +4,8 @@ export class CreateGenericBankBox1787415068662 implements MigrationInterface {
   name = "CreateGenericBankBox1787415068662";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TABLE "generic_bank_boxes" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "generic_bank_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "objective" numeric(10,2), "description" character varying(256), "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_7aa89d2ab3d72782f7eed058f4a" PRIMARY KEY ("id"))`
     );
@@ -21,6 +23,19 @@ export class CreateGenericBankBox1787415068662 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE generic_bank_boxes FORCE ROW LEVEL SECURITY`
     );
+
+    await queryRunner.query(`
+      CREATE POLICY select_generic_bank_box_logged_user ON generic_bank_boxes
+      FOR SELECT USING (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_generic_bank_box_logged_user ON generic_bank_boxes
+      FOR INSERT WITH CHECK (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY update_generic_bank_box_logged_user ON generic_bank_boxes
+      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

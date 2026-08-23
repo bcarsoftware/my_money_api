@@ -4,6 +4,8 @@ export class CreatePix1787413263792 implements MigrationInterface {
   name = "CreatePix1787413263792";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TYPE "public"."pix_type_key_enum" AS ENUM('RANDOM', 'CPF', 'CNPJ', 'PHONE', 'EMAIL')`
     );
@@ -20,6 +22,19 @@ export class CreatePix1787413263792 implements MigrationInterface {
 
     await queryRunner.query(`ALTER TABLE pix ENABLE ROW LEVEL SECURITY`);
     await queryRunner.query(`ALTER TABLE pix FORCE ROW LEVEL SECURITY`);
+
+    await queryRunner.query(`
+      CREATE POLICY select_pix_logged_user ON pix
+      FOR SELECT USING (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_pix_logged_user ON pix
+      FOR INSERT WITH CHECK (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY update_pix_logged_user ON pix
+      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

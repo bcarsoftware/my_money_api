@@ -4,6 +4,8 @@ export class CreateGenericBank1787414685365 implements MigrationInterface {
   name = "CreateGenericBank1787414685365";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"userId" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TYPE "public"."generic_banks_currency_enum" AS ENUM('BRL', 'COP', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD')`
     );
@@ -27,6 +29,19 @@ export class CreateGenericBank1787414685365 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE generic_banks FORCE ROW LEVEL SECURITY`
     );
+
+    await queryRunner.query(`
+      CREATE POLICY select_generic_bank_logged_user ON generic_banks
+      FOR SELECT USING (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_generic_bank_logged_user ON generic_banks
+      FOR INSERT WITH CHECK (${loggedUser})
+    `);
+    await queryRunner.query(`
+      CREATE POLICY update_generic_bank_logged_user ON generic_banks
+      FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
