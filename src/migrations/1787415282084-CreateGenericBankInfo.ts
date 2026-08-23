@@ -10,6 +10,10 @@ export class CreateGenericBankInfo1787415282084 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "generic_bank_info" ADD CONSTRAINT "FK_generic_bank_info_generic_bank_id" FOREIGN KEY ("generic_bank_id") REFERENCES "generic_banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
+
+    await queryRunner.query(
+      `GRANT SELECT, INSERT, UPDATE ON generic_bank_info TO my_money_app`
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

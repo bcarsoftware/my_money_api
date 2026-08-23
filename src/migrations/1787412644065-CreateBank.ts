@@ -16,6 +16,10 @@ export class CreateBank1787412644065 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "banks" ADD CONSTRAINT "FK_bank_user_id" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
+
+    await queryRunner.query(
+      `GRANT SELECT, INSERT, UPDATE ON banks TO my_money_app`
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

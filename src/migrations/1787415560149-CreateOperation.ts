@@ -43,6 +43,10 @@ export class CreateOperation1787415560149 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "operations" ADD CONSTRAINT "FK_operations_invoice_id" FOREIGN KEY ("invoice_id") REFERENCES "invoices"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
+
+    await queryRunner.query(
+      `GRANT SELECT, INSERT, UPDATE ON operations TO my_money_app`
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

@@ -13,6 +13,10 @@ export class CreatePix1787413263792 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "pix" ADD CONSTRAINT "FK_pix_bank_id" FOREIGN KEY ("bank_id") REFERENCES "banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
+
+    await queryRunner.query(
+      `GRANT SELECT, INSERT, UPDATE ON pix TO my_money_app`
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
