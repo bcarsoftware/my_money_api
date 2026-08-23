@@ -6,4 +6,3 @@ export type MyContext = {
   accessToken?: string;
   userId?: string;
 };
-

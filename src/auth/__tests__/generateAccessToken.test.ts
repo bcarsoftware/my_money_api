@@ -112,8 +112,6 @@ describe("generateAccessToken", () => {
 
   describe("Cláusulas de Guarda do Payload", () => {
     it("deve lançar erro se o payload for nulo ou indefinido", async () => {
-
-
       expect(jwt.sign).not.toHaveBeenCalled();
     });
 

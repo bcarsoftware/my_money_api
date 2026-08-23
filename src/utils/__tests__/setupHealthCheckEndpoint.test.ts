@@ -1,6 +1,6 @@
-import { Express, Request, Response } from "express";
-import { setupHealthCheckEndpoint } from "@/utils/setupHealthCheckEndpoint";
 import { AppDataSource } from "@/data-source";
+import { setupHealthCheckEndpoint } from "@/utils/setupHealthCheckEndpoint";
+import { Express, Request, Response } from "express";
 
 // Mock do AppDataSource para isolar completamente o banco de dados
 jest.mock("@/data-source", () => ({
