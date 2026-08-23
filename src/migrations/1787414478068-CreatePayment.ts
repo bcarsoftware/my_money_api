@@ -16,7 +16,7 @@ export class CreatePayment1787414478068 implements MigrationInterface {
       `CREATE TYPE "public"."payments_status_enum" AS ENUM('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED')`
     );
     await queryRunner.query(
-      `CREATE TABLE "payments" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "description" character varying(256), "repeat" "public"."payments_repeat_enum" NOT NULL, "balance" numeric(10,2) NOT NULL, "day" integer NOT NULL, "month" "public"."payments_month_enum" NOT NULL, "status" "public"."payments_status_enum" NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_197ab7af18c93fbb0c9b28b4a59" PRIMARY KEY ("id"))`
+      `CREATE TABLE "payments" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "description" character varying(256), "repeat" "public"."payments_repeat_enum" NOT NULL, "balance" numeric(10,2) NOT NULL, "day" integer NOT NULL, "month" "public"."payments_month_enum" NOT NULL, "status" "public"."payments_status_enum" NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_197ab7af18c93fbb0c9b28b4a59" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `ALTER TABLE "payments" ADD CONSTRAINT "FK_payment_user_id" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`

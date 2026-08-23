@@ -1,7 +1,7 @@
 import "dotenv/config";
 import "reflect-metadata";
-import { DataSource } from "typeorm";
 
+import { DataSource } from "typeorm";
 import { Bank } from "./entities/Bank";
 import { BankBox } from "./entities/BankBox";
 import { GenericBank } from "./entities/GenericBank";
@@ -14,8 +14,8 @@ import { Payment } from "./entities/Payment";
 import { Pix } from "./entities/Pix";
 import { User } from "./entities/User";
 
-import { Starting1787411777403 } from "./migrations/1787411777403-Starting";
 import { CreateUser1787412038436 } from "./migrations/1787412038436-CreateUser";
+import { FunctionUserLogged1787412078185 } from "./migrations/1787412078185-FunctionUserLogged";
 import { CreateMoney1787412195283 } from "./migrations/1787412195283-CreateMoney";
 import { CreateBank1787412644065 } from "./migrations/1787412644065-CreateBank";
 import { CreateBankBox1787412945271 } from "./migrations/1787412945271-CreateBankBox";
@@ -50,8 +50,8 @@ export const AppDataSource = new DataSource({
     Operation,
   ],
   migrations: [
-    Starting1787411777403,
     CreateUser1787412038436,
+    FunctionUserLogged1787412078185,
     CreateMoney1787412195283,
     CreateBank1787412644065,
     CreateBankBox1787412945271,
