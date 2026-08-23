@@ -20,9 +20,20 @@ export class CreateGenericBank1787414685365 implements MigrationInterface {
     await queryRunner.query(
       `GRANT SELECT, INSERT, UPDATE ON generic_banks TO my_money_app`
     );
+
+    await queryRunner.query(
+      `ALTER TABLE generic_banks ENABLE ROW LEVEL SECURITY`
+    );
+    await queryRunner.query(
+      `ALTER TABLE generic_banks FORCE ROW LEVEL SECURITY`
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE generic_banks DISABLE ROW LEVEL SECURITY`
+    );
+
     await queryRunner.query(
       `ALTER TABLE "generic_banks" DROP CONSTRAINT "FK_generic_bank_bank_id"`
     );

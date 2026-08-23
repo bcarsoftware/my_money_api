@@ -14,9 +14,14 @@ export class CreateMoney1787412195283 implements MigrationInterface {
     await queryRunner.query(
       `GRANT SELECT, INSERT, UPDATE ON money TO my_money_app`
     );
+
+    await queryRunner.query(`ALTER TABLE money ENABLE ROW LEVEL SECURITY`);
+    await queryRunner.query(`ALTER TABLE money FORCE ROW LEVEL SECURITY`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE money DISABLE ROW LEVEL SECURITY`);
+
     await queryRunner.query(
       `ALTER TABLE "money" DROP CONSTRAINT "FK_money_user_id"`
     );

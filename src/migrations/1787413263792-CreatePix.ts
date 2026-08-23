@@ -17,9 +17,14 @@ export class CreatePix1787413263792 implements MigrationInterface {
     await queryRunner.query(
       `GRANT SELECT, INSERT, UPDATE ON pix TO my_money_app`
     );
+
+    await queryRunner.query(`ALTER TABLE pix ENABLE ROW LEVEL SECURITY`);
+    await queryRunner.query(`ALTER TABLE pix FORCE ROW LEVEL SECURITY`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE pix DISABLE ROW LEVEL SECURITY`);
+
     await queryRunner.query(
       `ALTER TABLE "pix" DROP CONSTRAINT "FK_pix_bank_id"`
     );

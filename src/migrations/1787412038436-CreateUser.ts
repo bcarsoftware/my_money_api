@@ -14,9 +14,14 @@ export class CreateUser1787412038436 implements MigrationInterface {
     await queryRunner.query(
       `GRANT SELECT, INSERT, UPDATE ON users TO my_money_app`
     );
+
+    await queryRunner.query(`ALTER TABLE users ENABLE ROW LEVEL SECURITY`);
+    await queryRunner.query(`ALTER TABLE users FORCE ROW LEVEL SECURITY`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE users DISABLE ROW LEVEL SECURITY`);
+
     await queryRunner.query(`DROP TABLE "users"`);
     await queryRunner.query(`DROP TYPE "public"."users_gender_enum"`);
   }
