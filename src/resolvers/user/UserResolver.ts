@@ -106,8 +106,11 @@ export class UserResolver {
       if (!user) throw new Error(USER_NOT_FOUND);
 
       try {
-        const dateBorn =
-          new Date(new Date(input.dateBorn) === user.dateBorn ? user.dateBorn : input.dateBorn);
+        const dateBorn = new Date(
+          new Date(input.dateBorn) === user.dateBorn
+            ? user.dateBorn
+            : input.dateBorn
+        );
 
         user.name = input.name === user.name ? user.name : input.name;
         user.dateBorn = dateBorn;
