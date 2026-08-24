@@ -47,6 +47,28 @@ export class UserResolver {
     }
   }
 
+  @Mutation(() => MessageResponse)
+  async forgotPassowrd(
+    @Arg("input", () => UserLoginInput) input: UserLoginInput
+  ): Promise<MessageResponse> {
+    try {
+      const user = await User.findOne({
+        where: [{ username: input.username }, { email: input.username }],
+      });
+
+      if (!user) throw new Error(USER_NOT_FOUND);
+
+      user.password = await hashPassword(input.password);
+
+      await user.save();
+
+      return { message: "Password reset successfully." };
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      throw new Error("Failed to reset password.");
+    }
+  }
+
   @Mutation(() => UserDto)
   async createUser(
     @Arg("input", () => UserInput) input: UserInput
