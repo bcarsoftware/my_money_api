@@ -1,7 +1,8 @@
-import { MiddlewareFn, UseMiddleware } from "type-graphql";
-import { MyContext } from "@/context/MyContext";
 import { verifyAccessToken } from "@/auth/verifyAccessToken";
+import { TOKEN_INVALID } from "@/constants/constants";
+import { MyContext } from "@/context/MyContext";
 import { accessCookieName } from "@/utils/cookiesUtil";
+import { MiddlewareFn, UseMiddleware } from "type-graphql";
 
 export const authMiddleware: MiddlewareFn<MyContext> = async (
   { context },
@@ -14,13 +15,13 @@ export const authMiddleware: MiddlewareFn<MyContext> = async (
     ];
 
   if (!token) {
-    throw new Error("Access denied. No token provided.");
+    throw new Error(TOKEN_INVALID);
   }
 
   const claims = await verifyAccessToken(token);
 
   if (!claims) {
-    throw new Error("Access denied. Invalid or expired token.");
+    throw new Error(TOKEN_INVALID);
   }
 
   return next();

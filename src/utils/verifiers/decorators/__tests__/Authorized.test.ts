@@ -1,9 +1,13 @@
-import "reflect-metadata";
-import { authMiddleware, Authorized } from "@/utils/verifiers/decorators/Authorized";
 import { verifyAccessToken } from "@/auth/verifyAccessToken";
-import { accessCookieName } from "@/utils/cookiesUtil";
+import { TOKEN_INVALID } from "@/constants/constants";
 import { MyContext } from "@/context/MyContext";
+import { accessCookieName } from "@/utils/cookiesUtil";
+import {
+  authMiddleware,
+  Authorized,
+} from "@/utils/verifiers/decorators/Authorized";
 import { Request, Response } from "express";
+import "reflect-metadata";
 import { ResolverData, UseMiddleware } from "type-graphql";
 
 jest.mock("@/auth/verifyAccessToken");
@@ -80,7 +84,7 @@ describe("Authorized Decorator & authMiddleware", () => {
       } as ResolverData<MyContext>;
 
       await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
-        "Access denied. No token provided."
+        TOKEN_INVALID
       );
 
       expect(verifyAccessToken).not.toHaveBeenCalled();
@@ -95,7 +99,7 @@ describe("Authorized Decorator & authMiddleware", () => {
       } as ResolverData<MyContext>;
 
       await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
-        "Access denied. No token provided."
+        TOKEN_INVALID
       );
 
       expect(verifyAccessToken).not.toHaveBeenCalled();
@@ -111,7 +115,7 @@ describe("Authorized Decorator & authMiddleware", () => {
       } as ResolverData<MyContext>;
 
       await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
-        "Access denied. Invalid or expired token."
+        TOKEN_INVALID
       );
 
       expect(mockNext).not.toHaveBeenCalled();
