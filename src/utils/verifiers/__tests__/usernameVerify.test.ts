@@ -16,10 +16,10 @@ describe("usernameVerify - Validação de Nome de Usuário", () => {
   });
 
   describe("Validação de Tamanho", () => {
-    it("deve retornar false se tiver menos de 3 caracteres", () => {
+    it("deve retornar false se tiver menos de 2 caracteres", () => {
       expect(usernameVerify("")).toBe(false);
       expect(usernameVerify("a")).toBe(false);
-      expect(usernameVerify("ab")).toBe(false);
+      expect(usernameVerify("ab")).toBe(true);
     });
 
     it("deve retornar false se exceder o limite máximo", () => {

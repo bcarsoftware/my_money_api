@@ -25,7 +25,7 @@ export function IsUsername(
           return isUsername(value);
         },
         defaultMessage(args: ValidationArguments) {
-          return `${args.property} must be a valid username. It should start with a lowercase letter, can contain lowercase letters, numbers, underscores, and hyphens, and must be between 3 and 128 characters long.`;
+          return `${args.property} must be a valid username. It should start with a lowercase letter, can contain lowercase letters, numbers, underscores, and hyphens, and must be between 2 and 128 characters long.`;
         },
       },
     });

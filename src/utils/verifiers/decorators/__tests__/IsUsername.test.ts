@@ -29,7 +29,7 @@ describe("Class Validator - Custom Decorator @IsUsername & isUsername helper", (
 
     it.each([
       "",
-      "ab",
+      "b",
       "1user",
       "_user",
       "-user",
@@ -84,7 +84,7 @@ describe("Class Validator - Custom Decorator @IsUsername & isUsername helper", (
       expect(errors).toHaveLength(1);
       expect(errors[0]?.constraints).toBeDefined();
       expect(errors[0]?.constraints?.[IS_USERNAME]).toBe(
-        "username must be a valid username. It should start with a lowercase letter, can contain lowercase letters, numbers, underscores, and hyphens, and must be between 3 and 128 characters long."
+        "username must be a valid username. It should start with a lowercase letter, can contain lowercase letters, numbers, underscores, and hyphens, and must be between 2 and 128 characters long."
       );
     });
 
