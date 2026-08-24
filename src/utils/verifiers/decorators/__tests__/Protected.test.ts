@@ -4,8 +4,8 @@ import { MyContext } from "@/context/MyContext";
 import { accessCookieName } from "@/utils/cookiesUtil";
 import {
   authMiddleware,
-  Authorized,
-} from "@/utils/verifiers/decorators/Authorized";
+  Protected,
+} from "@/utils/verifiers/decorators/Protected";
 import { Request, Response } from "express";
 import "reflect-metadata";
 import { ResolverData, UseMiddleware } from "type-graphql";
@@ -20,7 +20,7 @@ jest.mock("type-graphql", () => {
   };
 });
 
-describe("Authorized Decorator & authMiddleware", () => {
+describe("Protected Decorator & authMiddleware", () => {
   let mockContext: MyContext;
   let mockNext: jest.Mock;
   const mockCookieName = "accessToken";
@@ -138,9 +138,9 @@ describe("Authorized Decorator & authMiddleware", () => {
     });
   });
 
-  describe("Authorized decorator factory", () => {
+  describe("Protected decorator factory", () => {
     it("deve invocar UseMiddleware repassando authMiddleware", () => {
-      Authorized();
+      Protected();
 
       expect(UseMiddleware).toHaveBeenCalledWith(authMiddleware);
     });

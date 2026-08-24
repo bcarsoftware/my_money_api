@@ -27,6 +27,6 @@ export const authMiddleware: MiddlewareFn<MyContext> = async (
   return next();
 };
 
-export function Authorized(): MethodDecorator & PropertyDecorator {
+export function Protected(): MethodDecorator & PropertyDecorator {
   return UseMiddleware(authMiddleware);
 }
