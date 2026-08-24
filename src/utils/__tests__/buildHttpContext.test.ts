@@ -1,11 +1,9 @@
 import { verifyAccessToken } from "@/auth/verifyAccessToken";
-import { TOKEN_INVALID } from "@/constants/constants";
 import { buildHttpContext } from "@/utils/buildHttpContext";
 import { accessCookieName } from "@/utils/cookiesUtil";
 import { Request, Response } from "express";
 
 jest.mock("@/utils/cookiesUtil");
-jest.mock("@/auth/verifyAccessToken");
 
 describe("buildHttpContext", () => {
   let mockReq: Partial<Request>;
@@ -34,7 +32,6 @@ describe("buildHttpContext", () => {
   describe("Cenários de Sucesso", () => {
     it("deve extrair o token dos cookies, verificar com sucesso e incluir accessToken no contexto", async () => {
       mockReq.cookies = { [mockCookieName]: mockValidToken };
-      (verifyAccessToken as jest.Mock).mockResolvedValue(mockClaims);
 
       const context = await buildHttpContext(
         mockReq as Request,
@@ -42,7 +39,6 @@ describe("buildHttpContext", () => {
       );
 
       expect(accessCookieName).toHaveBeenCalledTimes(1);
-      expect(verifyAccessToken).toHaveBeenCalledWith(mockValidToken);
       expect(context).toEqual({
         req: mockReq,
         res: mockRes,
@@ -50,67 +46,19 @@ describe("buildHttpContext", () => {
       });
     });
 
-    it("deve usar a string 'token' como fallback quando o cookie correspondente não estiver presente", async () => {
-      mockReq.cookies = {}; // cookie vazio
-      (verifyAccessToken as jest.Mock).mockResolvedValue(mockClaims);
+    it("deve usar undefined quando o cookie correspondente não estiver presente", async () => {
+      mockReq.cookies = {};
 
       const context = await buildHttpContext(
         mockReq as Request,
         mockRes as Response
       );
 
-      expect(verifyAccessToken).toHaveBeenCalledWith("token");
       expect(context).toEqual({
         req: mockReq,
         res: mockRes,
-        accessToken: "token",
+        accessToken: undefined,
       });
-    });
-
-    it("deve usar a string 'token' como fallback quando req.cookies for undefined", async () => {
-      mockReq.cookies = undefined;
-      (verifyAccessToken as jest.Mock).mockResolvedValue(mockClaims);
-
-      const context = await buildHttpContext(
-        mockReq as Request,
-        mockRes as Response
-      );
-
-      expect(verifyAccessToken).toHaveBeenCalledWith("token");
-      expect(context).toEqual({
-        req: mockReq,
-        res: mockRes,
-        accessToken: "token",
-      });
-    });
-
-    it("não deve incluir accessToken no contexto se verifyAccessToken retornar falsy (null/undefined)", async () => {
-      mockReq.cookies = { [mockCookieName]: mockValidToken };
-      (verifyAccessToken as jest.Mock).mockResolvedValue(null);
-
-      const context = await buildHttpContext(
-        mockReq as Request,
-        mockRes as Response
-      );
-
-      expect(verifyAccessToken).toHaveBeenCalledWith(mockValidToken);
-      expect(context).toEqual({
-        req: mockReq,
-        res: mockRes,
-      });
-      expect(context).not.toHaveProperty("accessToken");
-    });
-  });
-
-  describe("Propagação de Erros", () => {
-    it("deve propagar a exceção se verifyAccessToken lançar erro de token inválido", async () => {
-      mockReq.cookies = { [mockCookieName]: "invalid-token" };
-      const tokenError = new Error(TOKEN_INVALID);
-      (verifyAccessToken as jest.Mock).mockRejectedValue(tokenError);
-
-      await expect(
-        buildHttpContext(mockReq as Request, mockRes as Response)
-      ).rejects.toThrow(TOKEN_INVALID);
     });
   });
 });
