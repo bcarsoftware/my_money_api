@@ -10,6 +10,7 @@ declare global {
       ACCESS_SECRET: string;
       EXPIRES_IN: string;
       SALT_ROUNDS: string;
+      MAX_AGE: string;
     }
   }
 }
