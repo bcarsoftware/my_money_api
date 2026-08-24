@@ -15,7 +15,7 @@ import { UserInput, UserLoginInput } from "./UserInputs";
 export class UserResolver {
   @Mutation(() => UserDto)
   async loginUser(
-    @Arg("input") input: UserLoginInput,
+    @Arg("input", () => UserLoginInput) input: UserLoginInput,
     @Ctx() context: MyContext
   ): Promise<UserDto> {
     try {
@@ -48,7 +48,9 @@ export class UserResolver {
   }
 
   @Mutation(() => UserDto)
-  async createUser(@Arg("input") input: UserInput): Promise<UserDto> {
+  async createUser(
+    @Arg("input", () => UserInput) input: UserInput
+  ): Promise<UserDto> {
     if (!input.password) throw new Error("Password is required.");
 
     try {
@@ -70,8 +72,8 @@ export class UserResolver {
   @Mutation(() => UserDto)
   async updateUser(
     @Ctx() context: MyContext,
-    @Arg("id") id: string,
-    @Arg("input") input: UserInput
+    @Arg("id", () => String) id: string,
+    @Arg("input", () => UserInput) input: UserInput
   ): Promise<UserDto> {
     return loggedContext(context, async (em) => {
       const user = await em.findOne(User, { where: { id } });
@@ -121,8 +123,8 @@ export class UserResolver {
   @Mutation(() => MessageResponse)
   async changePassword(
     @Ctx() context: MyContext,
-    @Arg("id") id: string,
-    @Arg("newPassword") newPassword: string
+    @Arg("id", () => String) id: string,
+    @Arg("newPassword", () => String) newPassword: string
   ): Promise<MessageResponse> {
     return loggedContext(context, async (em) => {
       const user = await em.findOne(User, { where: { id } });
@@ -155,7 +157,7 @@ export class UserResolver {
   @Mutation(() => MessageResponse)
   async deleteUser(
     @Ctx() context: MyContext,
-    @Arg("id") id: string
+    @Arg("id", () => String) id: string
   ): Promise<MessageResponse> {
     return loggedContext(context, async (em) => {
       const user = await em.findOne(User, { where: { id } });

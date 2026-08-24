@@ -3,10 +3,10 @@ import { Field, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class UserDto {
-  @Field()
+  @Field(() => String)
   id: string;
 
-  @Field()
+  @Field(() => String)
   name: string;
 
   @Field(() => Date)
@@ -15,16 +15,16 @@ export class UserDto {
   @Field(() => GenderEnum)
   gender: GenderEnum;
 
-  @Field()
+  @Field(() => String)
   email: string;
 
-  @Field()
+  @Field(() => String)
   username: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   salary?: string | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   phone?: string | null;
 
   @Field(() => Date)
