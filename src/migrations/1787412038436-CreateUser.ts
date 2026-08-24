@@ -4,6 +4,8 @@ export class CreateUser1787412038436 implements MigrationInterface {
   name = "CreateUser1787412038436";
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const loggedUser = `"id" = nullif(current_setting('app.current_user_id', true), '')::uuid`;
+
     await queryRunner.query(
       `CREATE TYPE "public"."users_gender_enum" AS ENUM('MALE', 'FEMALE', 'NOT_SAY')`
     );
@@ -14,9 +16,28 @@ export class CreateUser1787412038436 implements MigrationInterface {
     await queryRunner.query(
       `GRANT SELECT, INSERT, UPDATE ON users TO my_money_app`
     );
+
+    await queryRunner.query(`
+      CREATE POLICY select_user ON users
+      FOR SELECT USING (true)
+    `);
+    await queryRunner.query(`
+      CREATE POLICY insert_user ON users
+      FOR INSERT WITH CHECK (true)
+    `);
+    await queryRunner.query(`
+      CREATE POLICY delete_user_logged_user ON users
+      FOR DELETE USING (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP POLICY IF EXISTS select_user ON users`);
+    await queryRunner.query(`DROP POLICY IF EXISTS insert_user ON users`);
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS delete_user_logged_user ON users`
+    );
+
     await queryRunner.query(`ALTER TABLE users DISABLE ROW LEVEL SECURITY`);
 
     await queryRunner.query(`DROP TABLE "users"`);

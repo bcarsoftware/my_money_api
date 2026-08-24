@@ -33,6 +33,10 @@ export class CreatePix1787413263792 implements MigrationInterface {
       CREATE POLICY update_pix_logged_user ON pix
       FOR UPDATE USING (is_user_logged()) WITH CHECK (is_user_logged())
     `);
+    await queryRunner.query(`
+      CREATE POLICY delete_pix_logged_user ON pix
+      FOR DELETE USING (is_user_logged())
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -44,6 +48,9 @@ export class CreatePix1787413263792 implements MigrationInterface {
     );
     await queryRunner.query(
       `DROP POLICY IF EXISTS update_pix_logged_user ON pix`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS delete_pix_logged_user ON pix`
     );
 
     await queryRunner.query(`ALTER TABLE pix DISABLE ROW LEVEL SECURITY`);

@@ -40,6 +40,10 @@ export class CreateGenericBank1787414685365 implements MigrationInterface {
       CREATE POLICY update_generic_bank_logged_user ON generic_banks
       FOR UPDATE USING (is_user_logged()) WITH CHECK (is_user_logged())
     `);
+    await queryRunner.query(`
+      CREATE POLICY delete_generic_bank_logged_user ON generic_banks
+      FOR DELETE USING (is_user_logged())
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -51,6 +55,9 @@ export class CreateGenericBank1787414685365 implements MigrationInterface {
     );
     await queryRunner.query(
       `DROP POLICY IF EXISTS update_generic_bank_logged_user ON generic_banks`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS delete_generic_bank_logged_user ON generic_banks`
     );
 
     await queryRunner.query(
