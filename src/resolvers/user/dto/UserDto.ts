@@ -1,6 +1,6 @@
 import { GenderEnum } from "@/enums/GenderEnum";
 
-export interface UserDto {
+export type UserDto = {
   id: string;
   name: string;
   dateBorn: Date;
@@ -10,4 +10,4 @@ export interface UserDto {
   salary?: string;
   phone?: string;
   createdAt: Date;
-}
+};
