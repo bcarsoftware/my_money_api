@@ -1,4 +1,4 @@
-import { USER_NOT_FOUND } from "@/constants/constants";
+import { USER_NOT_AUTHENTICATED } from "@/constants/constants";
 import { MyContext } from "@/context/MyContext";
 import { AppDataSource } from "@/data-source";
 import { loggedContext } from "@/utils/loggedContext";
@@ -31,34 +31,34 @@ describe("loggedContext", () => {
   });
 
   describe("Validação de Autenticação e UUID (Guards)", () => {
-    it("deve lançar erro USER_NOT_FOUND se userId for undefined", async () => {
+    it("deve lançar erro USER_NOT_AUTHENTICATED se userId for undefined", async () => {
       const ctx = {} as MyContext;
       const mockCallback = jest.fn();
 
       await expect(loggedContext(ctx, mockCallback)).rejects.toThrow(
-        USER_NOT_FOUND
+        USER_NOT_AUTHENTICATED
       );
       expect(AppDataSource.transaction).not.toHaveBeenCalled();
       expect(mockCallback).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro USER_NOT_FOUND se userId for uma string vazia", async () => {
+    it("deve lançar erro USER_NOT_AUTHENTICATED se userId for uma string vazia", async () => {
       const ctx = { userId: "" } as MyContext;
       const mockCallback = jest.fn();
 
       await expect(loggedContext(ctx, mockCallback)).rejects.toThrow(
-        USER_NOT_FOUND
+        USER_NOT_AUTHENTICATED
       );
       expect(AppDataSource.transaction).not.toHaveBeenCalled();
       expect(mockCallback).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro USER_NOT_FOUND se userId não for um UUID válido", async () => {
+    it("deve lançar erro USER_NOT_AUTHENTICATED se userId não for um UUID válido", async () => {
       const ctx = { userId: "invalid-uuid-12345" } as MyContext;
       const mockCallback = jest.fn();
 
       await expect(loggedContext(ctx, mockCallback)).rejects.toThrow(
-        USER_NOT_FOUND
+        USER_NOT_AUTHENTICATED
       );
       expect(AppDataSource.transaction).not.toHaveBeenCalled();
       expect(mockCallback).not.toHaveBeenCalled();
