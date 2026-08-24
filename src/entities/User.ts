@@ -32,7 +32,7 @@ export class User extends BaseEntity {
   password: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
-  salary?: number;
+  salary?: string;
 
   @Column({ type: "varchar", length: 32, nullable: true })
   phone?: string;
