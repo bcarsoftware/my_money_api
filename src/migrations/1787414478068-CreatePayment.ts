@@ -41,6 +41,10 @@ export class CreatePayment1787414478068 implements MigrationInterface {
       CREATE POLICY update_payment_logged_user ON payments
       FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
     `);
+    await queryRunner.query(`
+      CREATE POLICY delete_payment_logged_user ON payments
+      FOR DELETE USING (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -52,6 +56,9 @@ export class CreatePayment1787414478068 implements MigrationInterface {
     );
     await queryRunner.query(
       `DROP POLICY IF EXISTS update_payment_logged_user ON payments`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS delete_payment_logged_user ON payments`
     );
 
     await queryRunner.query(`ALTER TABLE payments DISABLE ROW LEVEL SECURITY`);

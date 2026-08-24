@@ -11,7 +11,7 @@ describe("Validation Test Suite - GraphQL Inputs (UserInput & UserLoginInput)", 
     beforeEach(() => {
       validUserInput = new UserInput();
       validUserInput.name = "Abel Carvalho";
-      validUserInput.dateBorn = new Date("1995-05-15T00:00:00.000Z");
+      validUserInput.dateBorn = "1995-05-15T00:00:00.000Z";
       validUserInput.gender = GenderEnum.MALE;
       validUserInput.email = "abel@example.com";
       validUserInput.username = "abelcarvalho";
@@ -55,13 +55,13 @@ describe("Validation Test Suite - GraphQL Inputs (UserInput & UserLoginInput)", 
     });
 
     describe("Campo 'dateBorn'", () => {
-      it("deve falhar se dateBorn não for uma instância válida de Date", async () => {
-        validUserInput.dateBorn = "1995-05-15" as unknown as Date;
+      it("deve falhar se dateBorn não for uma data válida", async () => {
+        validUserInput.dateBorn = "1995-05-15asdjimafijoe";
 
         const errors = await validate(validUserInput);
         const dateError = errors.find((err) => err.property === "dateBorn");
 
-        expect(dateError?.constraints?.isDate).toBe(
+        expect(dateError?.constraints?.isDateString).toBe(
           "Date of birth must be a valid date."
         );
       });

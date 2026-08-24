@@ -65,6 +65,10 @@ export class CreateOperation1787415560149 implements MigrationInterface {
       CREATE POLICY update_operation_logged_user ON operations
       FOR UPDATE USING (${loggedUser}) WITH CHECK (${loggedUser})
     `);
+    await queryRunner.query(`
+      CREATE POLICY delete_operation_logged_user ON operations
+      FOR DELETE USING (${loggedUser})
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -76,6 +80,9 @@ export class CreateOperation1787415560149 implements MigrationInterface {
     );
     await queryRunner.query(
       `DROP POLICY IF EXISTS update_operation_logged_user ON operations`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS delete_operation_logged_user ON operations`
     );
 
     await queryRunner.query(

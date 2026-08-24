@@ -30,6 +30,10 @@ export class CreateBankBox1787412945271 implements MigrationInterface {
       CREATE POLICY update_bank_box_logged_user ON bank_boxes
       FOR UPDATE USING (is_user_logged()) WITH CHECK (is_user_logged())
     `);
+    await queryRunner.query(`
+      CREATE POLICY delete_bank_box_logged_user ON bank_boxes
+      FOR DELETE USING (is_user_logged())
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -41,6 +45,9 @@ export class CreateBankBox1787412945271 implements MigrationInterface {
     );
     await queryRunner.query(
       `DROP POLICY IF EXISTS update_bank_box_logged_user ON bank_boxes`
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS delete_bank_box_logged_user ON bank_boxes`
     );
 
     await queryRunner.query(

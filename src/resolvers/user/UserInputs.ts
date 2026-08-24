@@ -2,7 +2,7 @@ import { GenderEnum } from "@/enums/GenderEnum";
 import { IsUsername } from "@/utils/verifiers/decorators/IsUsername";
 import {
   IsCurrency,
-  IsDate,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -22,8 +22,8 @@ export class UserInput {
   name: string;
 
   @Field(() => String)
-  @IsDate({ message: "Date of birth must be a valid date." })
-  dateBorn: Date;
+  @IsDateString({}, { message: "Date of birth must be a valid date." })
+  dateBorn: string;
 
   @Field(() => GenderEnum)
   @IsEnum(GenderEnum, { message: "Gender must be a valid enum value." })
