@@ -70,7 +70,6 @@ export class UserResolver {
     }
   }
 
-  @Protected()
   @Mutation(() => UserDto)
   async createUser(
     @Arg("input", () => UserInput) input: UserInput
@@ -82,6 +81,7 @@ export class UserResolver {
 
       const user = await User.create({
         ...input,
+        dateBorn: new Date(input.dateBorn),
         password,
       }).save();
 
@@ -106,9 +106,11 @@ export class UserResolver {
       if (!user) throw new Error(USER_NOT_FOUND);
 
       try {
+        const dateBorn =
+          new Date(new Date(input.dateBorn) === user.dateBorn ? user.dateBorn : input.dateBorn);
+
         user.name = input.name === user.name ? user.name : input.name;
-        user.dateBorn =
-          input.dateBorn === user.dateBorn ? user.dateBorn : input.dateBorn;
+        user.dateBorn = dateBorn;
         user.gender = input.gender === user.gender ? user.gender : input.gender;
         user.email = input.email === user.email ? user.email : input.email;
         user.username =
