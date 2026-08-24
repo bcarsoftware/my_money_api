@@ -10,6 +10,7 @@ import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { MessageResponse } from "../MessageResponse";
 import { toUserDto } from "./dto/toUserDto";
 import { UserInput, UserLoginInput } from "./UserInputs";
+import { Authorized } from "@/utils/verifiers/decorators/Authorized";
 
 @Resolver()
 export class UserResolver {
@@ -69,6 +70,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized()
   @Mutation(() => UserDto)
   async createUser(
     @Arg("input", () => UserInput) input: UserInput
@@ -91,6 +93,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized()
   @Mutation(() => UserDto)
   async updateUser(
     @Ctx() context: MyContext,
@@ -142,6 +145,7 @@ export class UserResolver {
     });
   }
 
+  @Authorized()
   @Mutation(() => MessageResponse)
   async changePassword(
     @Ctx() context: MyContext,
@@ -165,6 +169,7 @@ export class UserResolver {
     });
   }
 
+  @Authorized()
   @Mutation(() => MessageResponse)
   async logoutUser(@Ctx() context: MyContext): Promise<MessageResponse> {
     try {
@@ -176,6 +181,7 @@ export class UserResolver {
     }
   }
 
+  @Authorized()
   @Mutation(() => MessageResponse)
   async deleteUser(
     @Ctx() context: MyContext,
