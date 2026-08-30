@@ -39,13 +39,13 @@ export class MoneyResolver {
           ...(tag ? { tag } : {}),
         };
 
-        const [money, total] = await em.findAndCount(Money, {
+        const [items, total] = await em.findAndCount(Money, {
           where,
           take: limit ?? undefined,
           skip: offset ?? undefined,
         });
 
-        return { money, total };
+        return { items, total };
       } catch (error) {
         console.log("Error occurred in listMoney:", error);
         throw error;

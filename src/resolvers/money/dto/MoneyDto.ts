@@ -27,7 +27,7 @@ export class MoneyDto {
 @ObjectType()
 export class PaginatedMoney {
   @Field(() => [MoneyDto])
-  money: MoneyDto[];
+  items: MoneyDto[];
 
   @Field(() => Number)
   total: number;
