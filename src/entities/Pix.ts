@@ -27,7 +27,7 @@ export class Pix extends BaseEntity {
   tag: string;
 
   @Column({ type: "varchar", length: 256, nullable: true })
-  description?: string;
+  description?: string | null;
 
   @Column({ type: "enum", enum: PixEnum, name: "type_key" })
   typeKey: PixEnum;
