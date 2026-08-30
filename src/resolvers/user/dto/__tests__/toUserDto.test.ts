@@ -14,6 +14,7 @@ describe("toUserDto - Mapper de Entidade para DTO", () => {
     user.name = "Abel Carvalho";
     user.dateBorn = mockDate;
     user.gender = GenderEnum.MALE;
+    user.cpf = "12345678909";
     user.email = "abel@example.com";
     user.username = "abelcarvalho";
     user.password = "hashed_password_secret";
@@ -30,6 +31,7 @@ describe("toUserDto - Mapper de Entidade para DTO", () => {
       name: "Abel Carvalho",
       dateBorn: mockDate,
       gender: GenderEnum.MALE,
+      cpf: "12345678909",
       email: "abel@example.com",
       username: "abelcarvalho",
       salary: "5000.00",
@@ -44,6 +46,7 @@ describe("toUserDto - Mapper de Entidade para DTO", () => {
     user.name = "Abel Carvalho";
     user.dateBorn = mockDate;
     user.gender = GenderEnum.MALE;
+    user.cpf = "12345678909";
     user.email = "abel@example.com";
     user.username = "abelcarvalho";
     user.password = "super_secret_hash";
@@ -64,6 +67,7 @@ describe("toUserDto - Mapper de Entidade para DTO", () => {
     user.name = "Abel Carvalho";
     user.dateBorn = mockDate;
     user.gender = GenderEnum.MALE;
+    user.cpf = "18548353007";
     user.email = "abel@example.com";
     user.username = "abelcarvalho";
     user.password = "hashed_password";
@@ -80,6 +84,7 @@ describe("toUserDto - Mapper de Entidade para DTO", () => {
       name: "Abel Carvalho",
       dateBorn: mockDate,
       gender: GenderEnum.MALE,
+      cpf: "18548353007",
       email: "abel@example.com",
       username: "abelcarvalho",
       salary: undefined,

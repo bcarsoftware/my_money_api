@@ -15,6 +15,9 @@ export class UserDto {
   @Field(() => GenderEnum)
   gender: GenderEnum;
 
+  @Field(() => String, { nullable: true })
+  cpf?: string | null;
+
   @Field(() => String)
   email: string;
 
