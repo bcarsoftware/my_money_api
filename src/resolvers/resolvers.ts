@@ -1,7 +1,7 @@
-import { BankResolver } from "./bank/BankResolver";
-import { MeResolver } from "./me/MeResolver";
-import { MoneyResolver } from "./money/MoneyResolver";
-import { UserResolver } from "./user/UserResolver";
+import { BankResolver } from "@/resolvers/bank/BankResolver";
+import { MeResolver } from "@/resolvers/me/MeResolver";
+import { MoneyResolver } from "@/resolvers/money/MoneyResolver";
+import { UserResolver } from "@/resolvers/user/UserResolver";
 
 export const resolvers = [
   MeResolver,
