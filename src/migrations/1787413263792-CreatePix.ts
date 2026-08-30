@@ -8,10 +8,13 @@ export class CreatePix1787413263792 implements MigrationInterface {
       `CREATE TYPE "public"."pix_type_key_enum" AS ENUM('RANDOM', 'CPF', 'CNPJ', 'PHONE', 'EMAIL')`
     );
     await queryRunner.query(
-      `CREATE TABLE "pix" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "bank_id" uuid NOT NULL, "tag" character varying(64) NOT NULL, "description" character varying(256), "type_key" "public"."pix_type_key_enum" NOT NULL, "key" character varying(512) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_da846dad51d704c2f2814148ae4" PRIMARY KEY ("id"))`
+      `CREATE TABLE "pix" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "bank_id" uuid NOT NULL, "tag" character varying(64) NOT NULL, "description" character varying(256), "type_key" "public"."pix_type_key_enum" NOT NULL, "key" character varying(512) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_pix_id" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `ALTER TABLE "pix" ADD CONSTRAINT "FK_pix_bank_id" FOREIGN KEY ("bank_id") REFERENCES "banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "pix" ADD CONSTRAINT "IDX_pix_type_key" UNIQUE (type_key, key)`
     );
 
     await queryRunner.query(
@@ -57,6 +60,9 @@ export class CreatePix1787413263792 implements MigrationInterface {
 
     await queryRunner.query(
       `ALTER TABLE "pix" DROP CONSTRAINT "FK_pix_bank_id"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "pix" DROP CONSTRAINT "IDX_pix_type_key"`
     );
     await queryRunner.query(`DROP TABLE "pix"`);
     await queryRunner.query(`DROP TYPE "public"."pix_type_key_enum"`);
