@@ -1,18 +1,8 @@
-import {
-  IsCurrency,
-  IsInt,
-  IsOptional,
-  IsUUID,
-  MaxLength,
-} from "class-validator";
+import { IsCurrency, IsInt, IsOptional, MaxLength } from "class-validator";
 import { Field, InputType } from "type-graphql";
 
 @InputType()
 export class CreateMoneyInput {
-  @Field(() => String)
-  @IsUUID("4", { message: "User ID must be a valid UUID v4." })
-  userId: string;
-
   @Field(() => String)
   @MaxLength(64, { message: "Tag must be at most 64 characters long." })
   tag: string;

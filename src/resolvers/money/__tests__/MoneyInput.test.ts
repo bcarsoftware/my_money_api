@@ -23,8 +23,8 @@ function constraintsFor(errors: ValidationError[], property: string): string[] {
 }
 
 describe("CreateMoneyInput", () => {
+  // userId NÃO faz parte do CreateMoneyInput – é injetado pelo contexto
   const validPayload = {
-    userId: VALID_UUID_V4,
     tag: "aluguel",
     balance: "100.00",
   };
@@ -45,29 +45,7 @@ describe("CreateMoneyInput", () => {
     });
   });
 
-  describe("userId", () => {
-    it("rejeita string que não é UUID", async () => {
-      const errors = await validateInput(CreateMoneyInput, {
-        ...validPayload,
-        userId: "não-é-um-uuid",
-      });
-      expect(constraintsFor(errors, "userId")).toContain("isUuid");
-    });
-
-    it("rejeita UUID válido, mas de versão diferente de 4", async () => {
-      const errors = await validateInput(CreateMoneyInput, {
-        ...validPayload,
-        userId: VALID_UUID_V1,
-      });
-      expect(constraintsFor(errors, "userId")).toContain("isUuid");
-    });
-
-    it("rejeita quando ausente (campo obrigatório)", async () => {
-      const { userId: _userId, ...rest } = validPayload;
-      const errors = await validateInput(CreateMoneyInput, rest);
-      expect(constraintsFor(errors, "userId")).toContain("isUuid");
-    });
-  });
+  // ====== userId removido – não existe em CreateMoneyInput ======
 
   describe("tag", () => {
     it("aceita exatamente 64 caracteres (limite)", async () => {
@@ -94,7 +72,7 @@ describe("CreateMoneyInput", () => {
       expect(constraintsFor(errors, "tag")).toHaveLength(0);
     });
 
-    it("rejeita quando ausente (campo obrigatório) — MaxLength também falha em undefined, pois checa typeof === 'string'", async () => {
+    it("rejeita quando ausente (campo obrigatório) — MaxLength também falha em undefined", async () => {
       const { tag: _tag, ...rest } = validPayload;
       const errors = await validateInput(CreateMoneyInput, rest);
       expect(constraintsFor(errors, "tag")).toContain("maxLength");
@@ -129,10 +107,6 @@ describe("CreateMoneyInput", () => {
         ...validPayload,
         balance: "1.234,56",
       });
-      // IsCurrency usa configuração padrão (locale americano). Se o
-      // sistema espera receber valores em formato brasileiro, esse
-      // decorator precisa de opções customizadas
-      // (thousands_separator: '.', decimal_separator: ',').
       expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
 
@@ -195,16 +169,13 @@ describe("CreateMoneyInput", () => {
   describe("múltiplos erros simultâneos", () => {
     it("acumula erros independentes de campos diferentes", async () => {
       const errors = await validateInput(CreateMoneyInput, {
-        userId: "inválido",
         tag: "a".repeat(65),
         balance: "não é moeda",
         objective: "também inválido",
       });
 
       const properties = errors.map((e) => e.property).sort();
-      expect(properties).toEqual(
-        ["balance", "objective", "tag", "userId"].sort()
-      );
+      expect(properties).toEqual(["balance", "objective", "tag"].sort());
     });
   });
 });
@@ -227,11 +198,6 @@ describe("ListMoneyInput", () => {
   });
 
   describe("limit", () => {
-    it("aceita null explicitamente", async () => {
-      const errors = await validateInput(ListMoneyInput, { limit: null });
-      expect(constraintsFor(errors, "limit")).toHaveLength(0);
-    });
-
     it("rejeita valor não-inteiro (float)", async () => {
       const errors = await validateInput(ListMoneyInput, { limit: 10.5 });
       expect(constraintsFor(errors, "limit")).toContain("isInt");
@@ -249,8 +215,9 @@ describe("ListMoneyInput", () => {
   });
 
   describe("offset", () => {
-    it("aceita null explicitamente", async () => {
-      const errors = await validateInput(ListMoneyInput, { offset: null });
+    // ✅ Corrigido: offset é number | undefined, não aceita null
+    it("aceita undefined (ou omitido)", async () => {
+      const errors = await validateInput(ListMoneyInput, { offset: undefined });
       expect(constraintsFor(errors, "offset")).toHaveLength(0);
     });
 
