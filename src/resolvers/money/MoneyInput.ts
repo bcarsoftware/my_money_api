@@ -39,12 +39,12 @@ export class ListMoneyInput {
   @Field(() => Number, { nullable: true })
   @IsOptional()
   @IsInt({ message: "Limit must be an integer." })
-  limit?: number | null;
+  limit?: number;
 
   @Field(() => Number, { nullable: true })
   @IsOptional()
   @IsInt({ message: "Offset must be an integer." })
-  offset?: number | null;
+  offset?: number;
 
   @Field(() => String, { nullable: true })
   @IsOptional()
