@@ -120,11 +120,11 @@ describe("pixChecker", () => {
     });
 
     it("lança erro para um número de telefone com letras", () => {
-      expect(() => pixChecker(PixEnum.PHONE, INVALID_PHONE_WITH_LETTERS)).toThrow(
-        "Phone number is invalid."
-      );
+      expect(() =>
+        pixChecker(PixEnum.PHONE, INVALID_PHONE_WITH_LETTERS)
+      ).toThrow("Phone number is invalid.");
     });
-    
+
     it("lança erro para um número de telefone com formatação incorreta", () => {
       expect(() => pixChecker(PixEnum.PHONE, "123-456-7890")).toThrow(
         "Phone number is invalid."
