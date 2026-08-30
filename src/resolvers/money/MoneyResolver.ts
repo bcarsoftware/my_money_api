@@ -11,8 +11,9 @@ import { Money } from "@/entities/Money";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { MoneyDto, PaginatedMoney } from "@/resolvers/money/dto/MoneyDto";
 import { loggedContext } from "@/utils/loggedContext";
-import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { Protected } from "@/utils/verifiers/decorators/Protected";
+import { ILike } from "typeorm";
 
 @Resolver()
 export class MoneyResolver {
@@ -28,7 +29,7 @@ export class MoneyResolver {
       try {
         const where = {
           userId: context.userId,
-          ...(tag ? { tag } : {}),
+          ...(tag ? { tag: ILike(`%${tag}%`) } : {}),
         };
 
         const [items, total] = await em.findAndCount(Money, {
