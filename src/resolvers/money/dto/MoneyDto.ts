@@ -23,3 +23,12 @@ export class MoneyDto {
   @Field(() => Date)
   createdAt: Date;
 }
+
+@ObjectType()
+export class PaginatedMoney {
+  @Field(() => [MoneyDto])
+  money: MoneyDto[];
+
+  @Field(() => Number)
+  total: number;
+}
