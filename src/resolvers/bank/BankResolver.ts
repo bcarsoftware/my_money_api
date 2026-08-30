@@ -1,0 +1,120 @@
+import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { ILike } from "typeorm";
+
+import { type MyContext } from "@/context/MyContext";
+import { Bank } from "@/entities/Bank";
+import { CreateBankInput, UpdateBankInput } from "@/resolvers/bank/BankInputs";
+import { loggedContext } from "@/utils/loggedContext";
+import { Protected } from "@/utils/verifiers/decorators/Protected";
+import { ListBankInput } from "./BankInputs";
+import { BankDto, PaginatedBankDto } from "./dto/BankDto";
+import { MessageResponse } from "../MessageResponse";
+
+@Resolver()
+export class BankResolver {
+  @Protected()
+  @Query(() => PaginatedBankDto)
+  async listBanks(
+    @Ctx() context: MyContext,
+    @Arg("input", () => ListBankInput) input: ListBankInput
+  ): Promise<PaginatedBankDto> {
+    const { limit, offset } = input;
+    const userId = context.userId;
+
+    return await loggedContext(context, async (em) => {
+      try {
+        const where = {
+          userId,
+          ...(input.code && { code: input.code }),
+          ...(input.name && { name: ILike(`%${input.name}%`) }),
+          ...(input.accountType && { accountType: input.accountType }),
+        };
+
+        const [items, total] = await em.findAndCount(Bank, {
+          where,
+          take: limit,
+          skip: offset,
+        });
+
+        return { items, total };
+      } catch (error) {
+        console.error("Error listing banks:", error);
+        throw new Error("Failed to list banks");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => BankDto)
+  async createBank(
+    @Ctx() context: MyContext,
+    @Arg("input", () => CreateBankInput) input: CreateBankInput
+  ): Promise<BankDto> {
+    const userId = context.userId;
+
+    return await loggedContext(context, async (em) => {
+      try {
+        const bank = em.create(Bank, {
+          ...input,
+          userId,
+        });
+        await em.save(bank);
+        return bank;
+      } catch (error) {
+        console.error("Error creating bank:", error);
+        throw new Error("Failed to create bank");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => BankDto)
+  async updateBank(
+    @Ctx() context: MyContext,
+    @Arg("id", () => String) id: string,
+    @Arg("input", () => UpdateBankInput) input: UpdateBankInput
+  ): Promise<BankDto> {
+    const userId = context.userId;
+
+    return await loggedContext(context, async (em) => {
+      try {
+        const bank = await em.findOneOrFail(Bank, { where: { id, userId } });
+
+        bank.code = input.code ?? bank.code;
+        bank.name = input.name ?? bank.name;
+        bank.accountType = input.accountType ?? bank.accountType;
+        bank.accountNumber = input.accountNumber ?? bank.accountNumber;
+        bank.agency = input.agency ?? bank.agency;
+        bank.balance = input.balance ?? bank.balance;
+
+        await em.save(bank);
+        return bank;
+      } catch (error) {
+        console.error("Error updating bank:", error);
+        throw new Error("Failed to update bank");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => MessageResponse)
+  async deleteBank(
+    @Ctx() context: MyContext,
+    @Arg("id", () => String) id: string
+  ): Promise<MessageResponse> {
+    const userId = context.userId;
+
+    return await loggedContext(context, async (em) => {
+      try {
+        const bank = await em.findOneOrFail(Bank, { where: { id, userId } });
+
+        await em.softRemove(bank);
+
+        return { message: "Bank deleted successfully." };
+      } catch (error) {
+        console.error("Error deleting bank:", error);
+        throw new Error("Failed to delete bank");
+      }
+    });
+  }
+}

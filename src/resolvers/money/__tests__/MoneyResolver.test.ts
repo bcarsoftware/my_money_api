@@ -115,7 +115,7 @@ describe("MoneyResolver", () => {
 
       const result = await resolver.listMoney(makeContext(), {});
 
-      expect(result).toEqual({ money, total: 1 });
+      expect(result).toEqual({ items: money, total: 1 });
     });
 
     it("filtra sempre por userId do contexto", async () => {

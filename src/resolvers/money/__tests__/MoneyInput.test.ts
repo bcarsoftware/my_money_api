@@ -200,9 +200,9 @@ describe("ListMoneyInput", () => {
       expect(constraintsFor(errors, "limit")).toContain("isInt");
     });
 
-    it("aceita valor negativo (não há @Min — apenas @IsInt)", async () => {
+    it("rejeita valor negativo (há @Min(0))", async () => {
       const errors = await validateInput(ListMoneyInput, { limit: -5 });
-      expect(constraintsFor(errors, "limit")).toHaveLength(0);
+      expect(constraintsFor(errors, "limit")).toContain("min");
     });
 
     it("aceita 0", async () => {
@@ -212,7 +212,6 @@ describe("ListMoneyInput", () => {
   });
 
   describe("offset", () => {
-    // ✅ Corrigido: offset é number | undefined, não aceita null
     it("aceita undefined (ou omitido)", async () => {
       const errors = await validateInput(ListMoneyInput, { offset: undefined });
       expect(constraintsFor(errors, "offset")).toHaveLength(0);
@@ -223,8 +222,13 @@ describe("ListMoneyInput", () => {
       expect(constraintsFor(errors, "offset")).toContain("isInt");
     });
 
-    it("aceita valor negativo (não há @Min — apenas @IsInt)", async () => {
+    it("rejeita valor negativo (há @Min(0))", async () => {
       const errors = await validateInput(ListMoneyInput, { offset: -1 });
+      expect(constraintsFor(errors, "offset")).toContain("min");
+    });
+
+    it("aceita 0", async () => {
+      const errors = await validateInput(ListMoneyInput, { offset: 0 });
       expect(constraintsFor(errors, "offset")).toHaveLength(0);
     });
   });

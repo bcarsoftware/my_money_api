@@ -1,4 +1,4 @@
-import { IsCurrency, IsInt, IsOptional, MaxLength } from "class-validator";
+import { IsCurrency, IsInt, IsOptional, MaxLength, Min } from "class-validator";
 import { Field, InputType } from "type-graphql";
 
 @InputType()
@@ -29,11 +29,13 @@ export class ListMoneyInput {
   @Field(() => Number, { nullable: true })
   @IsOptional()
   @IsInt({ message: "Limit must be an integer." })
+  @Min(0, { message: "Limit must be at least 0." })
   limit?: number;
 
   @Field(() => Number, { nullable: true })
   @IsOptional()
   @IsInt({ message: "Offset must be an integer." })
+  @Min(0, { message: "Offset must be at least 0." })
   offset?: number;
 
   @Field(() => String, { nullable: true })

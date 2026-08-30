@@ -41,7 +41,7 @@ export class Bank extends BaseEntity {
   agency: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  balance: number;
+  balance: string;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
