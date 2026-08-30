@@ -5,6 +5,15 @@ import { loggedContext } from "@/utils/loggedContext";
 import { MoneyResolver } from "@/resolvers/money/MoneyResolver";
 import { EntityManager, FindManyOptions, FindOneOptions } from "typeorm";
 
+// Mock do ILike para retornar a string pura (facilita os testes)
+jest.mock("typeorm", () => {
+  const actual = jest.requireActual("typeorm");
+  return {
+    ...actual,
+    ILike: jest.fn((val: string) => val),
+  };
+});
+
 jest.mock("@/utils/loggedContext");
 
 const mockedLoggedContext = jest.mocked(loggedContext);
@@ -26,7 +35,6 @@ function makeMoney(overrides: Partial<Money> = {}): Money {
   } as Money;
 }
 
-// Definição dos tipos de parâmetros esperados pelos mocks
 type FindAndCountParams = [typeof Money, FindManyOptions<Money>?];
 type FindOneParams = [typeof Money, FindOneOptions<Money>?];
 
@@ -56,14 +64,12 @@ function setupEm(
   } = config;
 
   const em: FakeEm = {
-    // findAndCount: retorna explicitamente [Money[], number]
     findAndCount: jest.fn(
       async (
         _entity: typeof Money,
         _options?: FindManyOptions<Money>
       ): Promise<[Money[], number]> => [moneyList, total]
     ),
-    // findOneOrFail
     findOneOrFail: jest.fn(
       async (
         _entity: typeof Money,
@@ -81,7 +87,6 @@ function setupEm(
     softRemove: jest.fn(async (money: Money) => money),
   };
 
-  // Cast via unknown para evitar erro de conversão direta
   mockedLoggedContext.mockImplementation(
     async (
       _ctx: MyContext,
@@ -109,7 +114,7 @@ describe("MoneyResolver", () => {
   });
 
   describe("listMoney", () => {
-    it("retorna money e total vindos de findAndCount", async () => {
+    it("retorna items e total vindos de findAndCount", async () => {
       const money = [makeMoney()];
       setupEm({ moneyList: money, total: 1 });
 
@@ -141,7 +146,7 @@ describe("MoneyResolver", () => {
       const options = call![1];
       expect(options?.take).toBe(20);
       expect(options?.skip).toBe(40);
-      // Garantir que where seja um objeto e não um array
+      // Garante que o where não contenha limit/offset
       const where = options?.where as
         { limit?: unknown; offset?: unknown } | undefined;
       expect(where).not.toHaveProperty("limit");
@@ -183,14 +188,11 @@ describe("MoneyResolver", () => {
       const call = em.findAndCount.mock.calls[0];
       expect(call).toBeDefined();
       const options = call![1];
-      // Acessa where com segurança
       const where = options?.where;
-      // Verifica se where é um objeto (não array) e tem a propriedade tag
-      if (where && !Array.isArray(where)) {
-        expect(where.tag).toBe("mercado");
-      } else {
-        fail("where should be an object");
-      }
+
+      expect(where).toBeDefined();
+      expect(where).not.toBeInstanceOf(Array);
+      expect(where).toHaveProperty("tag", "%mercado%");
     });
 
     it("não inclui tag no where quando ausente", async () => {
@@ -202,12 +204,9 @@ describe("MoneyResolver", () => {
       expect(call).toBeDefined();
       const options = call![1];
       const where = options?.where;
-      if (where && !Array.isArray(where)) {
-        expect(where).not.toHaveProperty("tag");
-      } else {
-        // Se where for array, não tem tag
-        expect(Array.isArray(where)).toBe(true);
-      }
+      expect(where).toBeDefined();
+      expect(where).not.toBeInstanceOf(Array);
+      expect(where).not.toHaveProperty("tag");
     });
 
     it("propaga o erro original quando findAndCount falha", async () => {
