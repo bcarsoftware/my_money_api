@@ -17,6 +17,7 @@ describe("Validation Test Suite - GraphQL Inputs (UserInput & UserLoginInput)", 
       validUserInput.name = "Abel Carvalho";
       validUserInput.dateBorn = "1995-05-15T00:00:00.000Z";
       validUserInput.gender = GenderEnum.MALE;
+      validUserInput.cpf = "12345678909";
       validUserInput.email = "abel@example.com";
       validUserInput.username = "abelcarvalho";
       validUserInput.password = "StrongPassword#2026";
@@ -81,6 +82,28 @@ describe("Validation Test Suite - GraphQL Inputs (UserInput & UserLoginInput)", 
         expect(genderError?.constraints?.isEnum).toBe(
           "Gender must be a valid enum value."
         );
+      });
+    });
+
+    describe("Campo 'cpf'", () => {
+      it("deve falhar se o CPF não for válido", async () => {
+        validUserInput.cpf = "1234567890";
+
+        const errors = await validate(validUserInput);
+        const cpfError = errors.find((err) => err.property === "cpf");
+
+        expect(cpfError?.constraints?.isCpf).toBe(
+          "CPF must be a valid CPF number."
+        );
+      });
+
+      it("deve passar se o CPF for válido", async () => {
+        validUserInput.cpf = "12345678909";
+
+        const errors = await validate(validUserInput);
+        const cpfError = errors.find((err) => err.property === "cpf");
+
+        expect(cpfError).toBeUndefined();
       });
     });
 
