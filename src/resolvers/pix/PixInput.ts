@@ -1,5 +1,5 @@
 import { PixEnum } from "@/enums/PixEnum";
-import { IsEnum, IsInt, IsOptional, IsUUID, MaxLength } from "class-validator";
+import { IsEnum, IsInt, IsOptional, IsUUID, MaxLength, Min } from "class-validator";
 import { Field, InputType, registerEnumType } from "type-graphql";
 
 registerEnumType(PixEnum, {
@@ -36,11 +36,13 @@ export class CreatePixInput {
 export class ListPixInput {
   @Field(() => Number, { nullable: true })
   @IsOptional()
+  @Min(0, { message: "Limit must be at least 0." })
   @IsInt({ message: "Limit must be an integer." })
   limit?: number;
 
   @Field(() => Number, { nullable: true })
   @IsOptional()
+  @Min(0, { message: "Offset must be at least 0." })
   @IsInt({ message: "Offset must be an integer." })
   offset?: number;
 

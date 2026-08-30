@@ -196,6 +196,26 @@ describe("Pix Inputs Validation", () => {
       const errors = await validate(input);
       expect(errors).toHaveLength(0);
     });
+
+    it("deve falhar quando limit é menor que 0", async () => {
+      const input = new ListPixInput();
+      input.limit = -1;
+
+      const errors = await validate(input);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]?.property).toBe("limit");
+      expect(errors[0]?.constraints).toHaveProperty("min");
+    });
+
+    it("deve falhar quando offset é menor que 0", async () => {
+      const input = new ListPixInput();
+      input.offset = -1;
+
+      const errors = await validate(input);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]?.property).toBe("offset");
+      expect(errors[0]?.constraints).toHaveProperty("min");
+    });
   });
 
   // --------------------------------------------
