@@ -13,6 +13,15 @@ import { MoneyDto, PaginatedMoney } from "@/resolvers/money/dto/MoneyDto";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 
+function updatableFieldResolve(
+  newValue: string | null | undefined,
+  currentValue: string | null | undefined
+): string | null | undefined {
+  if (newValue === null) return null;
+  if (newValue && newValue !== currentValue) return newValue;
+  return currentValue;
+}
+
 @Resolver()
 export class MoneyResolver {
   @Protected()
@@ -21,19 +30,20 @@ export class MoneyResolver {
     @Ctx() context: MyContext,
     @Arg("input", () => ListMoneyInput) input: ListMoneyInput
   ): Promise<PaginatedMoney> {
-    const limit = input.limit;
-    const offset = input.offset;
+    const { limit, offset, tag } = input;
 
     return loggedContext(context, async (em) => {
       try {
         const where = {
           userId: context.userId,
-          limit,
-          offset,
-          ...(input.tag ? { tag: input.tag } : {}),
+          ...(tag ? { tag } : {}),
         };
 
-        const [money, total] = await em.findAndCount(Money, { where });
+        const [money, total] = await em.findAndCount(Money, {
+          where,
+          take: limit ?? undefined,
+          skip: offset ?? undefined,
+        });
 
         return { money, total };
       } catch (error) {
@@ -77,26 +87,17 @@ export class MoneyResolver {
         const money = await em.findOneOrFail(Money, { where });
 
         money.tag =
-          input.tag && input.tag !== money.tag ? input.tag : money.tag;
-
-        if (
-          (input.objective && input.objective !== money.objective) ||
-          input.objective === null
-        ) {
-          money.objective = input.objective;
-        }
-
-        if (
-          (input.description && input.description !== money.description) ||
-          input.description === null
-        ) {
-          money.description = input.description;
-        }
-
+          input.tag && money.tag !== input.tag ? input.tag : money.tag;
+        money.objective = updatableFieldResolve(
+          input.objective,
+          money.objective
+        );
+        money.description = updatableFieldResolve(
+          input.description,
+          money.description
+        );
         money.balance =
-          input.balance && input.balance !== money.balance
-            ? input.balance
-            : money.balance;
+          input.balance && money.balance ? input.balance : money.balance;
 
         await em.save(money);
         return money;
