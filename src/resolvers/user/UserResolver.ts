@@ -10,7 +10,7 @@ import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { MessageResponse } from "../MessageResponse";
 import { toUserDto } from "./dto/toUserDto";
-import { UserInput, UserLoginInput } from "./UserInputs";
+import { CreateUserInput, UpdateUserInput, UserLoginInput } from "./UserInputs";
 
 @Resolver()
 export class UserResolver {
@@ -72,7 +72,7 @@ export class UserResolver {
 
   @Mutation(() => UserDto)
   async createUser(
-    @Arg("input", () => UserInput) input: UserInput
+    @Arg("input", () => CreateUserInput) input: CreateUserInput
   ): Promise<UserDto> {
     if (!input.password) throw new Error("Password is required.");
 
@@ -98,7 +98,7 @@ export class UserResolver {
   async updateUser(
     @Ctx() context: MyContext,
     @Arg("id", () => String) id: string,
-    @Arg("input", () => UserInput) input: UserInput
+    @Arg("input", () => UpdateUserInput) input: UpdateUserInput
   ): Promise<UserDto> {
     return loggedContext(context, async (em) => {
       const user = await em.findOne(User, { where: { id } });
@@ -106,27 +106,15 @@ export class UserResolver {
       if (!user) throw new Error(USER_NOT_FOUND);
 
       try {
-        const dateBorn = new Date(
-          new Date(input.dateBorn) === user.dateBorn
-            ? user.dateBorn
-            : input.dateBorn
-        );
+        const dateBorn = new Date(input.dateBorn ?? user.dateBorn);
 
-        user.name = input.name === user.name ? user.name : input.name;
+        user.name = input.name ?? user.name;
         user.dateBorn = dateBorn;
-        user.gender = input.gender === user.gender ? user.gender : input.gender;
-        user.email = input.email === user.email ? user.email : input.email;
-        user.username =
-          input.username === user.username ? user.username : input.username;
-
-        user.salary =
-          input.salary === null || input.salary !== user.salary
-            ? input.salary
-            : user.salary;
-        user.phone =
-          input.phone === null || input.phone !== user.phone
-            ? input.phone
-            : user.phone;
+        user.gender = input.gender ?? user.gender;
+        user.email = input.email ?? user.email;
+        user.username = input.username ?? user.username;
+        user.salary = input.salary ?? user.salary;
+        user.phone = input.phone ?? user.phone;
 
         await em.save(user);
 

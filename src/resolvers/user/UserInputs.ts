@@ -1,4 +1,5 @@
 import { GenderEnum } from "@/enums/GenderEnum";
+import { IsPhone } from "@/utils/verifiers/decorators/IsPhone";
 import { IsUsername } from "@/utils/verifiers/decorators/IsUsername";
 import {
   IsCurrency,
@@ -6,7 +7,6 @@ import {
   IsEmail,
   IsEnum,
   IsOptional,
-  Matches,
   MaxLength,
 } from "class-validator";
 import { Field, InputType, registerEnumType } from "type-graphql";
@@ -16,7 +16,7 @@ registerEnumType(GenderEnum, {
 });
 
 @InputType()
-export class UserInput {
+export class CreateUserInput {
   @Field(() => String)
   @MaxLength(64, { message: "Name must be at most 64 characters long." })
   name: string;
@@ -50,9 +50,7 @@ export class UserInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @Matches(/^\+?[0-9]{10,13}$/, {
-    message: "Phone number must be a valid phone number.",
-  })
+  @IsPhone({ message: "Phone number must be a valid phone number." })
   phone?: string | null;
 }
 
@@ -67,4 +65,48 @@ export class UserLoginInput {
   @Field(() => String)
   @MaxLength(256, { message: "Password must be at most 256 characters long." })
   password: string;
+}
+
+@InputType()
+export class UpdateUserInput {
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @MaxLength(64, { message: "Name must be at most 64 characters long." })
+  name?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsDateString({}, { message: "Date of birth must be a valid date." })
+  dateBorn?: string;
+
+  @Field(() => GenderEnum, { nullable: true })
+  @IsOptional()
+  @IsEnum(GenderEnum, { message: "Gender must be a valid enum value." })
+  gender?: GenderEnum;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @MaxLength(256, { message: "Email must be at most 256 characters long." })
+  @IsEmail({}, { message: "Email must be a valid email address." })
+  email?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsUsername({ message: "Username must be a valid username." })
+  username?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @MaxLength(256, { message: "Password must be at most 256 characters long." })
+  password?: string | null;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency({}, { message: "Salary must be a valid currency value." })
+  salary?: string | null;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsPhone({ message: "Phone number must be a valid phone number." })
+  phone?: string | null;
 }
