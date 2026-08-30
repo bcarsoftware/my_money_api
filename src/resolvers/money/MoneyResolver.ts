@@ -11,16 +11,9 @@ import { Money } from "@/entities/Money";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { MoneyDto, PaginatedMoney } from "@/resolvers/money/dto/MoneyDto";
 import { loggedContext } from "@/utils/loggedContext";
+import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
-
-function updatableFieldResolve(
-  newValue: string | null | undefined,
-  currentValue: string | null | undefined
-): string | null | undefined {
-  if (newValue === null) return null;
-  if (newValue && newValue !== currentValue) return newValue;
-  return currentValue;
-}
+import { ILike } from "typeorm";
 
 @Resolver()
 export class MoneyResolver {
@@ -36,7 +29,7 @@ export class MoneyResolver {
       try {
         const where = {
           userId: context.userId,
-          ...(tag ? { tag } : {}),
+          ...(tag ? { tag: ILike(`%${tag}%`) } : {}),
         };
 
         const [items, total] = await em.findAndCount(Money, {
@@ -88,11 +81,11 @@ export class MoneyResolver {
 
         money.tag =
           input.tag && money.tag !== input.tag ? input.tag : money.tag;
-        money.objective = updatableFieldResolve(
+        money.objective = updatableFieldResolve<string>(
           input.objective,
           money.objective
         );
-        money.description = updatableFieldResolve(
+        money.description = updatableFieldResolve<string>(
           input.description,
           money.description
         );
