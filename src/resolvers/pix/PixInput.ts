@@ -1,5 +1,12 @@
 import { PixEnum } from "@/enums/PixEnum";
-import { IsEnum, IsInt, IsOptional, IsUUID, MaxLength, Min } from "class-validator";
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsUUID,
+  MaxLength,
+  Min,
+} from "class-validator";
 import { Field, InputType, registerEnumType } from "type-graphql";
 
 registerEnumType(PixEnum, {

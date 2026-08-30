@@ -26,7 +26,7 @@ export class PixDto {
 }
 
 @ObjectType()
-export class PaginatedPix {
+export class PaginatedPixDto {
   @Field(() => [PixDto])
   items: PixDto[];
 
