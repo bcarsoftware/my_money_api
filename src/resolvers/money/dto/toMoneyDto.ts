@@ -1,5 +1,5 @@
 import { Money } from "@/entities/Money";
-import { MoneyDto } from "./MoneyDto";
+import { MoneyDto } from "@/resolvers/money/dto/MoneyDto";
 
 export const toMoneyDto = (money: Money): MoneyDto => ({
   id: money.id,
