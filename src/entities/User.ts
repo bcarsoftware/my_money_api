@@ -22,6 +22,9 @@ export class User extends BaseEntity {
   @Column({ type: "enum", enum: GenderEnum })
   gender: GenderEnum;
 
+  @Column({ type: "varchar", length: 15, nullable: true, unique: true })
+  cpf?: string | null;
+
   @Column({ type: "varchar", length: 256, unique: true })
   email: string;
 

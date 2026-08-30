@@ -1,4 +1,5 @@
 import { GenderEnum } from "@/enums/GenderEnum";
+import { IsCpf } from "@/utils/verifiers/decorators/IsCpf";
 import { IsPhone } from "@/utils/verifiers/decorators/IsPhone";
 import { IsUsername } from "@/utils/verifiers/decorators/IsUsername";
 import {
@@ -28,6 +29,11 @@ export class CreateUserInput {
   @Field(() => GenderEnum)
   @IsEnum(GenderEnum, { message: "Gender must be a valid enum value." })
   gender: GenderEnum;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCpf({ message: "CPF must be a valid CPF number." })
+  cpf?: string | null;
 
   @Field(() => String)
   @MaxLength(256, { message: "Email must be at most 256 characters long." })
@@ -83,6 +89,11 @@ export class UpdateUserInput {
   @IsOptional()
   @IsEnum(GenderEnum, { message: "Gender must be a valid enum value." })
   gender?: GenderEnum;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCpf({ message: "CPF must be a valid CPF number." })
+  cpf?: string | null;
 
   @Field(() => String, { nullable: true })
   @IsOptional()

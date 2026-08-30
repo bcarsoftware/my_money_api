@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -13,6 +14,7 @@ import {
 import { Bank } from "./Bank";
 
 @Entity("pix")
+@Index("IDX_pix_type_key", ["typeKey", "key"], { unique: true })
 export class Pix extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
