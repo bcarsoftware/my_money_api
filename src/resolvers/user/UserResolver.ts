@@ -111,6 +111,7 @@ export class UserResolver {
         user.name = input.name ?? user.name;
         user.dateBorn = dateBorn;
         user.gender = input.gender ?? user.gender;
+        user.cpf = input.cpf ?? user.cpf;
         user.email = input.email ?? user.email;
         user.username = input.username ?? user.username;
         user.salary = input.salary ?? user.salary;
