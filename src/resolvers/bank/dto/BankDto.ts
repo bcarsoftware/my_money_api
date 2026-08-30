@@ -24,8 +24,8 @@ export class BankDto {
   @Field(() => String)
   agency: string;
 
-  @Field(() => Number)
-  balance: number;
+  @Field(() => String)
+  balance: string;
 
   @Field(() => Date)
   createdAt: Date;

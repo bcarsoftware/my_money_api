@@ -1,5 +1,13 @@
 import { AccountEnum } from "@/enums/AccountEnum";
-import { IsCurrency, IsEnum, IsInt, IsNumberString, IsOptional, MaxLength, Min } from "class-validator";
+import {
+  IsCurrency,
+  IsEnum,
+  IsInt,
+  IsNumberString,
+  IsOptional,
+  MaxLength,
+  Min,
+} from "class-validator";
 import { Field, InputType, registerEnumType } from "type-graphql";
 
 registerEnumType(AccountEnum, {
