@@ -97,11 +97,6 @@ export class UpdateUserInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @MaxLength(256, { message: "Password must be at most 256 characters long." })
-  password?: string | null;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
   @IsCurrency({}, { message: "Salary must be a valid currency value." })
   salary?: string | null;
 
