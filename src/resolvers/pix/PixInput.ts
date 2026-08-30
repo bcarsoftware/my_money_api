@@ -18,7 +18,9 @@ export class CreatePixInput {
 
   @Field(() => String)
   @IsOptional()
-  @MaxLength(256, { message: "Description must be at most 256 characters long." })
+  @MaxLength(256, {
+    message: "Description must be at most 256 characters long.",
+  })
   description?: string | null;
 
   @Field(() => PixEnum)
