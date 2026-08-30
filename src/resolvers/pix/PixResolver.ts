@@ -77,10 +77,7 @@ export class PixResolver {
   ): Promise<PixDto> {
     return await loggedContext(context, async (em) => {
       try {
-        if (input.typeKey && input.key) pixChecker(input.typeKey, input.key);
-        else if (input.typeKey && !input.key)
-          throw new Error("Key must be provided when typeKey is specified.");
-        else throw new Error("typeKey must be provided when key is specified.");
+        pixChecker(input.typeKey, input.key);
 
         const where = { id, userId: context.userId };
         const pix = await em.findOneOrFail(Pix, { where });

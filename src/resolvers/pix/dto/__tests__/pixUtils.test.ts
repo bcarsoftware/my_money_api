@@ -1,6 +1,9 @@
 import { PixEnum } from "@/enums/PixEnum";
 import { pixChecker } from "@/resolvers/pix/pixUtils";
 
+// ============================================================
+// Dados de teste
+// ============================================================
 const VALID_CPF = "11144477735";
 const INVALID_CPF_WRONG_DIGITS = "11144477700";
 const INVALID_CPF_REPDIGIT = "11111111111";
@@ -9,14 +12,51 @@ const VALID_CNPJ = "12ABC34501DE35";
 const INVALID_CNPJ_WRONG_DIGITS = "12ABC34501DE00";
 const INVALID_CNPJ_REPDIGIT = "00000000000000";
 
+const VALID_EMAIL = "usuario@exemplo.com";
+const INVALID_EMAIL_NO_AT = "usuario-exemplo.com";
+const INVALID_EMAIL_NO_DOMAIN = "usuario@";
+
 const VALID_UUID_V4 = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 const INVALID_UUID_V1 = "550e8400-e29b-11d4-a716-446655440000";
+const INVALID_RANDOM = "nao-e-uuid";
 
 const VALID_PHONE = "+5511999999999";
-const INVALID_PHONE = "123456789";
+const INVALID_PHONE_SHORT = "123456789";
 const INVALID_PHONE_WITH_LETTERS = "+5511abcd9999";
+const INVALID_PHONE_FORMATTED = "123-456-7890";
 
+const ERROR_BOTH_REQUIRED = "Both typeKey and value must be provided together.";
+
+// ============================================================
+// Testes
+// ============================================================
 describe("pixChecker", () => {
+  // --------------------------------------------
+  // Casos de entrada
+  // --------------------------------------------
+  it("não lança erro quando chamada sem argumentos", () => {
+    expect(() => pixChecker()).not.toThrow();
+  });
+
+  it("lança erro quando typeKey existe e value é undefined", () => {
+    expect(() => pixChecker(PixEnum.CPF, undefined)).toThrow(
+      ERROR_BOTH_REQUIRED
+    );
+  });
+
+  it("lança erro quando typeKey é undefined e value existe", () => {
+    expect(() => pixChecker(undefined, "qualquer-valor")).toThrow(
+      ERROR_BOTH_REQUIRED
+    );
+  });
+
+  it("lança erro quando typeKey existe e value é string vazia", () => {
+    expect(() => pixChecker(PixEnum.CPF, "")).toThrow(ERROR_BOTH_REQUIRED);
+  });
+
+  // --------------------------------------------
+  // PixEnum.CPF
+  // --------------------------------------------
   describe("PixEnum.CPF", () => {
     it("não lança erro para um CPF válido", () => {
       expect(() => pixChecker(PixEnum.CPF, VALID_CPF)).not.toThrow();
@@ -42,6 +82,9 @@ describe("pixChecker", () => {
     });
   });
 
+  // --------------------------------------------
+  // PixEnum.CNPJ
+  // --------------------------------------------
   describe("PixEnum.CNPJ", () => {
     it("não lança erro para um CNPJ válido (alfanumérico)", () => {
       expect(() => pixChecker(PixEnum.CNPJ, VALID_CNPJ)).not.toThrow();
@@ -66,30 +109,30 @@ describe("pixChecker", () => {
     });
   });
 
+  // --------------------------------------------
+  // PixEnum.EMAIL
+  // --------------------------------------------
   describe("PixEnum.EMAIL", () => {
     it("não lança erro para um e-mail válido", () => {
-      expect(() =>
-        pixChecker(PixEnum.EMAIL, "usuario@exemplo.com")
-      ).not.toThrow();
+      expect(() => pixChecker(PixEnum.EMAIL, VALID_EMAIL)).not.toThrow();
     });
 
     it("lança erro para um e-mail sem @", () => {
-      expect(() => pixChecker(PixEnum.EMAIL, "usuario-exemplo.com")).toThrow(
+      expect(() => pixChecker(PixEnum.EMAIL, INVALID_EMAIL_NO_AT)).toThrow(
         "Email is invalid."
       );
     });
 
     it("lança erro para um e-mail sem domínio", () => {
-      expect(() => pixChecker(PixEnum.EMAIL, "usuario@")).toThrow(
+      expect(() => pixChecker(PixEnum.EMAIL, INVALID_EMAIL_NO_DOMAIN)).toThrow(
         "Email is invalid."
       );
     });
-
-    it("lança erro para string vazia", () => {
-      expect(() => pixChecker(PixEnum.EMAIL, "")).toThrow("Email is invalid.");
-    });
   });
 
+  // --------------------------------------------
+  // PixEnum.RANDOM
+  // --------------------------------------------
   describe("PixEnum.RANDOM", () => {
     it("não lança erro para um UUID v4 válido", () => {
       expect(() => pixChecker(PixEnum.RANDOM, VALID_UUID_V4)).not.toThrow();
@@ -102,19 +145,22 @@ describe("pixChecker", () => {
     });
 
     it("lança erro para uma string que não é UUID", () => {
-      expect(() => pixChecker(PixEnum.RANDOM, "não-é-um-uuid")).toThrow(
+      expect(() => pixChecker(PixEnum.RANDOM, INVALID_RANDOM)).toThrow(
         "Random key is invalid."
       );
     });
   });
 
+  // --------------------------------------------
+  // PixEnum.PHONE
+  // --------------------------------------------
   describe("PixEnum.PHONE", () => {
     it("não lança erro para um número de telefone válido", () => {
       expect(() => pixChecker(PixEnum.PHONE, VALID_PHONE)).not.toThrow();
     });
 
-    it("lança erro para um número de telefone inválido", () => {
-      expect(() => pixChecker(PixEnum.PHONE, INVALID_PHONE)).toThrow(
+    it("lança erro para um número de telefone muito curto", () => {
+      expect(() => pixChecker(PixEnum.PHONE, INVALID_PHONE_SHORT)).toThrow(
         "Phone number is invalid."
       );
     });
@@ -126,14 +172,17 @@ describe("pixChecker", () => {
     });
 
     it("lança erro para um número de telefone com formatação incorreta", () => {
-      expect(() => pixChecker(PixEnum.PHONE, "123-456-7890")).toThrow(
+      expect(() => pixChecker(PixEnum.PHONE, INVALID_PHONE_FORMATTED)).toThrow(
         "Phone number is invalid."
       );
     });
   });
 
+  // --------------------------------------------
+  // Tipo de chave desconhecido
+  // --------------------------------------------
   describe("tipo de chave desconhecido", () => {
-    it("lança erro genérico para um typeKey fora do enum", () => {
+    it("lança erro para um typeKey fora do enum", () => {
       expect(() => pixChecker("QUALQUER_OUTRO" as PixEnum, "valor")).toThrow(
         "Invalid Pix key type."
       );
