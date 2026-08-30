@@ -6,9 +6,6 @@ import {
   UpdateMoneyInput,
 } from "@/resolvers/money/MoneyInput";
 
-const VALID_UUID_V4 = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
-const VALID_UUID_V1 = "550e8400-e29b-11d4-a716-446655440000"; // versão 1, não 4
-
 async function validateInput<T extends object>(
   Ctor: new () => T,
   plain: Partial<T>
