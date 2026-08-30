@@ -32,20 +32,20 @@ export class MoneyResolver {
   ): Promise<PaginatedMoney> {
     const { limit, offset, tag } = input;
 
-    return loggedContext(context, async (em) => {
+    return await loggedContext(context, async (em) => {
       try {
         const where = {
           userId: context.userId,
           ...(tag ? { tag } : {}),
         };
 
-        const [money, total] = await em.findAndCount(Money, {
+        const [items, total] = await em.findAndCount(Money, {
           where,
-          take: limit ?? undefined,
-          skip: offset ?? undefined,
+          take: limit,
+          skip: offset,
         });
 
-        return { money, total };
+        return { items, total };
       } catch (error) {
         console.log("Error occurred in listMoney:", error);
         throw error;
@@ -59,7 +59,7 @@ export class MoneyResolver {
     @Ctx() context: MyContext,
     @Arg("input", () => CreateMoneyInput) input: CreateMoneyInput
   ): Promise<MoneyDto> {
-    return loggedContext(context, async (em) => {
+    return await loggedContext(context, async (em) => {
       try {
         const money = em.create(Money, {
           ...input,
@@ -81,7 +81,7 @@ export class MoneyResolver {
     @Arg("id", () => String) id: string,
     @Arg("input", () => UpdateMoneyInput) input: UpdateMoneyInput
   ): Promise<MoneyDto> {
-    return loggedContext(context, async (em) => {
+    return await loggedContext(context, async (em) => {
       try {
         const where = { userId: context.userId, id };
         const money = await em.findOneOrFail(Money, { where });
@@ -114,7 +114,7 @@ export class MoneyResolver {
     @Ctx() context: MyContext,
     @Arg("id", () => String) id: string
   ): Promise<MessageResponse> {
-    return loggedContext(context, async (em) => {
+    return await loggedContext(context, async (em) => {
       try {
         const where = { userId: context.userId, id };
 
