@@ -64,11 +64,11 @@ describe("toBankDto", () => {
     const mockBank = makeBank();
     const bankWithZeroBalance = {
       ...mockBank,
-      balance: 0,
+      balance: "0",
     } as Bank;
 
     const dto = toBankDto(bankWithZeroBalance);
-    expect(dto.balance).toBe(0);
+    expect(dto.balance).toBe("0");
   });
 
   it("deve funcionar com datas no passado", () => {
