@@ -8,7 +8,7 @@ export class CreateGenericBank1787414685365 implements MigrationInterface {
       `CREATE TYPE "public"."generic_banks_currency_enum" AS ENUM('BRL', 'COP', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'SEK', 'NZD')`
     );
     await queryRunner.query(
-      `CREATE TABLE "generic_banks" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL, "bank_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "currency" "public"."generic_banks_currency_enum" NOT NULL, "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_e59bdf560a11f678a216fef8f92" PRIMARY KEY ("id"))`
+      `CREATE TABLE "generic_banks" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL, "bank_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "currency" "public"."generic_banks_currency_enum" NOT NULL, "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_generic_bank_id" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `ALTER TABLE "generic_banks" ADD CONSTRAINT "FK_generic_bank_user_id" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`

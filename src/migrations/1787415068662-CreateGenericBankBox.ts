@@ -5,7 +5,7 @@ export class CreateGenericBankBox1787415068662 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE "generic_bank_boxes" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "generic_bank_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "objective" numeric(10,2), "description" character varying(256), "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_7aa89d2ab3d72782f7eed058f4a" PRIMARY KEY ("id"))`
+      `CREATE TABLE "generic_bank_boxes" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "generic_bank_id" uuid NOT NULL, "name" character varying(64) NOT NULL, "objective" numeric(10,2), "description" character varying(256), "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_generic_bank_box_id" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `ALTER TABLE "generic_bank_boxes" ADD CONSTRAINT "FK_generic_bank_box_generic_bank_id" FOREIGN KEY ("generic_bank_id") REFERENCES "generic_banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
