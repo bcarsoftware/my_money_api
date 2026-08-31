@@ -3,6 +3,7 @@ import { BankBox } from "@/entities/BankBox";
 import {
   CreateBankBoxInput,
   ListBankBoxInput,
+  UpdateBankBoxInput,
 } from "@/resolvers/bank-box/BankBoxInputs";
 import {
   BankBoxDto,
@@ -79,7 +80,7 @@ export class BankBoxResolver {
   async updateBankBox(
     @Ctx() context: MyContext,
     @Arg("id", () => String) id: string,
-    @Arg("input", () => CreateBankBoxInput) input: CreateBankBoxInput
+    @Arg("input", () => UpdateBankBoxInput) input: UpdateBankBoxInput
   ): Promise<BankBoxDto> {
     return await loggedContext(context, async (em) => {
       try {
