@@ -5,7 +5,7 @@ import {
   CreatePixInput,
   ListPixInput,
   UpdatePixInput,
-} from "@/resolvers/pix/PixInput";
+} from "@/resolvers/pix/PixInputs";
 import { validate } from "class-validator";
 
 describe("Pix Inputs Validation", () => {

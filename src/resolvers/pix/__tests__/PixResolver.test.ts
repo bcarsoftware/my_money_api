@@ -7,7 +7,7 @@ import { MessageResponse } from "@/resolvers/MessageResponse";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { ILike } from "typeorm";
-import { CreatePixInput, ListPixInput, UpdatePixInput } from "../PixInput";
+import { CreatePixInput, ListPixInput, UpdatePixInput } from "../PixInputs";
 import { PixResolver } from "../PixResolver";
 import { PaginatedPixDto, PixDto } from "../dto/PixDto";
 

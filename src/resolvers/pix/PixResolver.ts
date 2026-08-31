@@ -5,7 +5,7 @@ import {
   CreatePixInput,
   ListPixInput,
   UpdatePixInput,
-} from "@/resolvers/pix/PixInput";
+} from "@/resolvers/pix/PixInputs";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
