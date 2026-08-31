@@ -73,7 +73,7 @@ export class PixResolver {
   @Mutation(() => PixDto)
   async updatePix(
     @Ctx() context: MyContext,
-    @Arg("id") id: string,
+    @Arg("id", () => String) id: string,
     @Arg("input", () => UpdatePixInput) input: UpdatePixInput
   ): Promise<PixDto> {
     return await loggedContext(context, async (em) => {
@@ -105,7 +105,7 @@ export class PixResolver {
   @Mutation(() => MessageResponse)
   async deletePix(
     @Ctx() context: MyContext,
-    @Arg("id") id: string
+    @Arg("id", () => String) id: string
   ): Promise<MessageResponse> {
     return await loggedContext(context, async (em) => {
       try {
