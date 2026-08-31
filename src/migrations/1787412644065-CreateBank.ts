@@ -10,7 +10,7 @@ export class CreateBank1787412644065 implements MigrationInterface {
       `CREATE TYPE "public"."banks_account_type_enum" AS ENUM('SAVING', 'CHECKING', 'INVESTMENT', 'PAYMENT')`
     );
     await queryRunner.query(
-      `CREATE TABLE "banks" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL, "code" character varying(8) NOT NULL, "name" character varying(64) NOT NULL, "account_type" "public"."banks_account_type_enum" NOT NULL, "accountNumber" character varying(64) NOT NULL, "agency" character varying(32) NOT NULL, "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_3975b5f684ec241e3901db62d77" PRIMARY KEY ("id"))`
+      `CREATE TABLE "banks" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL, "code" character varying(8) NOT NULL, "name" character varying(64) NOT NULL, "account_type" "public"."banks_account_type_enum" NOT NULL, "accountNumber" character varying(64) NOT NULL, "agency" character varying(32) NOT NULL, "balance" numeric(10,2) NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "deleted_at" TIMESTAMP, CONSTRAINT "PK_bank_id" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `CREATE UNIQUE INDEX "IDX_banks_user_id_code" ON "banks"  ("user_id", "code") `
