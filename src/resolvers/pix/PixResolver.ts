@@ -28,6 +28,7 @@ export class PixResolver {
       try {
         const where = {
           userId: context.userId,
+          ...(input.bankId ? { bankId: input.bankId } : {}),
           ...(tag ? { tag: ILike(`%${tag}%`) } : {}),
         };
 
