@@ -5,7 +5,7 @@ import {
   CreatePixInput,
   ListPixInput,
   UpdatePixInput,
-} from "@/resolvers/pix/PixInput";
+} from "@/resolvers/pix/PixInputs";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
@@ -28,6 +28,7 @@ export class PixResolver {
       try {
         const where = {
           userId: context.userId,
+          ...(input.bankId ? { bankId: input.bankId } : {}),
           ...(tag ? { tag: ILike(`%${tag}%`) } : {}),
         };
 
@@ -72,7 +73,7 @@ export class PixResolver {
   @Mutation(() => PixDto)
   async updatePix(
     @Ctx() context: MyContext,
-    @Arg("id") id: string,
+    @Arg("id", () => String) id: string,
     @Arg("input", () => UpdatePixInput) input: UpdatePixInput
   ): Promise<PixDto> {
     return await loggedContext(context, async (em) => {
@@ -104,7 +105,7 @@ export class PixResolver {
   @Mutation(() => MessageResponse)
   async deletePix(
     @Ctx() context: MyContext,
-    @Arg("id") id: string
+    @Arg("id", () => String) id: string
   ): Promise<MessageResponse> {
     return await loggedContext(context, async (em) => {
       try {

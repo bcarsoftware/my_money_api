@@ -1,10 +1,10 @@
-import "reflect-metadata";
-import { validate, ValidationError } from "class-validator";
 import {
   CreateMoneyInput,
   ListMoneyInput,
   UpdateMoneyInput,
-} from "@/resolvers/money/MoneyInput";
+} from "@/resolvers/money/MoneyInputs";
+import { validate, ValidationError } from "class-validator";
+import "reflect-metadata";
 
 async function validateInput<T extends object>(
   Ctor: new () => T,

@@ -7,7 +7,7 @@ import { MessageResponse } from "@/resolvers/MessageResponse";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { ILike } from "typeorm";
-import { CreatePixInput, ListPixInput, UpdatePixInput } from "../PixInput";
+import { CreatePixInput, ListPixInput, UpdatePixInput } from "../PixInputs";
 import { PixResolver } from "../PixResolver";
 import { PaginatedPixDto, PixDto } from "../dto/PixDto";
 
@@ -168,6 +168,111 @@ describe("PixResolver", () => {
         mockContext,
         expect.any(Function)
       );
+    });
+
+    // ----- NOVOS TESTES PARA bankId -----
+    describe("bankId", () => {
+      it("deve filtrar por bankId quando fornecido", async () => {
+        const bankId = "550e8400-e29b-41d4-a716-446655440000";
+        const inputComBankId: ListPixInput = {
+          limit: 10,
+          offset: 0,
+          bankId,
+        };
+        const mockItems = [mockPix];
+        const mockTotal = 1;
+        mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
+
+        const result = await resolver.listPix(mockContext, inputComBankId);
+
+        expect(result).toEqual<PaginatedPixDto>({
+          items: mockItems,
+          total: mockTotal,
+        });
+
+        expect(mockEm.findAndCount).toHaveBeenCalledWith(Pix, {
+          where: {
+            userId,
+            bankId,
+          },
+          take: inputComBankId.limit,
+          skip: inputComBankId.offset,
+        });
+      });
+
+      it("deve ignorar bankId quando não fornecido (undefined)", async () => {
+        const inputSemBankId: ListPixInput = { limit: 5, offset: 0 };
+        const mockItems = [mockPix];
+        const mockTotal = 1;
+        mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
+
+        const result = await resolver.listPix(mockContext, inputSemBankId);
+
+        expect(result).toEqual<PaginatedPixDto>({
+          items: mockItems,
+          total: mockTotal,
+        });
+
+        expect(mockEm.findAndCount).toHaveBeenCalledWith(Pix, {
+          where: { userId },
+          take: inputSemBankId.limit,
+          skip: inputSemBankId.offset,
+        });
+      });
+
+      it("deve combinar filtros de bankId e tag quando ambos são fornecidos", async () => {
+        const bankId = "550e8400-e29b-41d4-a716-446655440000";
+        const inputComBankIdETag: ListPixInput = {
+          limit: 10,
+          offset: 0,
+          bankId,
+          tag: "pix",
+        };
+        const mockItems = [mockPix];
+        const mockTotal = 1;
+        mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
+
+        const result = await resolver.listPix(mockContext, inputComBankIdETag);
+
+        expect(result).toEqual<PaginatedPixDto>({
+          items: mockItems,
+          total: mockTotal,
+        });
+
+        expect(mockEm.findAndCount).toHaveBeenCalledWith(Pix, {
+          where: {
+            userId,
+            bankId,
+            tag: ILike(`%${inputComBankIdETag.tag}%`),
+          },
+          take: inputComBankIdETag.limit,
+          skip: inputComBankIdETag.offset,
+        });
+      });
+
+      it("deve ignorar bankId quando for undefined (não adicionar ao where)", async () => {
+        const inputComBankIdNull: ListPixInput = {
+          limit: 5,
+          offset: 0,
+          bankId: undefined,
+        };
+        const mockItems = [mockPix];
+        const mockTotal = 1;
+        mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
+
+        const result = await resolver.listPix(mockContext, inputComBankIdNull);
+
+        expect(result).toEqual<PaginatedPixDto>({
+          items: mockItems,
+          total: mockTotal,
+        });
+
+        expect(mockEm.findAndCount).toHaveBeenCalledWith(Pix, {
+          where: { userId },
+          take: inputComBankIdNull.limit,
+          skip: inputComBankIdNull.offset,
+        });
+      });
     });
   });
 

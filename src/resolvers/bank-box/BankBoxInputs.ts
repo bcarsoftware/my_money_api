@@ -1,46 +1,42 @@
-import { PixEnum } from "@/enums/PixEnum";
 import {
-  IsEnum,
+  IsCurrency,
   IsInt,
   IsOptional,
   IsUUID,
   MaxLength,
   Min,
 } from "class-validator";
-import { Field, InputType, registerEnumType } from "type-graphql";
-
-registerEnumType(PixEnum, {
-  name: "PixEnum",
-});
+import { Field, InputType } from "type-graphql";
 
 @InputType()
-export class CreatePixInput {
+export class CreateBankBoxInput {
   @Field(() => String)
-  @IsUUID("4", { message: "BankId must be a valid UUID." })
+  @IsUUID("4", { message: "Bank ID must be a valid UUID." })
   bankId: string;
 
   @Field(() => String)
   @MaxLength(64, { message: "Tag must be at most 64 characters long." })
   tag: string;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency({}, { message: "Objective must be a valid currency value." })
+  objective?: string | null;
+
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @MaxLength(256, {
     message: "Description must be at most 256 characters long.",
   })
   description?: string | null;
 
-  @Field(() => PixEnum)
-  @IsEnum(PixEnum, { message: "TypeKey must be a valid PixEnum value." })
-  typeKey: PixEnum;
-
   @Field(() => String)
-  @MaxLength(512, { message: "Key must be at most 512 characters long." })
-  key: string;
+  @IsCurrency({}, { message: "Balance must be a valid currency value." })
+  balance: string;
 }
 
 @InputType()
-export class ListPixInput {
+export class ListBankBoxInput {
   @Field(() => Number, { nullable: true })
   @IsOptional()
   @Min(0, { message: "Limit must be at least 0." })
@@ -55,21 +51,21 @@ export class ListPixInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @MaxLength(64, { message: "Tag must be at most 64 characters long." })
-  tag?: string | null;
+  @IsUUID("4", { message: "Bank ID must be a valid UUID." })
+  bankId?: string;
 
-  @Field(() => PixEnum, { nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsEnum(PixEnum, { message: "TypeKey must be a valid PixEnum value." })
-  typeKey?: PixEnum;
+  @MaxLength(64, { message: "Tag must be at most 64 characters long." })
+  tag?: string;
 }
 
 @InputType()
-export class UpdatePixInput {
+export class UpdateBankBoxInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsUUID("4", { message: "BankId must be a valid UUID." })
-  bankId?: string | null;
+  @IsUUID("4", { message: "Bank ID must be a valid UUID." })
+  bankId?: string;
 
   @Field(() => String, { nullable: true })
   @IsOptional()
@@ -78,18 +74,18 @@ export class UpdatePixInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
+  @IsCurrency({}, { message: "Objective must be a valid currency value." })
+  objective?: string | null;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @MaxLength(256, {
     message: "Description must be at most 256 characters long.",
   })
   description?: string | null;
 
-  @Field(() => PixEnum, { nullable: true })
-  @IsOptional()
-  @IsEnum(PixEnum, { message: "TypeKey must be a valid PixEnum value." })
-  typeKey?: PixEnum;
-
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @MaxLength(512, { message: "Key must be at most 512 characters long." })
-  key?: string;
+  @IsCurrency({}, { message: "Balance must be a valid currency value." })
+  balance?: string;
 }

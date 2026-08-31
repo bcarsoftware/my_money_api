@@ -5,7 +5,7 @@ import {
   CreatePixInput,
   ListPixInput,
   UpdatePixInput,
-} from "@/resolvers/pix/PixInput";
+} from "@/resolvers/pix/PixInputs";
 import { validate } from "class-validator";
 
 describe("Pix Inputs Validation", () => {
@@ -215,6 +215,60 @@ describe("Pix Inputs Validation", () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0]?.property).toBe("offset");
       expect(errors[0]?.constraints).toHaveProperty("min");
+    });
+
+    it("deve validar com um UUID v4 válido", async () => {
+      const input = new ListPixInput();
+      input.bankId = "550e8400-e29b-41d4-a716-446655440000";
+
+      const errors = await validate(input);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("deve aceitar bankId null (campo opcional)", async () => {
+      const input = new ListPixInput();
+      input.bankId = undefined;
+
+      const errors = await validate(input);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("deve aceitar bankId undefined (campo opcional)", async () => {
+      const input = new ListPixInput();
+      // não setar bankId
+
+      const errors = await validate(input);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("deve falhar quando bankId não é um UUID", async () => {
+      const input = new ListPixInput();
+      input.bankId = "nao-e-uuid";
+
+      const errors = await validate(input);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]!.property).toBe("bankId");
+      expect(errors[0]!.constraints).toHaveProperty("isUuid");
+    });
+
+    it("deve falhar quando bankId é um UUID com versão diferente de 4", async () => {
+      const input = new ListPixInput();
+      input.bankId = "550e8400-e29b-11d4-a716-446655440000"; // UUID v1
+
+      const errors = await validate(input);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]!.property).toBe("bankId");
+      expect(errors[0]!.constraints).toHaveProperty("isUuid");
+    });
+
+    it("deve falhar quando bankId é string vazia", async () => {
+      const input = new ListPixInput();
+      input.bankId = "";
+
+      const errors = await validate(input);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0]!.property).toBe("bankId");
+      expect(errors[0]!.constraints).toHaveProperty("isUuid");
     });
   });
 

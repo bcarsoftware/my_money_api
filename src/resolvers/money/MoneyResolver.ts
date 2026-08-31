@@ -4,7 +4,7 @@ import {
   CreateMoneyInput,
   ListMoneyInput,
   UpdateMoneyInput,
-} from "@/resolvers/money/MoneyInput";
+} from "@/resolvers/money/MoneyInputs";
 
 import { type MyContext } from "@/context/MyContext";
 import { Money } from "@/entities/Money";
