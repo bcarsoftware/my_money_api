@@ -224,28 +224,28 @@ describe("PixResolver", () => {
     const updateInput: UpdatePixInput = {
       tag: "Novo tag",
       description: "Nova descrição",
-      key: "98765432100",
+      key: "31731106092",
+      typeKey: PixEnum.CPF,
     };
 
     it("deve atualizar um PIX existente com sucesso", async () => {
-      // Captura o valor ORIGINAL antes de chamar o resolver — depois da
-      // chamada, mockPix.description já estará mutado para o novo valor,
-      // então comparar com mockPix.description nesse ponto compararia o
-      // valor novo consigo mesmo, mascarando qualquer regressão real.
       const originalDescription = mockPix.description;
 
       const updatedPix = {
         ...mockPix,
-        tag: "Novo tag",
-        description: "Nova descrição",
-        key: "98765432100",
+        tag: updateInput.tag!,
+        description: updateInput.description,
+        key: updateInput.key!,
+        typeKey: updateInput.typeKey!,
       };
+
       mockEm.findOneOrFail.mockResolvedValue(mockPix);
       mockEm.save.mockResolvedValue(updatedPix);
 
       const result = await resolver.updatePix(mockContext, pixId, updateInput);
 
-      expect(result).toEqual<PixDto>(updatedPix);
+      // Comparação direta – o resultado tem todos os campos da entidade
+      expect(result).toEqual(updatedPix);
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
@@ -255,24 +255,23 @@ describe("PixResolver", () => {
       });
 
       // Verifica que os campos foram atualizados usando os operadores nullish
-      expect(mockPix.tag).toBe("Novo tag");
-      expect(mockPix.key).toBe("98765432100");
+      expect(mockPix.tag).toBe(updateInput.tag);
+      expect(mockPix.key).toBe(updateInput.key);
+      expect(mockPix.typeKey).toBe(updateInput.typeKey);
 
-      // Verifica que description usou updatableFieldResolve, com o valor
-      // ATUAL (antes da mutação) como "current"
+      // Verifica que description usou updatableFieldResolve
       expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
         updateInput.description,
         originalDescription
       );
-      expect(mockPix.description).toBe("Nova descrição");
+      expect(mockPix.description).toBe(updateInput.description);
 
       expect(mockEm.save).toHaveBeenCalledWith(mockPix);
     });
 
     it("deve ignorar campos undefined (operador nullish)", async () => {
       const inputParcial: UpdatePixInput = {
-        tag: undefined,
-        key: undefined,
+        tag: "Tag atualizada",
       };
       const originalDescription = mockPix.description;
 
@@ -281,10 +280,11 @@ describe("PixResolver", () => {
 
       await resolver.updatePix(mockContext, pixId, inputParcial);
 
-      // tag e key não devem ser alterados
-      expect(mockPix.tag).toBe("Pix para emergências");
+      expect(mockPix.tag).toBe("Tag atualizada");
+      // key e typeKey não devem ser alterados
       expect(mockPix.key).toBe("12345678909");
-      // description também não deve mudar (updatableFieldResolve será chamado com undefined)
+      expect(mockPix.typeKey).toBe(PixEnum.CPF);
+      // description também não deve mudar
       expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
         inputParcial.description,
         originalDescription
@@ -301,7 +301,6 @@ describe("PixResolver", () => {
       mockEm.findOneOrFail.mockResolvedValue(mockPix);
       mockEm.save.mockResolvedValue(mockPix);
 
-      // Simula que o updatableFieldResolve retorna null
       mockedUpdatableFieldResolve.mockImplementationOnce((input, current) => {
         if (input === null) return null;
         return input ?? current;
@@ -317,10 +316,14 @@ describe("PixResolver", () => {
     });
 
     it("deve lançar erro se o PIX não for encontrado", async () => {
+      const inputValido = {
+        key: "12345678909",
+        typeKey: PixEnum.CPF,
+      };
       mockEm.findOneOrFail.mockRejectedValue(new Error("Not found"));
 
       await expect(
-        resolver.updatePix(mockContext, pixId, updateInput)
+        resolver.updatePix(mockContext, pixId, inputValido)
       ).rejects.toThrow("Not found");
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
@@ -330,11 +333,15 @@ describe("PixResolver", () => {
     });
 
     it("deve lançar erro se a atualização falhar", async () => {
+      const inputValido = {
+        key: "12227044047",
+        typeKey: PixEnum.CPF,
+      };
       mockEm.findOneOrFail.mockResolvedValue(mockPix);
       mockEm.save.mockRejectedValue(new Error("DB error"));
 
       await expect(
-        resolver.updatePix(mockContext, pixId, updateInput)
+        resolver.updatePix(mockContext, pixId, inputValido)
       ).rejects.toThrow("DB error");
     });
   });

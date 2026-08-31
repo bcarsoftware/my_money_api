@@ -69,7 +69,7 @@ export class UpdatePixInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsUUID("4", { message: "BankId must be a valid UUID." })
-  bankId?: string;
+  bankId?: string | null;
 
   @Field(() => String, { nullable: true })
   @IsOptional()

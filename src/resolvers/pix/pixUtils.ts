@@ -25,22 +25,32 @@ function phoneCheck(phone: string) {
   if (!phoneVerify(phone)) throw new Error("Phone number is invalid.");
 }
 
-export function pixChecker(typeKey: PixEnum, value: string) {
+export function pixChecker(typeKey?: PixEnum, value?: string) {
+  if (!typeKey && !value) return;
+
+  if (typeKey && !value)
+    throw new Error("Both typeKey and value must be provided together.");
+
+  if (!typeKey && value)
+    throw new Error("Both typeKey and value must be provided together.");
+
+  const actualValue = value!;
+
   switch (typeKey) {
     case PixEnum.CPF:
-      cpfCheck(value);
+      cpfCheck(actualValue);
       break;
     case PixEnum.CNPJ:
-      cnpjCheck(value);
+      cnpjCheck(actualValue);
       break;
     case PixEnum.EMAIL:
-      emailCheck(value);
+      emailCheck(actualValue);
       break;
     case PixEnum.RANDOM:
-      randomCheck(value);
+      randomCheck(actualValue);
       break;
     case PixEnum.PHONE:
-      phoneCheck(value);
+      phoneCheck(actualValue);
       break;
     default:
       throw new Error("Invalid Pix key type.");

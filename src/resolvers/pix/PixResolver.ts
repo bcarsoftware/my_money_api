@@ -7,11 +7,12 @@ import {
   UpdatePixInput,
 } from "@/resolvers/pix/PixInput";
 import { loggedContext } from "@/utils/loggedContext";
+import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
 import { MessageResponse } from "../MessageResponse";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { pixChecker } from "./pixUtils";
 
 @Resolver()
 export class PixResolver {
@@ -52,6 +53,8 @@ export class PixResolver {
   ): Promise<PixDto> {
     return await loggedContext(context, async (em) => {
       try {
+        pixChecker(input.typeKey, input.key);
+
         const pix = em.create(Pix, {
           ...input,
           userId: context.userId,
@@ -74,6 +77,8 @@ export class PixResolver {
   ): Promise<PixDto> {
     return await loggedContext(context, async (em) => {
       try {
+        pixChecker(input.typeKey, input.key);
+
         const where = { id, userId: context.userId };
         const pix = await em.findOneOrFail(Pix, { where });
 
