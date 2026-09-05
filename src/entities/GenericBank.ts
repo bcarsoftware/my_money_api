@@ -7,10 +7,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { Bank } from "./Bank";
+import { GenericBankInfo } from "./GenericBankInfo";
 import { User } from "./User";
 
 @Entity("generic_banks")
@@ -39,6 +41,12 @@ export class GenericBank extends BaseEntity {
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: string;
+
+  @OneToMany(
+    () => GenericBankInfo,
+    (genericBankInfo) => genericBankInfo.genericBank
+  )
+  bankInfo: GenericBankInfo[];
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
