@@ -30,6 +30,6 @@ export class UserDto {
   @Field(() => String, { nullable: true })
   phone?: string | null;
 
-  @Field(() => Date)
-  createdAt: Date;
+  @Field(() => String)
+  createdAt: string;
 }

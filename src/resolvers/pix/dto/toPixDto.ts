@@ -8,5 +8,5 @@ export const toPixDto = (pix: Pix): PixDto => ({
   description: pix.description,
   typeKey: pix.typeKey,
   key: pix.key,
-  createdAt: pix.createdAt,
+  createdAt: pix.createdAt.toISOString(),
 });

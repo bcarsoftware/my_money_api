@@ -1,4 +1,5 @@
 import { MonthEnum } from "@/enums/MonthEnum";
+import { PaymentEnum } from "@/enums/PaymentEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
   BaseEntity,
@@ -11,7 +12,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { PaymentStatusEnum } from "../enums/PaymentStatusEnum";
 import { User } from "./User";
 
 @Entity("payments")
@@ -29,13 +29,13 @@ export class Payment extends BaseEntity {
   name: string;
 
   @Column({ type: "varchar", length: 256, nullable: true })
-  description?: string;
+  description?: string | null;
 
   @Column({ type: "enum", enum: RepeatEnum })
   repeat: RepeatEnum;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  balance: number;
+  balance: string;
 
   @Column({ type: "int" })
   day: number;
@@ -43,8 +43,8 @@ export class Payment extends BaseEntity {
   @Column({ type: "enum", enum: MonthEnum })
   month: MonthEnum;
 
-  @Column({ type: "enum", enum: PaymentStatusEnum })
-  status: PaymentStatusEnum;
+  @Column({ type: "enum", enum: PaymentEnum })
+  status: PaymentEnum;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

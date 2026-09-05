@@ -9,5 +9,5 @@ export const toBankDto = (bank: Bank) => ({
   accountNumber: bank.accountNumber,
   agency: bank.agency,
   balance: bank.balance,
-  createdAt: bank.createdAt,
+  createdAt: bank.createdAt.toISOString(),
 });

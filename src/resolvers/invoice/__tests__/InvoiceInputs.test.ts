@@ -488,7 +488,9 @@ describe("InvoicePayInput", () => {
       };
       const errors = await validateInput(InvoicePayInput, payload);
       const properties = errors.map((e) => e.property).sort();
-      expect(properties).toEqual(["bankId", "id", "payInvoice", "isRefund"].sort());
+      expect(properties).toEqual(
+        ["bankId", "id", "payInvoice", "isRefund"].sort()
+      );
     });
   });
 });

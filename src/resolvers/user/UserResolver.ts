@@ -4,6 +4,7 @@ import { cookieOptions } from "@/constants/cookies";
 import { type MyContext } from "@/context/MyContext";
 import { User } from "@/entities/User";
 import { UserDto } from "@/resolvers/user/dto/UserDto";
+import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { comparePassword, hashPassword } from "@/utils/passwordUtil";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
@@ -80,6 +81,8 @@ export class UserResolver {
     try {
       const password = await hashPassword(input.password);
 
+      if (input.salary) input.salary = clearDecimal(input.salary);
+
       const user = await User.create({
         ...input,
         dateBorn: new Date(input.dateBorn),
@@ -117,6 +120,8 @@ export class UserResolver {
         user.username = input.username ?? user.username;
         user.salary = input.salary ?? user.salary;
         user.phone = input.phone ?? user.phone;
+
+        if (user.salary) user.salary = clearDecimal(user.salary);
 
         await em.save(user);
 

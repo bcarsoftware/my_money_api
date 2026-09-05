@@ -8,5 +8,5 @@ export const toMoneyDto = (money: Money): MoneyDto => ({
   objective: money.objective,
   description: money.description,
   balance: money.balance,
-  createdAt: money.createdAt,
+  createdAt: money.createdAt.toISOString(),
 });

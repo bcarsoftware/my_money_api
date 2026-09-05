@@ -7,5 +7,5 @@ export const toBankBoxDto = (bankBox: BankBox) => ({
   objective: bankBox.objective,
   description: bankBox.description,
   balance: bankBox.balance,
-  createdAt: bankBox.createdAt,
+  createdAt: bankBox.createdAt.toISOString(),
 });

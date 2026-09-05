@@ -35,7 +35,7 @@ describe("toBankBoxDto", () => {
       objective: mockBankBox.objective,
       description: mockBankBox.description,
       balance: mockBankBox.balance,
-      createdAt: mockBankBox.createdAt,
+      createdAt: mockBankBox.createdAt.toISOString(),
     });
   });
 
@@ -49,7 +49,7 @@ describe("toBankBoxDto", () => {
     expect(dto.objective).toBe(mockBankBox.objective);
     expect(dto.description).toBe(mockBankBox.description);
     expect(dto.balance).toBe(mockBankBox.balance);
-    expect(dto.createdAt).toBe(mockBankBox.createdAt);
+    expect(dto.createdAt).toBe(mockBankBox.createdAt.toISOString());
   });
 
   it("deve ignorar campos extras da entidade (updatedAt, deletedAt, bank)", () => {
@@ -107,6 +107,6 @@ describe("toBankBoxDto", () => {
     const pastDate = new Date("2020-01-01T00:00:00Z");
     const mockBankBox = makeBankBox({ createdAt: pastDate });
     const dto = toBankBoxDto(mockBankBox);
-    expect(dto.createdAt).toBe(pastDate);
+    expect(dto.createdAt).toBe(pastDate.toISOString());
   });
 });
