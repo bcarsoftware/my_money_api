@@ -1,6 +1,8 @@
 import { MonthEnum } from "@/enums/MonthEnum";
 
 export const isValidMonthAndDay = (month: MonthEnum, day: number): boolean => {
+  if (day < 1) return false;
+
   if (month === MonthEnum.FEBRUARY && day > 29) return false;
 
   const monthsWith30Days = [

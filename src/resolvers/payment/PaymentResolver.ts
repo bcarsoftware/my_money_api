@@ -18,7 +18,7 @@ import {
   CreatePaymentInput,
   ListPaymentInput,
   UpdatePaymentInput,
-} from "./PaymentInput";
+} from "@/resolvers/payment/PaymentInput";
 
 @Resolver()
 export class PaymentResolver {
