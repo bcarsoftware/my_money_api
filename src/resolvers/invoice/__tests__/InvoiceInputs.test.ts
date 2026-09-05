@@ -105,7 +105,10 @@ describe("CreateInvoiceInput", () => {
     });
 
     it("rejeita null (campo obrigatório)", async () => {
-      const payload = { ...validPayload, name: null } as unknown as CreateInvoiceInput;
+      const payload = {
+        ...validPayload,
+        name: null,
+      } as unknown as CreateInvoiceInput;
       const errors = await validateInput(CreateInvoiceInput, payload);
       expect(constraintsFor(errors, "name")).toContain("maxLength");
     });
@@ -162,7 +165,10 @@ describe("CreateInvoiceInput", () => {
     });
 
     it("rejeita null (campo obrigatório)", async () => {
-      const payload = { ...validPayload, repeat: null } as unknown as CreateInvoiceInput;
+      const payload = {
+        ...validPayload,
+        repeat: null,
+      } as unknown as CreateInvoiceInput;
       const errors = await validateInput(CreateInvoiceInput, payload);
       expect(constraintsFor(errors, "repeat")).toContain("isEnum");
     });
@@ -458,7 +464,7 @@ describe("InvoicePayInput", () => {
 
     it("rejeita quando ausente (campo obrigatório)", async () => {
       const { payInvoice, ...payload } = validPayload;
-      const errors = await validateInput(InvoicePayInput, payload );
+      const errors = await validateInput(InvoicePayInput, payload);
 
       const error = errors.find((e) => e.property === "payInvoice");
       expect(error?.constraints).toHaveProperty("isBoolean");
