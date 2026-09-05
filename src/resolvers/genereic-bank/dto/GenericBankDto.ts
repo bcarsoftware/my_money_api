@@ -28,8 +28,8 @@ export class GenericBankDto {
   @Field(() => String)
   balance: string;
 
-  @Field(() => [GenBankInfoDto])
-  bankInfo: GenBankInfoDto[];
+  @Field(() => [GenBankInfoDto], { nullable: true })
+  bankInfo?: GenBankInfoDto[] | null;
 
   @Field(() => String)
   createdAt: string;
