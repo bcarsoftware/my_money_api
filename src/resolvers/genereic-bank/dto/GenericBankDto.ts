@@ -3,8 +3,13 @@ import { Field, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class GenBankInfoDto {
+  @Field(() => String)
   id: string;
+
+  @Field(() => String)
   name: string;
+
+  @Field(() => String)
   value: string;
 }
 
@@ -35,6 +40,7 @@ export class GenericBankDto {
   createdAt: string;
 }
 
+@ObjectType()
 export class PaginatedGenericBankDto {
   @Field(() => [GenericBankDto])
   items: GenericBankDto[];
