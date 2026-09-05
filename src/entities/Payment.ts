@@ -28,7 +28,7 @@ export class Payment extends BaseEntity {
   name: string;
 
   @Column({ type: "varchar", length: 256, nullable: true })
-  description?: string;
+  description?: string | null;
 
   @Column({ type: "enum", enum: RepeatEnum })
   repeat: RepeatEnum;
