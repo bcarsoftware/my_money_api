@@ -141,7 +141,7 @@ export class InvoiceResolver {
       try {
         const increment = input.isRefund ? -1 : 1;
 
-        if (input.payInvoice) invoice.paidInstallments += increment;
+        invoice.paidInstallments += increment;
 
         if (input.isRefund) {
           invoice.status = InvoiceStatusEnum.REFUNDED;
