@@ -29,7 +29,7 @@ describe("toPixDto", () => {
       description: mockPix.description,
       typeKey: mockPix.typeKey,
       key: mockPix.key,
-      createdAt: mockPix.createdAt,
+      createdAt: mockPix.createdAt.toISOString(),
     });
   });
 
@@ -43,7 +43,7 @@ describe("toPixDto", () => {
     expect(dto.description).toBe(mockPix.description);
     expect(dto.typeKey).toBe(mockPix.typeKey);
     expect(dto.key).toBe(mockPix.key);
-    expect(dto.createdAt).toBe(mockPix.createdAt);
+    expect(dto.createdAt).toBe(mockPix.createdAt.toISOString());
   });
 
   it("deve ignorar campos extras da entidade (updatedAt, deletedAt, bank)", () => {
@@ -106,7 +106,7 @@ describe("toPixDto", () => {
     const pastDate = new Date("2020-01-01T00:00:00Z");
     const pixWithPastDate = { ...mockPix, createdAt: pastDate };
     const dto = toPixDto(pixWithPastDate as unknown as Pix);
-    expect(dto.createdAt).toBe(pastDate);
+    expect(dto.createdAt).toBe(pastDate.toISOString());
   });
 
   it("deve funcionar com tag vazia", () => {

@@ -30,7 +30,7 @@ describe("toMoneyDto", () => {
         objective: "1000.00",
         description: "Reserva para o aluguel",
         balance: "250.00",
-        createdAt: money.createdAt,
+        createdAt: money.createdAt.toISOString(),
       });
     });
 
@@ -79,14 +79,13 @@ describe("toMoneyDto", () => {
   });
 
   describe("createdAt", () => {
-    it("preserva a instância de Date, sem convertê-la para string", () => {
+    it("converte createdAt para string", () => {
       const createdAt = new Date("2025-06-01T00:00:00.000Z");
       const money = makeMoney({ createdAt });
 
       const dto = toMoneyDto(money);
 
-      expect(dto.createdAt).toBeInstanceOf(Date);
-      expect(dto.createdAt).toBe(createdAt);
+      expect(dto.createdAt).toBe(createdAt.toISOString());
     });
   });
 

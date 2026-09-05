@@ -21,8 +21,8 @@ export class PixDto {
   @Field(() => String)
   key: string;
 
-  @Field(() => Date)
-  createdAt: Date;
+  @Field(() => String)
+  createdAt: string;
 }
 
 @ObjectType()

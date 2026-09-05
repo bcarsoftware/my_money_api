@@ -36,7 +36,7 @@ describe("toUserDto - Mapper de Entidade para DTO", () => {
       username: "abelcarvalho",
       salary: "5000.00",
       phone: "+5574999999999",
-      createdAt: mockCreatedAt,
+      createdAt: mockCreatedAt.toISOString(),
     });
   });
 
@@ -89,7 +89,7 @@ describe("toUserDto - Mapper de Entidade para DTO", () => {
       username: "abelcarvalho",
       salary: undefined,
       phone: undefined,
-      createdAt: mockCreatedAt,
+      createdAt: mockCreatedAt.toISOString(),
     });
   });
 });

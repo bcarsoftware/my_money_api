@@ -32,7 +32,7 @@ describe("toBankDto", () => {
       accountNumber: mockBank.accountNumber,
       agency: mockBank.agency,
       balance: mockBank.balance,
-      createdAt: mockBank.createdAt,
+      createdAt: mockBank.createdAt.toISOString(),
     });
   });
 
@@ -48,7 +48,7 @@ describe("toBankDto", () => {
     expect(dto.accountNumber).toBe(mockBank.accountNumber);
     expect(dto.agency).toBe(mockBank.agency);
     expect(dto.balance).toBe(mockBank.balance);
-    expect(dto.createdAt).toBe(mockBank.createdAt);
+    expect(dto.createdAt).toBe(mockBank.createdAt.toISOString());
   });
 
   it("deve ignorar campos extras da entidade (updatedAt, deletedAt, user)", () => {
@@ -80,7 +80,7 @@ describe("toBankDto", () => {
     } as Bank;
 
     const dto = toBankDto(bankWithPastDate);
-    expect(dto.createdAt).toBe(pastDate);
+    expect(dto.createdAt).toBe(pastDate.toISOString());
   });
 
   it("deve preservar o tipo numérico do balance", () => {

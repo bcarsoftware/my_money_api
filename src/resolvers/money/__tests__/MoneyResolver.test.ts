@@ -1,11 +1,14 @@
-import "reflect-metadata";
-import { Money } from "@/entities/Money";
 import { type MyContext } from "@/context/MyContext";
-import { loggedContext } from "@/utils/loggedContext";
+import { Money } from "@/entities/Money";
 import { MoneyResolver } from "@/resolvers/money/MoneyResolver";
+import { toMoneyDto } from "@/resolvers/money/dto/toMoneyDto";
+import { loggedContext } from "@/utils/loggedContext";
+import "reflect-metadata";
 import { EntityManager, FindManyOptions, FindOneOptions } from "typeorm";
 
-// Mock do ILike para retornar a string pura (facilita os testes)
+// ============================================================
+// Mocks
+// ============================================================
 jest.mock("typeorm", () => {
   const actual = jest.requireActual("typeorm");
   return {
@@ -15,9 +18,16 @@ jest.mock("typeorm", () => {
 });
 
 jest.mock("@/utils/loggedContext");
+jest.mock("@/resolvers/money/dto/toMoneyDto", () => ({
+  toMoneyDto: jest.fn(),
+}));
 
 const mockedLoggedContext = jest.mocked(loggedContext);
+const mockedToMoneyDto = jest.mocked(toMoneyDto);
 
+// ============================================================
+// Helpers
+// ============================================================
 function makeContext(overrides: Partial<MyContext> = {}): MyContext {
   return { userId: "user-1", ...overrides } as MyContext;
 }
@@ -33,6 +43,18 @@ function makeMoney(overrides: Partial<Money> = {}): Money {
     createdAt: new Date("2026-01-15T10:00:00.000Z"),
     ...overrides,
   } as Money;
+}
+
+function makeMoneyDto(money: Money) {
+  return {
+    id: money.id,
+    userId: money.userId,
+    tag: money.tag,
+    objective: money.objective,
+    description: money.description,
+    balance: money.balance,
+    createdAt: money.createdAt.toISOString(),
+  };
 }
 
 type FindAndCountParams = [typeof Money, FindManyOptions<Money>?];
@@ -111,16 +133,24 @@ describe("MoneyResolver", () => {
   beforeEach(() => {
     resolver = new MoneyResolver();
     jest.clearAllMocks();
+
+    // Mock do toMoneyDto para retornar a estrutura correta do DTO
+    mockedToMoneyDto.mockImplementation((money: Money) => makeMoneyDto(money));
   });
 
+  // ============================================================
+  // listMoney
+  // ============================================================
   describe("listMoney", () => {
     it("retorna items e total vindos de findAndCount", async () => {
       const money = [makeMoney()];
-      setupEm({ moneyList: money, total: 1 });
+      const em = setupEm({ moneyList: money, total: 1 });
 
       const result = await resolver.listMoney(makeContext(), {});
 
-      expect(result).toEqual({ items: money, total: 1 });
+      const expectedItems = money.map(makeMoneyDto);
+      expect(result).toEqual({ items: expectedItems, total: 1 });
+      expect(mockedToMoneyDto).toHaveBeenCalledTimes(1);
     });
 
     it("filtra sempre por userId do contexto", async () => {
@@ -146,7 +176,6 @@ describe("MoneyResolver", () => {
       const options = call![1];
       expect(options?.take).toBe(20);
       expect(options?.skip).toBe(40);
-      // Garante que o where não contenha limit/offset
       const where = options?.where as
         { limit?: unknown; offset?: unknown } | undefined;
       expect(where).not.toHaveProperty("limit");
@@ -220,6 +249,9 @@ describe("MoneyResolver", () => {
     });
   });
 
+  // ============================================================
+  // createMoney
+  // ============================================================
   describe("createMoney", () => {
     it("cria o registro com o userId do contexto, ignorando o userId enviado no input", async () => {
       const em = setupEm({});
@@ -257,14 +289,14 @@ describe("MoneyResolver", () => {
     });
 
     it("salva e retorna o registro criado", async () => {
-      const em = setupEm({});
-
       const result = await resolver.createMoney(makeContext(), {
         tag: "aluguel",
         balance: "100.00",
       });
 
-      expect(em.save).toHaveBeenCalledWith(result);
+      expect(result.createdAt).toBe("2026-01-15T10:00:00.000Z");
+      expect(result.tag).toBe("aluguel");
+      expect(result.balance).toBe("100.00");
     });
 
     it("propaga o erro original quando em.save falha", async () => {
@@ -280,6 +312,9 @@ describe("MoneyResolver", () => {
     });
   });
 
+  // ============================================================
+  // updateMoney
+  // ============================================================
   describe("updateMoney", () => {
     it("busca o registro filtrando por userId e id", async () => {
       const money = makeMoney({ id: "money-77" });
@@ -414,6 +449,9 @@ describe("MoneyResolver", () => {
     });
   });
 
+  // ============================================================
+  // deleteMoney
+  // ============================================================
   describe("deleteMoney", () => {
     it("busca o registro filtrando por userId e id, e faz soft remove", async () => {
       const money = makeMoney({ id: "money-1" });

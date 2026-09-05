@@ -11,5 +11,5 @@ export const toUserDto = (user: User): UserDto => ({
   username: user.username,
   salary: user.salary,
   phone: user.phone,
-  createdAt: user.createdAt,
+  createdAt: user.createdAt.toISOString(),
 });

@@ -20,8 +20,8 @@ export class BankBoxDto {
   @Field(() => String)
   balance: string;
 
-  @Field(() => Date)
-  createdAt: Date;
+  @Field(() => String)
+  createdAt: string;
 }
 
 @ObjectType()
