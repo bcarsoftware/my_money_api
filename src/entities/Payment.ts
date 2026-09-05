@@ -11,7 +11,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { PaymentStatusEnum } from "../enums/PaymentStatusEnum";
 import { User } from "./User";
 
 @Entity("payments")
@@ -35,16 +34,13 @@ export class Payment extends BaseEntity {
   repeat: RepeatEnum;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  balance: number;
+  balance: string;
 
   @Column({ type: "int" })
   day: number;
 
   @Column({ type: "enum", enum: MonthEnum })
   month: MonthEnum;
-
-  @Column({ type: "enum", enum: PaymentStatusEnum })
-  status: PaymentStatusEnum;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
