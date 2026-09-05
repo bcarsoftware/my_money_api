@@ -1,12 +1,14 @@
 import { INVOICE_NOT_FOUND, USER_BANK_NOT_MATCH } from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
 import { Invoice } from "@/entities/Invoice";
+import { InvoiceStatusEnum } from "@/enums/InvoiceStatusEnum";
 import {
   InvoiceDto,
   PaginatedInvoiceDto,
 } from "@/resolvers/invoice/dto/InvoiceDto";
 import {
   CreateInvoiceInput,
+  InvoicePayInput,
   ListInvoiceInput,
   UpdateInvoiceInput,
 } from "@/resolvers/invoice/InvoiceInputs";
@@ -64,6 +66,8 @@ export class InvoiceResolver {
       try {
         const invoice = em.create(Invoice, {
           ...input,
+          status: InvoiceStatusEnum.ACTIVE,
+          paidInstallments: 0,
           userId,
         });
 
@@ -103,6 +107,48 @@ export class InvoiceResolver {
       } catch (error) {
         console.error("Error updating invoice:", error);
         throw new Error("Failed to update invoice.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => InvoiceDto)
+  async invoicePaymentOrRefund(
+    @Ctx() context: MyContext,
+    @Arg("input", () => InvoicePayInput) input: InvoicePayInput
+  ): Promise<InvoiceDto> {
+    if ((input.payInvoice && input.isRefund) || (!input.payInvoice && !input.isRefund))
+      throw new Error("You cannot pay and refund the same invoice at the same time.");
+
+    return await loggedContext(context, async (em) => {
+      const invoice = await em.findOne(Invoice, {
+        where: { id: input.id, bankId: input.bankId },
+        relations: { bank: true },
+      });
+
+      if (!invoice) throw new Error(INVOICE_NOT_FOUND);
+
+      if (invoice.bank.userId !== context.userId)
+        throw new Error(USER_BANK_NOT_MATCH);
+
+      try {
+        const increment = input.isRefund ? -invoice.installments : 1;
+
+        if (input.payInvoice) invoice.paidInstallments += increment;
+
+        if (input.isRefund) {
+          invoice.status = InvoiceStatusEnum.REFUNDED;
+        } else if (invoice.paidInstallments === invoice.installments)
+          invoice.status = InvoiceStatusEnum.COMPLETED;
+
+        const updatedInvoice = await em.save(invoice);
+
+        return toInvoiceDto(updatedInvoice);
+      } catch (error) {
+        const opt = input.isRefund ? "refund" : "payment";
+
+        console.error(`Error processing invoice ${opt}:`, error);
+        throw new Error(`Failed to process invoice ${opt}.`);
       }
     });
   }

@@ -80,6 +80,10 @@ export class InvoicePayInput {
   @Field(() => Boolean)
   @IsBoolean({ message: "PayInvoice must be a boolean value." })
   payInvoice: boolean;
+
+  @Field(() => Boolean)
+  @IsBoolean({ message: "IsRefund must be a boolean value." })
+  isRefund: boolean;
 }
 
 @InputType()

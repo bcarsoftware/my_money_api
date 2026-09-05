@@ -376,6 +376,7 @@ describe("InvoicePayInput", () => {
     id: "550e8400-e29b-41d4-a716-446655440000",
     bankId: "550e8400-e29b-41d4-a716-446655440000",
     payInvoice: true,
+    isRefund: false,
   };
 
   describe("caminho feliz", () => {
@@ -483,10 +484,11 @@ describe("InvoicePayInput", () => {
         id: "invalido",
         bankId: "invalido",
         payInvoice: undefined,
+        isRefund: undefined,
       };
       const errors = await validateInput(InvoicePayInput, payload);
       const properties = errors.map((e) => e.property).sort();
-      expect(properties).toEqual(["bankId", "id", "payInvoice"].sort());
+      expect(properties).toEqual(["bankId", "id", "payInvoice", "isRefund"].sort());
     });
   });
 });
