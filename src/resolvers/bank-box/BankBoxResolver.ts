@@ -9,6 +9,7 @@ import {
   BankBoxDto,
   PaginatedBankBoxDto,
 } from "@/resolvers/bank-box/dto/BankBoxDto";
+import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
@@ -35,11 +36,13 @@ export class BankBoxResolver {
           ...(input.bankId ? { bankId: input.bankId } : {}),
         };
 
-        const [items, total] = await em.findAndCount(BankBox, {
+        const [bankBoxes, total] = await em.findAndCount(BankBox, {
           where,
           take: limit,
           skip: offset,
         });
+
+        const items = bankBoxes.map((bankBox) => toBankBoxDto(bankBox));
 
         return {
           items,
@@ -63,11 +66,12 @@ export class BankBoxResolver {
         const bankBox = em.create(BankBox, {
           ...input,
           userId: context.userId,
+          balance: clearDecimal(input.balance),
         });
 
-        await em.save(bankBox);
+        const newBankBox = await em.save(bankBox);
 
-        return toBankBoxDto(bankBox);
+        return toBankBoxDto(newBankBox);
       } catch (error) {
         console.error("Error creating bank box:", error);
         throw error;
@@ -97,10 +101,9 @@ export class BankBoxResolver {
           input.objective,
           bankBox.objective
         );
-        bankBox.balance = input.balance ?? bankBox.balance;
 
-        await em.save(bankBox);
-        return toBankBoxDto(bankBox);
+        const uptBankBox = await em.save(bankBox);
+        return toBankBoxDto(uptBankBox);
       } catch (error) {
         console.error("Error updating bank box:", error);
         throw error;

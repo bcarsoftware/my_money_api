@@ -20,7 +20,10 @@ export class CreateBankBoxInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsCurrency({}, { message: "Objective must be a valid currency value." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Objective must be a valid currency value." }
+  )
   objective?: string | null;
 
   @Field(() => String, { nullable: true })
@@ -31,7 +34,10 @@ export class CreateBankBoxInput {
   description?: string | null;
 
   @Field(() => String)
-  @IsCurrency({}, { message: "Balance must be a valid currency value." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Balance must be a valid currency value." }
+  )
   balance: string;
 }
 
@@ -74,7 +80,10 @@ export class UpdateBankBoxInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsCurrency({}, { message: "Objective must be a valid currency value." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Objective must be a valid currency value." }
+  )
   objective?: string | null;
 
   @Field(() => String, { nullable: true })
@@ -83,9 +92,4 @@ export class UpdateBankBoxInput {
     message: "Description must be at most 256 characters long.",
   })
   description?: string | null;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsCurrency({}, { message: "Balance must be a valid currency value." })
-  balance?: string;
 }

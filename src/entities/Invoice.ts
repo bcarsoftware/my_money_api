@@ -28,7 +28,7 @@ export class Invoice extends BaseEntity {
   name: string;
 
   @Column({ type: "varchar", length: 256, nullable: true })
-  description?: string;
+  description?: string | null;
 
   @Column({ type: "enum", enum: RepeatEnum })
   repeat: RepeatEnum;
@@ -40,10 +40,10 @@ export class Invoice extends BaseEntity {
   paidInstallments: number;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  balance: number;
+  balance: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  total: number;
+  total: string;
 
   @Column({ type: "enum", enum: InvoiceStatusEnum })
   status: InvoiceStatusEnum;

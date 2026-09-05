@@ -349,7 +349,7 @@ describe("MoneyResolver", () => {
       expect(result.tag).toBe("original");
     });
 
-    it.each(["objective", "description", "balance"] as const)(
+    it.each(["objective", "description"] as const)(
       "atualiza %s quando um valor diferente é enviado",
       async (field) => {
         const money = makeMoney({ [field]: "valor-antigo" });
@@ -377,41 +377,6 @@ describe("MoneyResolver", () => {
       }
     );
 
-    it("[balance é obrigatório na entidade] null enviado para balance é ignorado — mantém o valor atual, não limpa", async () => {
-      const money = makeMoney({ balance: "100.00" });
-      setupEm({ findOneResult: money });
-
-      const result = await resolver.updateMoney(makeContext(), "money-1", {
-        balance: null,
-      });
-
-      expect(result.balance).toBe("100.00");
-    });
-
-    it("[INCONSISTÊNCIA DOCUMENTADA] balance não verifica se o valor é diferente do atual, só se ambos são truthy — reatribui mesmo quando o valor enviado é igual", async () => {
-      const money = makeMoney({ balance: "100.00" });
-      const em = setupEm({ findOneResult: money });
-
-      await resolver.updateMoney(makeContext(), "money-1", {
-        balance: "100.00",
-      });
-
-      expect(em.save).toHaveBeenCalledWith(
-        expect.objectContaining({ balance: "100.00" })
-      );
-    });
-
-    it("[BUG DOCUMENTADO] se o balance atual (na entidade) for uma string vazia, a atualização é silenciosamente ignorada mesmo com um novo valor válido", async () => {
-      const money = makeMoney({ balance: "" });
-      setupEm({ findOneResult: money });
-
-      const result = await resolver.updateMoney(makeContext(), "money-1", {
-        balance: "50.00",
-      });
-
-      expect(result.balance).toBe("");
-    });
-
     it("atualiza múltiplos campos simultaneamente sem afetar os demais", async () => {
       const money = makeMoney({
         tag: "antigo",
@@ -423,11 +388,9 @@ describe("MoneyResolver", () => {
 
       const result = await resolver.updateMoney(makeContext(), "money-1", {
         tag: "novo",
-        balance: "20.00",
       });
 
       expect(result.tag).toBe("novo");
-      expect(result.balance).toBe("20.00");
       expect(result.objective).toBe("objetivo-antigo");
       expect(result.description).toBe("descricao-antiga");
     });

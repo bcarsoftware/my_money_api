@@ -16,7 +16,7 @@ function makeBankBox(overrides: Partial<BankBox> = {}): BankBox {
     updatedAt: new Date("2025-02-02T12:00:00Z"),
     deletedAt: null,
     bank: null as unknown as BankBox, // não usado no DTO
-    ...overrides
+    ...overrides,
   } as BankBox;
 }
 

@@ -10,10 +10,12 @@ import { type MyContext } from "@/context/MyContext";
 import { Money } from "@/entities/Money";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { MoneyDto, PaginatedMoney } from "@/resolvers/money/dto/MoneyDto";
+import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { ILike } from "typeorm";
+import { toMoneyDto } from "./dto/toMoneyDto";
 
 @Resolver()
 export class MoneyResolver {
@@ -32,11 +34,13 @@ export class MoneyResolver {
           ...(tag ? { tag: ILike(`%${tag}%`) } : {}),
         };
 
-        const [items, total] = await em.findAndCount(Money, {
+        const [moneys, total] = await em.findAndCount(Money, {
           where,
           take: limit,
           skip: offset,
         });
+
+        const items = moneys.map((money) => toMoneyDto(money));
 
         return { items, total };
       } catch (error) {
@@ -57,9 +61,10 @@ export class MoneyResolver {
         const money = em.create(Money, {
           ...input,
           userId: context.userId,
+          balance: clearDecimal(input.balance),
         });
-        await em.save(money);
-        return money;
+        const newMoney = await em.save(money);
+        return toMoneyDto(newMoney);
       } catch (error) {
         console.log("Error occurred in createMoney:", error);
         throw error;
@@ -89,11 +94,9 @@ export class MoneyResolver {
           input.description,
           money.description
         );
-        money.balance =
-          input.balance && money.balance ? input.balance : money.balance;
 
-        await em.save(money);
-        return money;
+        const uptMoney = await em.save(money);
+        return toMoneyDto(uptMoney);
       } catch (error) {
         console.log("Error occurred in updateMoney:", error);
         throw error;
