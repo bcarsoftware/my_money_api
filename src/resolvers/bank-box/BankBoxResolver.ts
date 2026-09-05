@@ -9,6 +9,7 @@ import {
   BankBoxDto,
   PaginatedBankBoxDto,
 } from "@/resolvers/bank-box/dto/BankBoxDto";
+import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
@@ -65,6 +66,7 @@ export class BankBoxResolver {
         const bankBox = em.create(BankBox, {
           ...input,
           userId: context.userId,
+          balance: clearDecimal(input.balance),
         });
 
         const newBankBox = await em.save(bankBox);
@@ -99,7 +101,6 @@ export class BankBoxResolver {
           input.objective,
           bankBox.objective
         );
-        bankBox.balance = input.balance ?? bankBox.balance;
 
         const uptBankBox = await em.save(bankBox);
         return toBankBoxDto(uptBankBox);

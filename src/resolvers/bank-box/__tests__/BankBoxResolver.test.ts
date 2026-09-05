@@ -13,7 +13,7 @@ import {
   UpdateBankBoxInput,
 } from "../BankBoxInputs";
 import { BankBoxResolver } from "../BankBoxResolver";
-import { BankBoxDto, PaginatedBankBoxDto } from "../dto/BankBoxDto";
+import { PaginatedBankBoxDto } from "../dto/BankBoxDto";
 
 // ============================================================
 // Mocks (devem vir antes dos imports das funções mockadas)
@@ -378,7 +378,6 @@ describe("BankBoxResolver", () => {
       bankId: "bank-456",
       tag: "Tag Atualizada",
       description: "Nova descrição",
-      balance: "9999.99",
     };
 
     it("deve atualizar um BankBox existente com sucesso", async () => {
@@ -389,7 +388,6 @@ describe("BankBoxResolver", () => {
         ...mockBankBox,
         tag: updateInput.tag,
         description: updateInput.description,
-        balance: updateInput.balance,
       });
 
       mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
@@ -419,7 +417,6 @@ describe("BankBoxResolver", () => {
       });
 
       expect(mockBankBox.tag).toBe(updateInput.tag);
-      expect(mockBankBox.balance).toBe(updateInput.balance);
 
       expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
         updateInput.description,

@@ -475,38 +475,6 @@ describe("UpdateBankBoxInput", () => {
     });
   });
 
-  describe("balance (opcional)", () => {
-    it("é opcional — omitido não gera erro", async () => {
-      const input = { balance: undefined };
-      const errors = await validateInput(UpdateBankBoxInput, input);
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
-    });
-
-    it("é opcional - não aceita negativos", async () => {
-      const input = { balance: "-100.00" };
-      const errors = await validateInput(UpdateBankBoxInput, input);
-      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
-    });
-
-    it.each(["100.00", "0.00", "1,234.56", "50.00"])(
-      "aceita formato de moeda válido: %s",
-      async (value) => {
-        const input = { balance: value };
-        const errors = await validateInput(UpdateBankBoxInput, input);
-        expect(constraintsFor(errors, "balance")).toHaveLength(0);
-      }
-    );
-
-    it.each(["não é moeda", "", "100.5"])(
-      "rejeita formato de moeda inválido: %s",
-      async (value) => {
-        const input = { balance: value };
-        const errors = await validateInput(UpdateBankBoxInput, input);
-        expect(constraintsFor(errors, "balance")).toContain("isCurrency");
-      }
-    );
-  });
-
   describe("múltiplos erros", () => {
     it("acumula erros de campos diferentes", async () => {
       const input = {
@@ -514,12 +482,11 @@ describe("UpdateBankBoxInput", () => {
         tag: "a".repeat(65),
         objective: "inválido",
         description: "a".repeat(257),
-        balance: "inválido",
       };
       const errors = await validateInput(UpdateBankBoxInput, input);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "bankId", "description", "objective", "tag"].sort()
+        ["bankId", "description", "objective", "tag"].sort()
       );
     });
   });
