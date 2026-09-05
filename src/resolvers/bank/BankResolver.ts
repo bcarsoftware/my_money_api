@@ -4,6 +4,7 @@ import { ILike } from "typeorm";
 import { type MyContext } from "@/context/MyContext";
 import { Bank } from "@/entities/Bank";
 import { CreateBankInput, UpdateBankInput } from "@/resolvers/bank/BankInputs";
+import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { MessageResponse } from "../MessageResponse";
@@ -59,6 +60,7 @@ export class BankResolver {
       try {
         const bank = em.create(Bank, {
           ...input,
+          balance: clearDecimal(input.balance),
           userId,
         });
         const newBank = await em.save(bank);
@@ -88,7 +90,6 @@ export class BankResolver {
         bank.accountType = input.accountType ?? bank.accountType;
         bank.accountNumber = input.accountNumber ?? bank.accountNumber;
         bank.agency = input.agency ?? bank.agency;
-        bank.balance = input.balance ?? bank.balance;
 
         const uptBank = await em.save(bank);
         return toBankDto(uptBank);

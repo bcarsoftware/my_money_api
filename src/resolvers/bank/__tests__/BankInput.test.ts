@@ -393,7 +393,6 @@ describe("UpdateBankInput", () => {
         accountType: AccountEnum.SAVING,
         accountNumber: "987654",
         agency: "0002",
-        balance: "2500.00",
       });
       expect(errors).toHaveLength(0);
     });
@@ -526,38 +525,6 @@ describe("UpdateBankInput", () => {
         agency: undefined,
       });
       expect(constraintsFor(errors, "agency")).toHaveLength(0);
-    });
-  });
-
-  describe("balance (opcional)", () => {
-    it.each(["100.00", "0.00", "1,234.56", "50.00"])(
-      "aceita formato de moeda válido: %s",
-      async (value) => {
-        const errors = await validateInput(UpdateBankInput, { balance: value });
-        expect(constraintsFor(errors, "balance")).toHaveLength(0);
-      }
-    );
-
-    it.each(["não é número", "", "100.5"])(
-      "rejeita formato de moeda inválido: %s",
-      async (value) => {
-        const errors = await validateInput(UpdateBankInput, { balance: value });
-        expect(constraintsFor(errors, "balance")).toContain("isCurrency");
-      }
-    );
-
-    it("aceita undefined (opcional)", async () => {
-      const errors = await validateInput(UpdateBankInput, {
-        balance: undefined,
-      });
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
-    });
-
-    it("rejeita formato de moeda inválido", async () => {
-      const errors = await validateInput(UpdateBankInput, {
-        balance: "-100.00",
-      });
-      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
   });
 });

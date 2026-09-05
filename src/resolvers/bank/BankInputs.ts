@@ -111,12 +111,4 @@ export class UpdateBankInput {
   @MaxLength(32, { message: "Agency must be at most 32 characters long." })
   @IsNumberString({}, { message: "Agency must contain only numbers." })
   agency?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsCurrency(
-    { allow_negatives: false },
-    { message: "Balance must be a valid currency amount." }
-  )
-  balance?: string;
 }

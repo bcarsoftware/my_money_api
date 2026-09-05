@@ -237,7 +237,6 @@ describe("BankResolver", () => {
   describe("updateBank", () => {
     const updateInput: UpdateBankInput = {
       name: "Novo Nome",
-      balance: "2000.00",
     };
 
     it("deve atualizar um banco existente com sucesso", async () => {
@@ -268,7 +267,6 @@ describe("BankResolver", () => {
         where: { id: bankId, userId },
       });
       expect(mockBank.name).toBe("Novo Nome");
-      expect(mockBank.balance).toBe("2000.00");
       expect(mockEm.save).toHaveBeenCalledWith(mockBank);
     });
 
