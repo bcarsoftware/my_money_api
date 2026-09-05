@@ -282,7 +282,6 @@ describe("UpdateMoneyInput", () => {
         tag: "novo-nome",
         objective: "500.00",
         description: "Atualizado",
-        balance: "250.00",
       });
       expect(errors).toHaveLength(0);
     });
@@ -341,46 +340,17 @@ describe("UpdateMoneyInput", () => {
     });
   });
 
-  describe("balance", () => {
-    it("rejeita balance negativo", async () => {
-      const errors = await validateInput(UpdateMoneyInput, {
-        balance: "-100.00",
-      });
-      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
-    });
-
-    it("rejeita formato de moeda inválido quando informado", async () => {
-      const errors = await validateInput(UpdateMoneyInput, {
-        balance: "não é moeda",
-      });
-      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
-    });
-
-    it("aceita formato de moeda válido quando informado", async () => {
-      const errors = await validateInput(UpdateMoneyInput, {
-        balance: "999.99",
-      });
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
-    });
-
-    it("aceita null explicitamente", async () => {
-      const errors = await validateInput(UpdateMoneyInput, { balance: null });
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
-    });
-  });
-
   describe("múltiplos erros simultâneos", () => {
     it("acumula erros independentes de campos diferentes sem interferência cruzada", async () => {
       const errors = await validateInput(UpdateMoneyInput, {
         tag: "a".repeat(65),
         objective: "inválido",
         description: "a".repeat(300),
-        balance: "também inválido",
       });
 
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "description", "objective", "tag"].sort()
+        ["description", "objective", "tag"].sort()
       );
     });
   });

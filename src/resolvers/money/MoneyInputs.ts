@@ -71,12 +71,4 @@ export class UpdateMoneyInput {
     message: "Description must be at most 256 characters long.",
   })
   description?: string | null;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsCurrency(
-    { allow_negatives: false },
-    { message: "Balance must be a valid currency format." }
-  )
-  balance?: string | null;
 }

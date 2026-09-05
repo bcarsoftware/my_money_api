@@ -10,6 +10,7 @@ import { type MyContext } from "@/context/MyContext";
 import { Money } from "@/entities/Money";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { MoneyDto, PaginatedMoney } from "@/resolvers/money/dto/MoneyDto";
+import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
@@ -60,6 +61,7 @@ export class MoneyResolver {
         const money = em.create(Money, {
           ...input,
           userId: context.userId,
+          balance: clearDecimal(input.balance),
         });
         const newMoney = await em.save(money);
         return toMoneyDto(newMoney);
@@ -92,8 +94,6 @@ export class MoneyResolver {
           input.description,
           money.description
         );
-        money.balance =
-          input.balance && money.balance ? input.balance : money.balance;
 
         const uptMoney = await em.save(money);
         return toMoneyDto(uptMoney);
