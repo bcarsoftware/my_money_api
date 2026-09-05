@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
   type Relation,
 } from "typeorm";
-import { GenericBank } from "./GenericBank";
+import { GenericBank } from "@/entities/GenericBank";
 
 @Entity("generic_bank_info")
 export class GenericBankInfo extends BaseEntity {

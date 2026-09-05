@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { GenericBank } from "./GenericBank";
+import { GenericBank } from "@/entities/GenericBank";
 
 @Entity("generic_bank_boxes")
 export class GenericBankBox extends BaseEntity {
