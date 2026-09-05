@@ -112,7 +112,9 @@ describe("PixResolver", () => {
     };
 
     it("deve retornar uma lista paginada de PIX com filtro de tag", async () => {
-      const mockItems = [mockPix];
+      const mockItems = [
+        { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
+      ];
       const mockTotal = 1;
       mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
@@ -139,7 +141,9 @@ describe("PixResolver", () => {
 
     it("deve retornar uma lista paginada de PIX sem filtro de tag", async () => {
       const inputSemTag: ListPixInput = { limit: 5, offset: 0 };
-      const mockItems = [mockPix];
+      const mockItems = [
+        { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
+      ];
       const mockTotal = 1;
       mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
@@ -179,7 +183,9 @@ describe("PixResolver", () => {
           offset: 0,
           bankId,
         };
-        const mockItems = [mockPix];
+        const mockItems = [
+          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
+        ];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
@@ -202,7 +208,9 @@ describe("PixResolver", () => {
 
       it("deve ignorar bankId quando não fornecido (undefined)", async () => {
         const inputSemBankId: ListPixInput = { limit: 5, offset: 0 };
-        const mockItems = [mockPix];
+        const mockItems = [
+          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
+        ];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
@@ -228,7 +236,9 @@ describe("PixResolver", () => {
           bankId,
           tag: "pix",
         };
-        const mockItems = [mockPix];
+        const mockItems = [
+          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
+        ];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
@@ -256,7 +266,9 @@ describe("PixResolver", () => {
           offset: 0,
           bankId: undefined,
         };
-        const mockItems = [mockPix];
+        const mockItems = [
+          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
+        ];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
@@ -289,7 +301,7 @@ describe("PixResolver", () => {
     };
 
     it("deve criar um novo PIX com sucesso", async () => {
-      const createdPix = { ...mockPix };
+      const createdPix = { ...mockPix, createdAt: mockPix.createdAt.toISOString() };
       mockEm.create.mockReturnValue(createdPix);
       mockEm.save.mockResolvedValue(createdPix);
 

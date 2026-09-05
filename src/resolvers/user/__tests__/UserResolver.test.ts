@@ -6,7 +6,7 @@ import { comparePassword, hashPassword } from "@/utils/passwordUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { toUserDto } from "@/resolvers/user/dto/toUserDto";
 import { MyContext } from "@/context/MyContext";
-import { UserInput, UserLoginInput } from "@/resolvers/user/UserInputs";
+import { CreateUserInput, UpdateUserInput, UserLoginInput } from "@/resolvers/user/UserInputs";
 import { GenderEnum } from "@/enums/GenderEnum";
 import { cookieOptions } from "@/constants/cookies";
 
@@ -179,9 +179,9 @@ describe("UserResolver Test Suite", () => {
   });
 
   describe("createUser", () => {
-    const createInput: UserInput = {
+    const createInput: CreateUserInput = {
       name: "Abel Carvalho",
-      dateBorn: new Date("1995-05-15T00:00:00.000Z"),
+      dateBorn: "1995-05-15T00:00:00.000Z",
       gender: GenderEnum.MALE,
       email: "abel@example.com",
       username: "abelcarvalho",
@@ -230,9 +230,9 @@ describe("UserResolver Test Suite", () => {
   });
 
   describe("updateUser", () => {
-    const updateInput: UserInput = {
+    const updateInput: UpdateUserInput = {
       name: "Abel Atualizado",
-      dateBorn: new Date("1996-01-01T00:00:00.000Z"),
+      dateBorn: "1996-01-01T00:00:00.000Z",
       gender: GenderEnum.MALE,
       email: "novo_email@example.com",
       username: "abel_novo",

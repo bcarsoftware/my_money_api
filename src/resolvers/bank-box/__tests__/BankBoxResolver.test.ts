@@ -102,7 +102,7 @@ describe("BankBoxResolver", () => {
       objective: bankBox.objective,
       description: bankBox.description,
       balance: bankBox.balance,
-      createdAt: bankBox.createdAt,
+      createdAt: bankBox.createdAt.toISOString(),
     }));
   });
 
@@ -135,7 +135,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -173,7 +173,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -207,7 +207,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -247,7 +247,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -284,7 +284,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({

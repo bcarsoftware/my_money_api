@@ -10,7 +10,15 @@ import {
   MaxLength,
   Min,
 } from "class-validator";
-import { Field, InputType } from "type-graphql";
+import { Field, InputType, registerEnumType } from "type-graphql";
+
+registerEnumType(InvoiceStatusEnum, {
+  name: "InvoiceStatusEnum",
+});
+
+registerEnumType(RepeatEnum, {
+  name: "RepeatEnum",
+});
 
 @InputType()
 export class CreateInvoiceInput {

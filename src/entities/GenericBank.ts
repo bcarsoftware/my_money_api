@@ -9,6 +9,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  type Relation,
   UpdateDateColumn,
 } from "typeorm";
 import { Bank } from "./Bank";
@@ -46,7 +47,7 @@ export class GenericBank extends BaseEntity {
     () => GenericBankInfo,
     (genericBankInfo) => genericBankInfo.genericBank
   )
-  bankInfo: GenericBankInfo[];
+  bankInfo: Relation<GenericBankInfo[]>;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

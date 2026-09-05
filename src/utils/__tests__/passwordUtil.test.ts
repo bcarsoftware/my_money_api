@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 
 import { hashPassword, comparePassword } from "@/utils/passwordUtil";
-import { SALT_ROUNTS_INVALID } from "@/constants/constants";
+import { SALT_ROUNDS_INVALID } from "@/constants/constants";
 
 jest.mock("bcrypt", () => ({
   hash: jest.fn(),
@@ -41,7 +41,7 @@ describe("Password Security & Hashing Utilities", () => {
         process.env.SALT_ROUNDS = undefined as unknown as string;
 
         await expect(hashPassword(mockPassword)).rejects.toThrow(
-          SALT_ROUNTS_INVALID
+          SALT_ROUNDS_INVALID
         );
         expect(bcrypt.hash).not.toHaveBeenCalled();
       });
@@ -50,7 +50,7 @@ describe("Password Security & Hashing Utilities", () => {
         process.env.SALT_ROUNDS = "";
 
         await expect(hashPassword(mockPassword)).rejects.toThrow(
-          SALT_ROUNTS_INVALID
+          SALT_ROUNDS_INVALID
         );
         expect(bcrypt.hash).not.toHaveBeenCalled();
       });
@@ -61,7 +61,7 @@ describe("Password Security & Hashing Utilities", () => {
           process.env.SALT_ROUNDS = invalidRounds;
 
           await expect(hashPassword(mockPassword)).rejects.toThrow(
-            SALT_ROUNTS_INVALID
+            SALT_ROUNDS_INVALID
           );
           expect(bcrypt.hash).not.toHaveBeenCalled();
         }

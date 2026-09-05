@@ -7,7 +7,7 @@ import {
   CreatePaymentInput,
   ListPaymentInput,
   UpdatePaymentInput,
-} from "@/resolvers/payment/PaymentInput";
+} from "@/resolvers/payment/PaymentInputs";
 import { validate, ValidationError } from "class-validator";
 
 // ============================================================

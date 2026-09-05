@@ -13,6 +13,7 @@ import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
 import { MessageResponse } from "../MessageResponse";
 import { pixChecker } from "./pixUtils";
+import { toPixDto } from "./dto/toPixDto";
 
 @Resolver()
 export class PixResolver {
@@ -32,11 +33,13 @@ export class PixResolver {
           ...(tag ? { tag: ILike(`%${tag}%`) } : {}),
         };
 
-        const [items, total] = await em.findAndCount(Pix, {
+        const [pixs, total] = await em.findAndCount(Pix, {
           where,
           take: limit,
           skip: offset,
         });
+
+        const items = pixs.map((pix) => toPixDto(pix));
 
         return { items, total };
       } catch (error) {
@@ -60,8 +63,8 @@ export class PixResolver {
           ...input,
           userId: context.userId,
         });
-        await em.save(pix);
-        return pix;
+        const newPix = await em.save(pix);
+        return toPixDto(newPix);
       } catch (error) {
         console.log("Error occurred in createPix:", error);
         throw error;
@@ -92,8 +95,8 @@ export class PixResolver {
         pix.typeKey = input.typeKey ?? pix.typeKey;
         pix.key = input.key ?? pix.key;
 
-        await em.save(pix);
-        return pix;
+        const uptPix = await em.save(pix);
+        return toPixDto(uptPix);
       } catch (error) {
         console.log("Error occurred in updatePix:", error);
         throw error;

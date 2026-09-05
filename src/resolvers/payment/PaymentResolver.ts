@@ -5,6 +5,11 @@ import {
 import { type MyContext } from "@/context/MyContext";
 import { Payment } from "@/entities/Payment";
 import { PaymentEnum } from "@/enums/PaymentEnum";
+import {
+  CreatePaymentInput,
+  ListPaymentInput,
+  UpdatePaymentInput,
+} from "@/resolvers/payment/PaymentInputs";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { isValidMonthAndDay } from "@/utils/dateUtil";
 import { loggedContext } from "@/utils/loggedContext";
@@ -14,11 +19,6 @@ import { ILike } from "typeorm";
 import { MessageResponse } from "../MessageResponse";
 import { PaginatedPaymentsDto, PaymentDto } from "./dto/PaymentDto";
 import { toPaymentDto } from "./dto/toPaymentDto";
-import {
-  CreatePaymentInput,
-  ListPaymentInput,
-  UpdatePaymentInput,
-} from "@/resolvers/payment/PaymentInput";
 
 @Resolver()
 export class PaymentResolver {

@@ -14,7 +14,7 @@ import {
   CreatePaymentInput,
   ListPaymentInput,
   UpdatePaymentInput,
-} from "@/resolvers/payment/PaymentInput";
+} from "@/resolvers/payment/PaymentInputs";
 import { PaymentResolver } from "@/resolvers/payment/PaymentResolver";
 import {
   PaginatedPaymentsDto,
