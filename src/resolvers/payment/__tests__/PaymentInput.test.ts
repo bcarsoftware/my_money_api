@@ -1,13 +1,14 @@
 import "reflect-metadata";
 
-import { validate, ValidationError } from "class-validator";
 import { MonthEnum } from "@/enums/MonthEnum";
+import { PaymentEnum } from "@/enums/PaymentEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
   CreatePaymentInput,
   ListPaymentInput,
   UpdatePaymentInput,
 } from "@/resolvers/payment/PaymentInput";
+import { validate, ValidationError } from "class-validator";
 
 // ============================================================
 // Helpers
@@ -465,6 +466,28 @@ describe("ListPaymentInput", () => {
     });
   });
 
+  describe("status (opcional)", () => {
+    it("aceita todos os valores do enum PaymentEnum", async () => {
+      for (const status of Object.values(PaymentEnum)) {
+        const input = { status };
+        const errors = await validateInput(UpdatePaymentInput, input);
+        expect(constraintsFor(errors, "status")).toHaveLength(0);
+      }
+    });
+
+    it("rejeita valor inválido (não enum)", async () => {
+      const input = { status: "INVALIDO" as unknown as PaymentEnum };
+      const errors = await validateInput(UpdatePaymentInput, input);
+      expect(constraintsFor(errors, "status")).toContain("isEnum");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const input = { status: undefined };
+      const errors = await validateInput(UpdatePaymentInput, input);
+      expect(constraintsFor(errors, "status")).toHaveLength(0);
+    });
+  });
+
   describe("múltiplos erros", () => {
     it("acumula erros de diferentes campos", async () => {
       const input = {
@@ -473,11 +496,12 @@ describe("ListPaymentInput", () => {
         name: "a".repeat(65),
         repeat: "INVALIDO" as unknown as RepeatEnum,
         month: "INVALIDO" as unknown as MonthEnum,
+        status: "INVALIDO" as unknown as PaymentEnum,
       };
       const errors = await validateInput(ListPaymentInput, input);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["limit", "month", "name", "offset", "repeat"].sort()
+        ["limit", "month", "name", "offset", "repeat", "status"].sort()
       );
     });
   });
@@ -667,6 +691,28 @@ describe("UpdatePaymentInput", () => {
     });
   });
 
+  describe("status (opcional)", () => {
+    it("aceita todos os valores do enum PaymentEnum", async () => {
+      for (const status of Object.values(PaymentEnum)) {
+        const input = { status };
+        const errors = await validateInput(UpdatePaymentInput, input);
+        expect(constraintsFor(errors, "status")).toHaveLength(0);
+      }
+    });
+
+    it("rejeita valor inválido (não enum)", async () => {
+      const input = { status: "INVALIDO" as unknown as PaymentEnum };
+      const errors = await validateInput(UpdatePaymentInput, input);
+      expect(constraintsFor(errors, "status")).toContain("isEnum");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const input = { status: undefined };
+      const errors = await validateInput(UpdatePaymentInput, input);
+      expect(constraintsFor(errors, "status")).toHaveLength(0);
+    });
+  });
+
   describe("múltiplos erros", () => {
     it("acumula erros de diferentes campos", async () => {
       const input = {
@@ -676,11 +722,20 @@ describe("UpdatePaymentInput", () => {
         balance: "-10.00",
         day: 0,
         month: "INVALIDO" as unknown as MonthEnum,
+        status: "INVALIDO" as unknown as PaymentEnum,
       };
       const errors = await validateInput(UpdatePaymentInput, input);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "day", "description", "month", "name", "repeat"].sort()
+        [
+          "balance",
+          "day",
+          "description",
+          "month",
+          "name",
+          "repeat",
+          "status",
+        ].sort()
       );
     });
   });

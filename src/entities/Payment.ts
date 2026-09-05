@@ -1,4 +1,5 @@
 import { MonthEnum } from "@/enums/MonthEnum";
+import { PaymentEnum } from "@/enums/PaymentEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
   BaseEntity,
@@ -41,6 +42,9 @@ export class Payment extends BaseEntity {
 
   @Column({ type: "enum", enum: MonthEnum })
   month: MonthEnum;
+
+  @Column({ type: "enum", enum: PaymentEnum })
+  status: PaymentEnum;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

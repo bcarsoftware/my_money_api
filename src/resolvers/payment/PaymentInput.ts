@@ -1,4 +1,5 @@
 import { MonthEnum } from "@/enums/MonthEnum";
+import { PaymentEnum } from "@/enums/PaymentEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
   IsCurrency,
@@ -79,6 +80,11 @@ export class ListPaymentInput {
   @IsOptional()
   @IsEnum(MonthEnum, { message: "Month must be a valid MonthEnum value." })
   month?: MonthEnum;
+
+  @Field(() => PaymentEnum, { nullable: true })
+  @IsOptional()
+  @IsEnum(PaymentEnum, { message: "Status must be a valid PaymentEnum value." })
+  status?: PaymentEnum;
 }
 
 @InputType()
@@ -119,4 +125,9 @@ export class UpdatePaymentInput {
   @IsOptional()
   @IsEnum(MonthEnum, { message: "Month must be a valid MonthEnum value." })
   month?: MonthEnum;
+
+  @Field(() => PaymentEnum, { nullable: true })
+  @IsOptional()
+  @IsEnum(PaymentEnum, { message: "Status must be a valid PaymentEnum value." })
+  status?: PaymentEnum;
 }
