@@ -31,8 +31,6 @@ export class InvoiceResolver {
     return await loggedContext(context, async (em) => {
       try {
         const where = {
-          limit,
-          offset,
           userId,
           ...(input.status && { status: input.status }),
           ...(input.repeat && { repeat: input.repeat }),
@@ -117,8 +115,13 @@ export class InvoiceResolver {
     @Ctx() context: MyContext,
     @Arg("input", () => InvoicePayInput) input: InvoicePayInput
   ): Promise<InvoiceDto> {
-    if ((input.payInvoice && input.isRefund) || (!input.payInvoice && !input.isRefund))
-      throw new Error("You cannot pay and refund the same invoice at the same time.");
+    if (
+      (input.payInvoice && input.isRefund) ||
+      (!input.payInvoice && !input.isRefund)
+    )
+      throw new Error(
+        "You cannot pay and refund the same invoice at the same time."
+      );
 
     return await loggedContext(context, async (em) => {
       const invoice = await em.findOne(Invoice, {
@@ -132,7 +135,7 @@ export class InvoiceResolver {
         throw new Error(USER_BANK_NOT_MATCH);
 
       try {
-        const increment = input.isRefund ? -invoice.installments : 1;
+        const increment = input.isRefund ? -1 : 1;
 
         if (input.payInvoice) invoice.paidInstallments += increment;
 
