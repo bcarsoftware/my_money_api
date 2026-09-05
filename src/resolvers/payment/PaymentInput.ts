@@ -16,10 +16,6 @@ import { Field, InputType } from "type-graphql";
 @InputType()
 export class CreatePaymentInput {
   @Field(() => String)
-  @IsUUID("4", { message: "UserId must be a valid UUID." })
-  userId: string;
-
-  @Field(() => String)
   @MaxLength(64, { message: "Name must be at most 64 characters long." })
   name: string;
 

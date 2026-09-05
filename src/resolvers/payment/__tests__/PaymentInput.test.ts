@@ -69,25 +69,10 @@ describe("CreatePaymentInput", () => {
       expect(constraintsFor(errors, "userId")).toHaveLength(0);
     });
 
-    it("rejeita UUID com versão diferente de 4", async () => {
-      const payload = {
-        ...validPayload,
-        userId: "550e8400-e29b-11d4-a716-446655440000",
-      };
-      const errors = await validateInput(CreatePaymentInput, payload);
-      expect(constraintsFor(errors, "userId")).toContain("isUuid");
-    });
-
-    it("rejeita string não UUID", async () => {
-      const payload = { ...validPayload, userId: "nao-e-uuid" };
-      const errors = await validateInput(CreatePaymentInput, payload);
-      expect(constraintsFor(errors, "userId")).toContain("isUuid");
-    });
-
     it("rejeita quando ausente (campo obrigatório)", async () => {
-      const { userId, ...payload } = validPayload;
+      const { name, ...payload } = validPayload;
       const errors = await validateInput(CreatePaymentInput, payload);
-      expect(constraintsFor(errors, "userId")).toContain("isUuid");
+      expect(constraintsFor(errors, "name")).toContain("maxLength");
     });
   });
 
@@ -299,7 +284,6 @@ describe("CreatePaymentInput", () => {
   describe("múltiplos erros simultâneos", () => {
     it("acumula erros de diferentes campos", async () => {
       const payload = {
-        userId: "uuid-invalido",
         name: "a".repeat(65),
         repeat: "INVALIDO" as unknown as RepeatEnum,
         balance: "-50.00",
@@ -309,7 +293,7 @@ describe("CreatePaymentInput", () => {
       const errors = await validateInput(CreatePaymentInput, payload);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "day", "month", "name", "repeat", "userId"].sort()
+        ["balance", "day", "month", "name", "repeat"].sort()
       );
     });
   });
