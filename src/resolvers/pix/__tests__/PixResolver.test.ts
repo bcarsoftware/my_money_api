@@ -199,7 +199,7 @@ describe("PixResolver", () => {
       mockEm.findAndCount.mockRejectedValue(new Error("DB error"));
 
       await expect(resolver.listPix(mockContext, {})).rejects.toThrow(
-        "DB error"
+        "Failed to list pix."
       );
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
@@ -403,7 +403,7 @@ describe("PixResolver", () => {
 
       await expect(
         resolver.createPix(mockContext, createInput)
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to create pix.");
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -525,7 +525,7 @@ describe("PixResolver", () => {
 
       await expect(
         resolver.updatePix(mockContext, pixId, inputValido)
-      ).rejects.toThrow("Not found");
+      ).rejects.toThrow("Failed to update pix.");
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -543,7 +543,7 @@ describe("PixResolver", () => {
 
       await expect(
         resolver.updatePix(mockContext, pixId, inputValido)
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to update pix.");
     });
   });
 
@@ -574,7 +574,7 @@ describe("PixResolver", () => {
       mockEm.findOne.mockResolvedValue(null);
 
       await expect(resolver.deletePix(mockContext, pixId)).rejects.toThrow(
-        "Pix not found"
+        "Failed to delete pix."
       );
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
@@ -589,7 +589,7 @@ describe("PixResolver", () => {
       mockEm.softRemove.mockRejectedValue(new Error("DB error"));
 
       await expect(resolver.deletePix(mockContext, pixId)).rejects.toThrow(
-        "DB error"
+        "Failed to delete pix."
       );
     });
   });

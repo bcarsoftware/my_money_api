@@ -51,7 +51,7 @@ export class PaymentResolver {
         return { items, total };
       } catch (error) {
         console.log("Error occurred in listPayments:", error);
-        throw error;
+        throw new Error("Failed to list payments.");
       }
     });
   }
@@ -77,7 +77,7 @@ export class PaymentResolver {
         return toPaymentDto(newPayment);
       } catch (error) {
         console.log("Error occurred in createPayment:", error);
-        throw error;
+        throw new Error("Failed to create payment.");
       }
     });
   }
@@ -123,7 +123,7 @@ export class PaymentResolver {
         return toPaymentDto(updatedPayment);
       } catch (error) {
         console.log("Error occurred in updatePayment:", error);
-        throw error;
+        throw new Error("Failed to update payment.");
       }
     });
   }
@@ -146,7 +146,7 @@ export class PaymentResolver {
         return { message: "Payment deleted successfully." };
       } catch (error) {
         console.log("Error occurred in deletePayment:", error);
-        throw error;
+        throw new Error("Failed to delete payment.");
       }
     });
   }

@@ -44,7 +44,7 @@ export class PixResolver {
         return { items, total };
       } catch (error) {
         console.log("Error occurred in listPix:", error);
-        throw error;
+        throw new Error("Failed to list pix.");
       }
     });
   }
@@ -67,7 +67,7 @@ export class PixResolver {
         return toPixDto(newPix);
       } catch (error) {
         console.log("Error occurred in createPix:", error);
-        throw error;
+        throw new Error("Failed to create pix.");
       }
     });
   }
@@ -99,7 +99,7 @@ export class PixResolver {
         return toPixDto(uptPix);
       } catch (error) {
         console.log("Error occurred in updatePix:", error);
-        throw error;
+        throw new Error("Failed to update pix.");
       }
     });
   }
@@ -123,7 +123,7 @@ export class PixResolver {
         return { message: "Pix deleted successfully." };
       } catch (error) {
         console.log("Error occurred in deletePix:", error);
-        throw error;
+        throw new Error("Failed to delete pix.");
       }
     });
   }

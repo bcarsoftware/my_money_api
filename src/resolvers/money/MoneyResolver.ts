@@ -45,7 +45,7 @@ export class MoneyResolver {
         return { items, total };
       } catch (error) {
         console.log("Error occurred in listMoney:", error);
-        throw error;
+        throw new Error("Failed to list money.");
       }
     });
   }
@@ -67,7 +67,7 @@ export class MoneyResolver {
         return toMoneyDto(newMoney);
       } catch (error) {
         console.log("Error occurred in createMoney:", error);
-        throw error;
+        throw new Error("Failed to create money.");
       }
     });
   }
@@ -99,7 +99,7 @@ export class MoneyResolver {
         return toMoneyDto(uptMoney);
       } catch (error) {
         console.log("Error occurred in updateMoney:", error);
-        throw error;
+        throw new Error("Failed to update money.");
       }
     });
   }
@@ -121,7 +121,7 @@ export class MoneyResolver {
         return { message: "Money deleted successfully." };
       } catch (error) {
         console.log("Error occurred in deleteMoney:", error);
-        throw error;
+        throw new Error("Failed to delete money.");
       }
     });
   }

@@ -244,7 +244,7 @@ describe("MoneyResolver", () => {
       em.findAndCount.mockRejectedValueOnce(originalError);
 
       await expect(resolver.listMoney(makeContext(), {})).rejects.toThrow(
-        "falha de conexão"
+        "Failed to list money."
       );
     });
   });
@@ -308,7 +308,7 @@ describe("MoneyResolver", () => {
           tag: "aluguel",
           balance: "100.00",
         })
-      ).rejects.toThrow("constraint violation");
+      ).rejects.toThrow("Failed to create money.");
     });
   });
 
@@ -445,7 +445,7 @@ describe("MoneyResolver", () => {
 
       await expect(
         resolver.updateMoney(makeContext(), "inexistente", {})
-      ).rejects.toThrow("EntityNotFoundError");
+      ).rejects.toThrow("Failed to update money.");
     });
   });
 
@@ -475,7 +475,7 @@ describe("MoneyResolver", () => {
 
       await expect(
         resolver.deleteMoney(makeContext(), "inexistente")
-      ).rejects.toThrow("EntityNotFoundError");
+      ).rejects.toThrow("Failed to delete money.");
     });
   });
 });
