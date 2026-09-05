@@ -342,7 +342,7 @@ describe("BankBoxResolver", () => {
         objective: createdBankBox.objective,
         description: createdBankBox.description,
         balance: createdBankBox.balance,
-        createdAt: createdBankBox.createdAt,
+        createdAt: createdBankBox.createdAt.toISOString(),
       });
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -406,7 +406,7 @@ describe("BankBoxResolver", () => {
         objective: updatedBankBox.objective,
         description: updatedBankBox.description,
         balance: updatedBankBox.balance,
-        createdAt: updatedBankBox.createdAt,
+        createdAt: updatedBankBox.createdAt.toISOString(),
       });
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,

@@ -10,19 +10,23 @@ import { ILike } from "typeorm";
 import { CreatePixInput, ListPixInput, UpdatePixInput } from "../PixInputs";
 import { PixResolver } from "../PixResolver";
 import { PaginatedPixDto, PixDto } from "../dto/PixDto";
+import { toPixDto } from "../dto/toPixDto";
 
 // Mocks
 jest.mock("@/utils/loggedContext");
 jest.mock("@/utils/updatableFieldResolve");
+jest.mock("@/resolvers/pix/dto/toPixDto", () => ({
+  toPixDto: jest.fn(),
+}));
 
-// Definição de tipos para os mocks
 const mockedLoggedContext = loggedContext as jest.MockedFunction<
   typeof loggedContext
 >;
 const mockedUpdatableFieldResolve =
   updatableFieldResolve as jest.MockedFunction<typeof updatableFieldResolve>;
+const mockedToPixDto = jest.mocked(toPixDto);
 
-// Tipo para o EntityManager mockado (apenas os métodos usados)
+// Tipo para o EntityManager mockado
 interface MockEntityManager {
   create: jest.Mock;
   save: jest.Mock;
@@ -32,7 +36,6 @@ interface MockEntityManager {
   softRemove: jest.Mock;
 }
 
-// Helper para criar um mock de EntityManager
 function createMockEm(): MockEntityManager {
   return {
     create: jest.fn(),
@@ -47,12 +50,6 @@ function createMockEm(): MockEntityManager {
 const userId = "user-123";
 const pixId = "pix-456";
 
-/**
- * Fábrica de um Pix "fresco" a cada teste. Isso é essencial: o resolver
- * muta diretamente o objeto retornado por findOneOrFail (money.tag = ...,
- * etc.), então reusar a MESMA instância entre testes faz um teste vazar
- * mutação para o próximo.
- */
 function makeMockPix(overrides: Partial<Pix> = {}): Pix {
   return {
     id: pixId,
@@ -68,6 +65,19 @@ function makeMockPix(overrides: Partial<Pix> = {}): Pix {
     bank: null,
     ...overrides,
   } as unknown as Pix;
+}
+
+function makeMockPixDto(overrides: Partial<PixDto> = {}): PixDto {
+  return {
+    id: pixId,
+    bankId: "bank-789",
+    tag: "Pix para emergências",
+    description: "Conta de luz",
+    typeKey: PixEnum.CPF,
+    key: "12345678909",
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
 }
 
 describe("PixResolver", () => {
@@ -86,15 +96,23 @@ describe("PixResolver", () => {
     mockEm = createMockEm();
     mockPix = makeMockPix();
 
-    // Configura o mock do loggedContext para executar o callback com o em mockado
     mockedLoggedContext.mockImplementation(async (ctx, callback) => {
       return callback(mockEm as unknown as Parameters<typeof callback>[0]);
     });
 
-    // Mock do updatableFieldResolve para retornar o valor recebido (comportamento padrão)
     mockedUpdatableFieldResolve.mockImplementation(
       (input, current) => input ?? current
     );
+
+    mockedToPixDto.mockImplementation((pix: Pix) => ({
+      id: pix.id,
+      bankId: pix.bankId,
+      tag: pix.tag,
+      description: pix.description,
+      typeKey: pix.typeKey,
+      key: pix.key,
+      createdAt: pix.createdAt.toISOString(),
+    }));
   });
 
   afterEach(() => {
@@ -112,16 +130,24 @@ describe("PixResolver", () => {
     };
 
     it("deve retornar uma lista paginada de PIX com filtro de tag", async () => {
-      const mockItems = [
-        { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
-      ];
+      const mockItems = [mockPix];
       const mockTotal = 1;
       mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
       const result = await resolver.listPix(mockContext, listInput);
 
+      const expectedItems = mockItems.map((p) => ({
+        id: p.id,
+        bankId: p.bankId,
+        tag: p.tag,
+        description: p.description,
+        typeKey: p.typeKey,
+        key: p.key,
+        createdAt: p.createdAt.toISOString(),
+      }));
+
       expect(result).toEqual<PaginatedPixDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -141,16 +167,24 @@ describe("PixResolver", () => {
 
     it("deve retornar uma lista paginada de PIX sem filtro de tag", async () => {
       const inputSemTag: ListPixInput = { limit: 5, offset: 0 };
-      const mockItems = [
-        { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
-      ];
+      const mockItems = [mockPix];
       const mockTotal = 1;
       mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
       const result = await resolver.listPix(mockContext, inputSemTag);
 
+      const expectedItems = mockItems.map((p) => ({
+        id: p.id,
+        bankId: p.bankId,
+        tag: p.tag,
+        description: p.description,
+        typeKey: p.typeKey,
+        key: p.key,
+        createdAt: p.createdAt.toISOString(),
+      }));
+
       expect(result).toEqual<PaginatedPixDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -174,7 +208,6 @@ describe("PixResolver", () => {
       );
     });
 
-    // ----- NOVOS TESTES PARA bankId -----
     describe("bankId", () => {
       it("deve filtrar por bankId quando fornecido", async () => {
         const bankId = "550e8400-e29b-41d4-a716-446655440000";
@@ -183,16 +216,24 @@ describe("PixResolver", () => {
           offset: 0,
           bankId,
         };
-        const mockItems = [
-          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
-        ];
+        const mockItems = [mockPix];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
         const result = await resolver.listPix(mockContext, inputComBankId);
 
+        const expectedItems = mockItems.map((p) => ({
+          id: p.id,
+          bankId: p.bankId,
+          tag: p.tag,
+          description: p.description,
+          typeKey: p.typeKey,
+          key: p.key,
+          createdAt: p.createdAt.toISOString(),
+        }));
+
         expect(result).toEqual<PaginatedPixDto>({
-          items: mockItems,
+          items: expectedItems,
           total: mockTotal,
         });
 
@@ -208,16 +249,24 @@ describe("PixResolver", () => {
 
       it("deve ignorar bankId quando não fornecido (undefined)", async () => {
         const inputSemBankId: ListPixInput = { limit: 5, offset: 0 };
-        const mockItems = [
-          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
-        ];
+        const mockItems = [mockPix];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
         const result = await resolver.listPix(mockContext, inputSemBankId);
 
+        const expectedItems = mockItems.map((p) => ({
+          id: p.id,
+          bankId: p.bankId,
+          tag: p.tag,
+          description: p.description,
+          typeKey: p.typeKey,
+          key: p.key,
+          createdAt: p.createdAt.toISOString(),
+        }));
+
         expect(result).toEqual<PaginatedPixDto>({
-          items: mockItems,
+          items: expectedItems,
           total: mockTotal,
         });
 
@@ -236,16 +285,24 @@ describe("PixResolver", () => {
           bankId,
           tag: "pix",
         };
-        const mockItems = [
-          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
-        ];
+        const mockItems = [mockPix];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
         const result = await resolver.listPix(mockContext, inputComBankIdETag);
 
+        const expectedItems = mockItems.map((p) => ({
+          id: p.id,
+          bankId: p.bankId,
+          tag: p.tag,
+          description: p.description,
+          typeKey: p.typeKey,
+          key: p.key,
+          createdAt: p.createdAt.toISOString(),
+        }));
+
         expect(result).toEqual<PaginatedPixDto>({
-          items: mockItems,
+          items: expectedItems,
           total: mockTotal,
         });
 
@@ -260,29 +317,40 @@ describe("PixResolver", () => {
         });
       });
 
-      it("deve ignorar bankId quando for undefined (não adicionar ao where)", async () => {
-        const inputComBankIdNull: ListPixInput = {
+      it("deve ignorar bankId quando for undefined", async () => {
+        const inputComBankIdUndefined: ListPixInput = {
           limit: 5,
           offset: 0,
           bankId: undefined,
         };
-        const mockItems = [
-          { ...mockPix, createdAt: mockPix.createdAt.toISOString() },
-        ];
+        const mockItems = [mockPix];
         const mockTotal = 1;
         mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
 
-        const result = await resolver.listPix(mockContext, inputComBankIdNull);
+        const result = await resolver.listPix(
+          mockContext,
+          inputComBankIdUndefined
+        );
+
+        const expectedItems = mockItems.map((p) => ({
+          id: p.id,
+          bankId: p.bankId,
+          tag: p.tag,
+          description: p.description,
+          typeKey: p.typeKey,
+          key: p.key,
+          createdAt: p.createdAt.toISOString(),
+        }));
 
         expect(result).toEqual<PaginatedPixDto>({
-          items: mockItems,
+          items: expectedItems,
           total: mockTotal,
         });
 
         expect(mockEm.findAndCount).toHaveBeenCalledWith(Pix, {
           where: { userId },
-          take: inputComBankIdNull.limit,
-          skip: inputComBankIdNull.offset,
+          take: inputComBankIdUndefined.limit,
+          skip: inputComBankIdUndefined.offset,
         });
       });
     });
@@ -301,13 +369,23 @@ describe("PixResolver", () => {
     };
 
     it("deve criar um novo PIX com sucesso", async () => {
-      const createdPix = { ...mockPix, createdAt: mockPix.createdAt.toISOString() };
+      const createdPix = makeMockPix();
       mockEm.create.mockReturnValue(createdPix);
       mockEm.save.mockResolvedValue(createdPix);
 
       const result = await resolver.createPix(mockContext, createInput);
 
-      expect(result).toEqual<PixDto>(createdPix);
+      const expectedDto = {
+        id: createdPix.id,
+        bankId: createdPix.bankId,
+        tag: createdPix.tag,
+        description: createdPix.description,
+        typeKey: createdPix.typeKey,
+        key: createdPix.key,
+        createdAt: createdPix.createdAt.toISOString(),
+      };
+
+      expect(result).toEqual<PixDto>(expectedDto);
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
@@ -348,12 +426,22 @@ describe("PixResolver", () => {
     it("deve atualizar um PIX existente com sucesso", async () => {
       const originalDescription = mockPix.description;
 
-      const updatedPix = {
-        ...mockPix,
-        tag: updateInput.tag!,
+      const updatedPix = makeMockPix({
+        tag: updateInput.tag,
         description: updateInput.description,
-        key: updateInput.key!,
-        typeKey: updateInput.typeKey!,
+        key: updateInput.key,
+        typeKey: updateInput.typeKey,
+      });
+
+      // O DTO esperado deve ter createdAt como string
+      const expectedDto = {
+        id: updatedPix.id,
+        bankId: updatedPix.bankId,
+        tag: updatedPix.tag,
+        description: updatedPix.description,
+        typeKey: updatedPix.typeKey,
+        key: updatedPix.key,
+        createdAt: updatedPix.createdAt.toISOString(),
       };
 
       mockEm.findOneOrFail.mockResolvedValue(mockPix);
@@ -361,8 +449,7 @@ describe("PixResolver", () => {
 
       const result = await resolver.updatePix(mockContext, pixId, updateInput);
 
-      // Comparação direta – o resultado tem todos os campos da entidade
-      expect(result).toEqual(updatedPix);
+      expect(result).toEqual(expectedDto);
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
@@ -371,12 +458,10 @@ describe("PixResolver", () => {
         where: { id: pixId, userId },
       });
 
-      // Verifica que os campos foram atualizados usando os operadores nullish
       expect(mockPix.tag).toBe(updateInput.tag);
       expect(mockPix.key).toBe(updateInput.key);
       expect(mockPix.typeKey).toBe(updateInput.typeKey);
 
-      // Verifica que description usou updatableFieldResolve
       expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
         updateInput.description,
         originalDescription
@@ -398,10 +483,9 @@ describe("PixResolver", () => {
       await resolver.updatePix(mockContext, pixId, inputParcial);
 
       expect(mockPix.tag).toBe("Tag atualizada");
-      // key e typeKey não devem ser alterados
       expect(mockPix.key).toBe("12345678909");
       expect(mockPix.typeKey).toBe(PixEnum.CPF);
-      // description também não deve mudar
+
       expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
         inputParcial.description,
         originalDescription

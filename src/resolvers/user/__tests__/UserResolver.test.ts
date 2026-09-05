@@ -6,7 +6,11 @@ import { comparePassword, hashPassword } from "@/utils/passwordUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { toUserDto } from "@/resolvers/user/dto/toUserDto";
 import { MyContext } from "@/context/MyContext";
-import { CreateUserInput, UpdateUserInput, UserLoginInput } from "@/resolvers/user/UserInputs";
+import {
+  CreateUserInput,
+  UpdateUserInput,
+  UserLoginInput,
+} from "@/resolvers/user/UserInputs";
 import { GenderEnum } from "@/enums/GenderEnum";
 import { cookieOptions } from "@/constants/cookies";
 
@@ -31,13 +35,13 @@ describe("UserResolver Test Suite", () => {
   const mockUserDto = {
     id: "550e8400-e29b-41d4-a716-446655440000",
     name: "Abel Carvalho",
-    dateBorn: new Date("1995-05-15T00:00:00.000Z"),
+    dateBorn: "1995-05-15T00:00:00.000Z",
     gender: GenderEnum.MALE,
     email: "abel@example.com",
     username: "abelcarvalho",
     salary: "5000.00",
     phone: "+5574999999999",
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    createdAt: "2026-01-01T00:00:00.000Z",
   };
 
   beforeEach(() => {
@@ -201,6 +205,7 @@ describe("UserResolver Test Suite", () => {
       expect(hashPassword).toHaveBeenCalledWith("SecretPassword#2026");
       expect(User.create).toHaveBeenCalledWith({
         ...createInput,
+        dateBorn: new Date(createInput.dateBorn),
         password: "hashed_password",
       });
       expect(toUserDto).toHaveBeenCalledWith(mockUser);
