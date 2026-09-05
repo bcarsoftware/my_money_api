@@ -1,5 +1,6 @@
 import { Payment } from "@/entities/Payment";
 import { MonthEnum } from "@/enums/MonthEnum";
+import { PaymentEnum } from "@/enums/PaymentEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import { toPaymentDto } from "@/resolvers/payment/dto/toPaymentDto";
 
@@ -16,6 +17,7 @@ function makePayment(overrides: Partial<Payment> = {}): Payment {
     balance: "1500.00",
     day: 5,
     month: MonthEnum.JANUARY,
+    status: PaymentEnum.ACTIVE,
     createdAt: new Date("2025-01-01T10:00:00.000Z"),
     updatedAt: new Date("2025-01-02T12:00:00.000Z"),
     deletedAt: null,
@@ -40,6 +42,7 @@ describe("toPaymentDto", () => {
       balance: mockPayment.balance,
       day: mockPayment.day,
       month: mockPayment.month,
+      status: mockPayment.status,
       createdAt: mockPayment.createdAt.toISOString(),
     });
   });
@@ -56,6 +59,7 @@ describe("toPaymentDto", () => {
     expect(dto.balance).toBe(mockPayment.balance);
     expect(dto.day).toBe(mockPayment.day);
     expect(dto.month).toBe(mockPayment.month);
+    expect(dto.status).toBe(mockPayment.status);
     expect(dto.createdAt).toBe(mockPayment.createdAt.toISOString());
   });
 
@@ -104,6 +108,21 @@ describe("toPaymentDto", () => {
       const dto = toPaymentDto(mockPayment);
       expect(dto.month).toBe(month);
     }
+  });
+
+  it("deve funcionar com todos os valores do enum PaymentEnum", () => {
+    const valores = Object.values(PaymentEnum);
+    for (const status of valores) {
+      const mockPayment = makePayment({ status });
+      const dto = toPaymentDto(mockPayment);
+      expect(dto.status).toBe(status);
+    }
+  });
+
+  it("deve falhar com status inválido (não enum)", () => {
+    const mockPayment = makePayment({ status: "INVALIDO" as unknown as PaymentEnum });
+    const dto = toPaymentDto(mockPayment);
+    expect(dto.status).toBe("INVALIDO");
   });
 
   it("deve funcionar com day como número", () => {

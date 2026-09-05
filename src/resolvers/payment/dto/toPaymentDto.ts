@@ -10,5 +10,6 @@ export const toPaymentDto = (payment: Payment): PaymentDto => ({
   balance: payment.balance,
   day: payment.day,
   month: payment.month,
+  status: payment.status,
   createdAt: payment.createdAt.toISOString(),
 });

@@ -1,4 +1,5 @@
 import { MonthEnum } from "@/enums/MonthEnum";
+import { PaymentEnum } from "@/enums/PaymentEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import { Field, ObjectType } from "type-graphql";
 
@@ -27,6 +28,9 @@ export class PaymentDto {
 
   @Field(() => MonthEnum)
   month: MonthEnum;
+
+  @Field(() => PaymentEnum)
+  status: PaymentEnum;
 
   @Field(() => String)
   createdAt: string;
