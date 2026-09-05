@@ -38,11 +38,17 @@ export class CreateInvoiceInput {
   installments: number;
 
   @Field(() => String)
-  @IsCurrency({}, { message: "Balance must be a valid currency value." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Balance must be a valid currency value." }
+  )
   balance: string;
 
   @Field(() => String)
-  @IsCurrency({}, { message: "Total must be a valid currency value." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Total must be a valid currency value." }
+  )
   total: string;
 }
 

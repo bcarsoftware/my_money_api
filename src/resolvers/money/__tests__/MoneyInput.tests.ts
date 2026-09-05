@@ -77,6 +77,14 @@ describe("CreateMoneyInput", () => {
   });
 
   describe("balance", () => {
+    it("rejeita balance negativo", async () => {
+      const errors = await validateInput(CreateMoneyInput, {
+        ...validPayload,
+        balance: "-100.00",
+      });
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+
     it.each(["100.00", "0.00", "1,234.56", "-50.00", "100"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
@@ -115,6 +123,13 @@ describe("CreateMoneyInput", () => {
   });
 
   describe("objective (opcional)", () => {
+    it("é opcional - rejeita objective negativo", async () => {
+      const errors = await validateInput(CreateMoneyInput, {
+        objective: "-100.00",
+      });
+      expect(constraintsFor(errors, "objective")).toContain("isCurrency");
+    });
+
     it("é opcional — ausência não gera erro", async () => {
       const errors = await validateInput(CreateMoneyInput, validPayload);
       expect(constraintsFor(errors, "objective")).toHaveLength(0);
@@ -288,6 +303,13 @@ describe("UpdateMoneyInput", () => {
   });
 
   describe("objective", () => {
+    it("rejeita objective negativo", async () => {
+      const errors = await validateInput(UpdateMoneyInput, {
+        objective: "-100.00",
+      });
+      expect(constraintsFor(errors, "objective")).toContain("isCurrency");
+    });
+
     it("rejeita formato de moeda inválido quando informado", async () => {
       const errors = await validateInput(UpdateMoneyInput, {
         objective: "abc",
@@ -320,6 +342,13 @@ describe("UpdateMoneyInput", () => {
   });
 
   describe("balance", () => {
+    it("rejeita balance negativo", async () => {
+      const errors = await validateInput(UpdateMoneyInput, {
+        balance: "-100.00",
+      });
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+
     it("rejeita formato de moeda inválido quando informado", async () => {
       const errors = await validateInput(UpdateMoneyInput, {
         balance: "não é moeda",

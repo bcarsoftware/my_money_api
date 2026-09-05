@@ -42,7 +42,10 @@ export class CreateBankInput {
   agency: string;
 
   @Field(() => String)
-  @IsCurrency({}, { message: "Balance must be a valid currency amount." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Balance must be a valid currency amount." }
+  )
   balance: string;
 }
 
@@ -111,6 +114,9 @@ export class UpdateBankInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsCurrency({}, { message: "Balance must be a valid currency amount." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Balance must be a valid currency amount." }
+  )
   balance?: string;
 }

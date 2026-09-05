@@ -9,7 +9,10 @@ export class CreateMoneyInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsCurrency({}, { message: "Objective must be a valid currency format." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Objective must be a valid currency format." }
+  )
   objective?: string | null;
 
   @Field(() => String, { nullable: true })
@@ -20,7 +23,10 @@ export class CreateMoneyInput {
   description?: string | null;
 
   @Field(() => String)
-  @IsCurrency({}, { message: "Balance must be a valid currency format." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Balance must be a valid currency format." }
+  )
   balance: string;
 }
 
@@ -53,7 +59,10 @@ export class UpdateMoneyInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsCurrency({}, { message: "Objective must be a valid currency format." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Objective must be a valid currency format." }
+  )
   objective?: string | null;
 
   @Field(() => String, { nullable: true })
@@ -65,6 +74,9 @@ export class UpdateMoneyInput {
 
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsCurrency({}, { message: "Balance must be a valid currency format." })
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Balance must be a valid currency format." }
+  )
   balance?: string | null;
 }

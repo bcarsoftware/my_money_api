@@ -1,11 +1,11 @@
 import "reflect-metadata";
 
-import { validate, ValidationError } from "class-validator";
 import {
   CreateBankBoxInput,
   ListBankBoxInput,
   UpdateBankBoxInput,
 } from "@/resolvers/bank-box/BankBoxInputs";
+import { validate, ValidationError } from "class-validator";
 
 // Helper para validar instâncias
 async function validateInput<T extends object>(
@@ -129,6 +129,12 @@ describe("CreateBankBoxInput", () => {
       const errors = await validateInput(CreateBankBoxInput, payload);
       expect(constraintsFor(errors, "objective")).toHaveLength(0);
     });
+
+    it("rejeita formato de moeda negativo", async () => {
+      const payload = { ...validPayload, objective: "-1,234.56" };
+      const errors = await validateInput(CreateBankBoxInput, payload);
+      expect(constraintsFor(errors, "objective")).toContain("isCurrency");
+    });
   });
 
   describe("description (opcional)", () => {
@@ -158,7 +164,7 @@ describe("CreateBankBoxInput", () => {
   });
 
   describe("balance", () => {
-    it.each(["100.00", "0.00", "1,234.56", "-50.00", "100"])(
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const payload = { ...validPayload, balance: value };
@@ -179,6 +185,12 @@ describe("CreateBankBoxInput", () => {
     it("rejeita quando ausente (campo obrigatório)", async () => {
       const { balance, ...payload } = validPayload;
       const errors = await validateInput(CreateBankBoxInput, payload);
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+
+    it("balance não aceita negativos", async () => {
+      const input = { balance: "-100.00" };
+      const errors = await validateInput(CreateBankBoxInput, input);
       expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
   });
@@ -429,6 +441,12 @@ describe("UpdateBankBoxInput", () => {
       const errors = await validateInput(UpdateBankBoxInput, input);
       expect(constraintsFor(errors, "objective")).toContain("isCurrency");
     });
+
+    it("rejeita objective negativo", async () => {
+      const input = { objective: "-100.00" };
+      const errors = await validateInput(UpdateBankBoxInput, input);
+      expect(constraintsFor(errors, "objective")).toContain("isCurrency");
+    });
   });
 
   describe("description (opcional)", () => {
@@ -464,7 +482,13 @@ describe("UpdateBankBoxInput", () => {
       expect(constraintsFor(errors, "balance")).toHaveLength(0);
     });
 
-    it.each(["100.00", "0.00", "1,234.56", "-50.00"])(
+    it("é opcional - não aceita negativos", async () => {
+      const input = { balance: "-100.00" };
+      const errors = await validateInput(UpdateBankBoxInput, input);
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+
+    it.each(["100.00", "0.00", "1,234.56", "50.00"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const input = { balance: value };

@@ -1,14 +1,14 @@
 import "reflect-metadata";
 
-import { validate, ValidationError } from "class-validator";
 import { InvoiceStatusEnum } from "@/enums/InvoiceStatusEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
   CreateInvoiceInput,
-  UpdateInvoiceInput,
   InvoicePayInput,
   ListInvoiceInput,
+  UpdateInvoiceInput,
 } from "@/resolvers/invoice/InvoiceInputs";
+import { validate, ValidationError } from "class-validator";
 
 // ============================================================
 // Helpers
@@ -207,7 +207,7 @@ describe("CreateInvoiceInput", () => {
   });
 
   describe("balance", () => {
-    it.each(["100.00", "0.00", "1,234.56", "-50.00", "100"])(
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const payload = { ...validPayload, balance: value };
@@ -233,7 +233,7 @@ describe("CreateInvoiceInput", () => {
   });
 
   describe("total", () => {
-    it.each(["100.00", "0.00", "1,234.56", "-50.00", "100"])(
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const payload = { ...validPayload, total: value };
@@ -253,6 +253,12 @@ describe("CreateInvoiceInput", () => {
 
     it("rejeita quando ausente (campo obrigatório)", async () => {
       const { total, ...payload } = validPayload;
+      const errors = await validateInput(CreateInvoiceInput, payload);
+      expect(constraintsFor(errors, "total")).toContain("isCurrency");
+    });
+
+    it("rejeita total negativo", async () => {
+      const payload = { ...validPayload, total: "-100.00" };
       const errors = await validateInput(CreateInvoiceInput, payload);
       expect(constraintsFor(errors, "total")).toContain("isCurrency");
     });

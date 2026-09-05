@@ -1,12 +1,12 @@
 import "reflect-metadata";
 
-import { validate, ValidationError } from "class-validator";
 import { AccountEnum } from "@/enums/AccountEnum";
 import {
   CreateBankInput,
   ListBankInput,
   UpdateBankInput,
 } from "@/resolvers/bank/BankInputs";
+import { validate, ValidationError } from "class-validator";
 
 // Helper para validar instâncias
 async function validateInput<T extends object>(
@@ -204,7 +204,7 @@ describe("CreateBankInput", () => {
   });
 
   describe("balance", () => {
-    it.each(["100.00", "0.00", "1,234.56", "-50.00", "100"])(
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const errors = await validateInput(CreateBankInput, {
@@ -214,6 +214,13 @@ describe("CreateBankInput", () => {
         expect(constraintsFor(errors, "balance")).toHaveLength(0);
       }
     );
+
+    it("rejeita formato de moeda inválido", async () => {
+      const errors = await validateInput(CreateBankInput, {
+        balance: "-100.00",
+      });
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
 
     it.each(["não é número", "", "100.5", "100.000"])(
       "rejeita formato de moeda inválido: %s",
@@ -523,7 +530,7 @@ describe("UpdateBankInput", () => {
   });
 
   describe("balance (opcional)", () => {
-    it.each(["100.00", "0.00", "1,234.56", "-50.00"])(
+    it.each(["100.00", "0.00", "1,234.56", "50.00"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const errors = await validateInput(UpdateBankInput, { balance: value });
@@ -544,6 +551,13 @@ describe("UpdateBankInput", () => {
         balance: undefined,
       });
       expect(constraintsFor(errors, "balance")).toHaveLength(0);
+    });
+
+    it("rejeita formato de moeda inválido", async () => {
+      const errors = await validateInput(UpdateBankInput, {
+        balance: "-100.00",
+      });
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
   });
 });
