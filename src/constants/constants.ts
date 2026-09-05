@@ -18,6 +18,7 @@ export const INVOICE_NOT_FOUND = "Invoice not found.";
 
 export const INVALID_CURRENCY_FORMAT =
   "Invalid currency format. Must be a number with up to 2 decimal places.";
-export const INVALID_DAY_MONTH_COMBINATION = "Invalid day and month combination.";
+export const INVALID_DAY_MONTH_COMBINATION =
+  "Invalid day and month combination.";
 
 export const PAYMENT_NOT_FOUND = "Payment not found.";

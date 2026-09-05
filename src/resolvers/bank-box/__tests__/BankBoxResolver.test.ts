@@ -102,7 +102,7 @@ describe("BankBoxResolver", () => {
       objective: bankBox.objective,
       description: bankBox.description,
       balance: bankBox.balance,
-      createdAt: bankBox.createdAt,
+      createdAt: bankBox.createdAt.toISOString(),
     }));
   });
 
@@ -135,7 +135,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -173,7 +173,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -207,7 +207,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -247,7 +247,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -284,7 +284,7 @@ describe("BankBoxResolver", () => {
         objective: bankBox.objective,
         description: bankBox.description,
         balance: bankBox.balance,
-        createdAt: bankBox.createdAt,
+        createdAt: bankBox.createdAt.toISOString(),
       }));
 
       expect(result).toEqual<PaginatedBankBoxDto>({
@@ -303,7 +303,7 @@ describe("BankBoxResolver", () => {
       mockEm.findAndCount.mockRejectedValue(new Error("DB error"));
 
       await expect(resolver.listBankBox(mockContext, {})).rejects.toThrow(
-        "DB error"
+        "Failed to list bank boxes."
       );
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
@@ -342,7 +342,7 @@ describe("BankBoxResolver", () => {
         objective: createdBankBox.objective,
         description: createdBankBox.description,
         balance: createdBankBox.balance,
-        createdAt: createdBankBox.createdAt,
+        createdAt: createdBankBox.createdAt.toISOString(),
       });
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -361,7 +361,7 @@ describe("BankBoxResolver", () => {
 
       await expect(
         resolver.createBankBox(mockContext, createInput)
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to create bank box.");
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -406,7 +406,7 @@ describe("BankBoxResolver", () => {
         objective: updatedBankBox.objective,
         description: updatedBankBox.description,
         balance: updatedBankBox.balance,
-        createdAt: updatedBankBox.createdAt,
+        createdAt: updatedBankBox.createdAt.toISOString(),
       });
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -523,7 +523,7 @@ describe("BankBoxResolver", () => {
 
       await expect(
         resolver.updateBankBox(mockContext, bankBoxId, updateInput)
-      ).rejects.toThrow("Not found");
+      ).rejects.toThrow("Failed to update bank box.");
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -537,7 +537,7 @@ describe("BankBoxResolver", () => {
 
       await expect(
         resolver.updateBankBox(mockContext, bankBoxId, updateInput)
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to update bank box.");
     });
   });
 
@@ -569,7 +569,7 @@ describe("BankBoxResolver", () => {
 
       await expect(
         resolver.deleteBankBox(mockContext, bankBoxId)
-      ).rejects.toThrow("Not found");
+      ).rejects.toThrow("Failed to delete bank box.");
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
@@ -584,7 +584,7 @@ describe("BankBoxResolver", () => {
 
       await expect(
         resolver.deleteBankBox(mockContext, bankBoxId)
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to delete bank box.");
     });
   });
 });

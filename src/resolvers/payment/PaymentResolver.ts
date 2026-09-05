@@ -5,6 +5,11 @@ import {
 import { type MyContext } from "@/context/MyContext";
 import { Payment } from "@/entities/Payment";
 import { PaymentEnum } from "@/enums/PaymentEnum";
+import {
+  CreatePaymentInput,
+  ListPaymentInput,
+  UpdatePaymentInput,
+} from "@/resolvers/payment/PaymentInputs";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { isValidMonthAndDay } from "@/utils/dateUtil";
 import { loggedContext } from "@/utils/loggedContext";
@@ -14,11 +19,6 @@ import { ILike } from "typeorm";
 import { MessageResponse } from "../MessageResponse";
 import { PaginatedPaymentsDto, PaymentDto } from "./dto/PaymentDto";
 import { toPaymentDto } from "./dto/toPaymentDto";
-import {
-  CreatePaymentInput,
-  ListPaymentInput,
-  UpdatePaymentInput,
-} from "@/resolvers/payment/PaymentInput";
 
 @Resolver()
 export class PaymentResolver {
@@ -51,7 +51,7 @@ export class PaymentResolver {
         return { items, total };
       } catch (error) {
         console.log("Error occurred in listPayments:", error);
-        throw error;
+        throw new Error("Failed to list payments.");
       }
     });
   }
@@ -77,7 +77,7 @@ export class PaymentResolver {
         return toPaymentDto(newPayment);
       } catch (error) {
         console.log("Error occurred in createPayment:", error);
-        throw error;
+        throw new Error("Failed to create payment.");
       }
     });
   }
@@ -123,7 +123,7 @@ export class PaymentResolver {
         return toPaymentDto(updatedPayment);
       } catch (error) {
         console.log("Error occurred in updatePayment:", error);
-        throw error;
+        throw new Error("Failed to update payment.");
       }
     });
   }
@@ -146,7 +146,7 @@ export class PaymentResolver {
         return { message: "Payment deleted successfully." };
       } catch (error) {
         console.log("Error occurred in deletePayment:", error);
-        throw error;
+        throw new Error("Failed to delete payment.");
       }
     });
   }

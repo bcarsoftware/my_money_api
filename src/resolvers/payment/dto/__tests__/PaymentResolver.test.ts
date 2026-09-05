@@ -14,7 +14,7 @@ import {
   CreatePaymentInput,
   ListPaymentInput,
   UpdatePaymentInput,
-} from "@/resolvers/payment/PaymentInput";
+} from "@/resolvers/payment/PaymentInputs";
 import { PaymentResolver } from "@/resolvers/payment/PaymentResolver";
 import {
   PaginatedPaymentsDto,
@@ -341,7 +341,7 @@ describe("PaymentResolver", () => {
       const em = setupEm({ findAndCountError: new Error("DB error") });
 
       await expect(resolver.listPayments(makeContext(), {})).rejects.toThrow(
-        "DB error"
+        "Failed to list payments."
       );
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
@@ -409,7 +409,7 @@ describe("PaymentResolver", () => {
 
       await expect(
         resolver.createPayment(makeContext(), createInput)
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to create payment.");
 
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         expect.any(Object),
@@ -601,7 +601,7 @@ describe("PaymentResolver", () => {
 
       await expect(
         resolver.updatePayment(makeContext(), "payment-1", { name: "Novo" })
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to update payment.");
     });
   });
 
@@ -645,7 +645,7 @@ describe("PaymentResolver", () => {
 
       await expect(
         resolver.deletePayment(makeContext(), "payment-1")
-      ).rejects.toThrow("DB error");
+      ).rejects.toThrow("Failed to delete payment.");
     });
   });
 });

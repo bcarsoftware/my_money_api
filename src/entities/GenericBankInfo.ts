@@ -8,8 +8,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  type Relation,
 } from "typeorm";
-import { GenericBank } from "./GenericBank";
+import { GenericBank } from "@/entities/GenericBank";
 
 @Entity("generic_bank_info")
 export class GenericBankInfo extends BaseEntity {
@@ -20,7 +21,7 @@ export class GenericBankInfo extends BaseEntity {
 
   @ManyToOne(() => GenericBank, (generic_bank) => generic_bank.id)
   @JoinColumn({ name: "generic_bank_id", referencedColumnName: "id" })
-  genericBank: GenericBank;
+  genericBank: Relation<GenericBank>;
 
   @Column({ type: "varchar", length: 64 })
   name: string;

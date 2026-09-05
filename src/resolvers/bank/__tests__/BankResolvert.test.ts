@@ -62,7 +62,7 @@ function toBankDtoMock(bank: Bank): BankDto {
     accountNumber: bank.accountNumber,
     agency: bank.agency,
     balance: bank.balance, // mantém string
-    createdAt: bank.createdAt,
+    createdAt: bank.createdAt.toISOString(),
   };
 }
 

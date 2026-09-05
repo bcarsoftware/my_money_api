@@ -1,11 +1,11 @@
-import { SALT_ROUNTS_INVALID } from "@/constants/constants";
+import { SALT_ROUNDS_INVALID } from "@/constants/constants";
 import { compare, hash } from "bcrypt";
 
 async function getSaltRounds(): Promise<number> {
   const saltRounds = process.env.SALT_ROUNDS;
 
   if (!saltRounds || !/^[0-9]+$/.test(saltRounds)) {
-    throw new Error(SALT_ROUNTS_INVALID);
+    throw new Error(SALT_ROUNDS_INVALID);
   }
 
   return Number(saltRounds);

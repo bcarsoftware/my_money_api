@@ -6,12 +6,19 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
-  IsUUID,
   Max,
   MaxLength,
   Min,
 } from "class-validator";
-import { Field, InputType } from "type-graphql";
+import { Field, InputType, registerEnumType } from "type-graphql";
+
+registerEnumType(MonthEnum, {
+  name: "MonthEnum",
+});
+
+registerEnumType(PaymentEnum, {
+  name: "PaymentEnum",
+});
 
 @InputType()
 export class CreatePaymentInput {

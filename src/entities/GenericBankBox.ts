@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { GenericBank } from "./GenericBank";
+import { GenericBank } from "@/entities/GenericBank";
 
 @Entity("generic_bank_boxes")
 export class GenericBankBox extends BaseEntity {
@@ -26,13 +26,13 @@ export class GenericBankBox extends BaseEntity {
   name: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
-  objective?: number;
+  objective?: string;
 
   @Column({ type: "varchar", length: 256, nullable: true })
   description?: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  balance: number;
+  balance: string;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

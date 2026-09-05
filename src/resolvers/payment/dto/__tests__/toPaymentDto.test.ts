@@ -120,7 +120,9 @@ describe("toPaymentDto", () => {
   });
 
   it("deve falhar com status inválido (não enum)", () => {
-    const mockPayment = makePayment({ status: "INVALIDO" as unknown as PaymentEnum });
+    const mockPayment = makePayment({
+      status: "INVALIDO" as unknown as PaymentEnum,
+    });
     const dto = toPaymentDto(mockPayment);
     expect(dto.status).toBe("INVALIDO");
   });

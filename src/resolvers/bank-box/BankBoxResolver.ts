@@ -50,7 +50,7 @@ export class BankBoxResolver {
         };
       } catch (error) {
         console.error("Error listing bank boxes:", error);
-        throw error;
+        throw new Error("Failed to list bank boxes.");
       }
     });
   }
@@ -74,7 +74,7 @@ export class BankBoxResolver {
         return toBankBoxDto(newBankBox);
       } catch (error) {
         console.error("Error creating bank box:", error);
-        throw error;
+        throw new Error("Failed to create bank box.");
       }
     });
   }
@@ -106,7 +106,7 @@ export class BankBoxResolver {
         return toBankBoxDto(uptBankBox);
       } catch (error) {
         console.error("Error updating bank box:", error);
-        throw error;
+        throw new Error("Failed to update bank box.");
       }
     });
   }
@@ -126,7 +126,7 @@ export class BankBoxResolver {
         return { message: "Bank box deleted successfully." };
       } catch (error) {
         console.error("Error deleting bank box:", error);
-        throw error;
+        throw new Error("Failed to delete bank box.");
       }
     });
   }
