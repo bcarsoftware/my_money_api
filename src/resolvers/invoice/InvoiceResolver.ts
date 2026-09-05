@@ -12,10 +12,12 @@ import {
   ListInvoiceInput,
   UpdateInvoiceInput,
 } from "@/resolvers/invoice/InvoiceInputs";
+import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { toInvoiceDto } from "./dto/toInvoiceDto";
+import { MessageResponse } from "../MessageResponse";
 
 @Resolver()
 export class InvoiceResolver {
@@ -67,6 +69,8 @@ export class InvoiceResolver {
           status: InvoiceStatusEnum.ACTIVE,
           paidInstallments: 0,
           userId,
+          balance: clearDecimal(input.balance),
+          total: clearDecimal(input.total),
         });
 
         const newInvoice = await em.save(invoice);
@@ -152,6 +156,33 @@ export class InvoiceResolver {
 
         console.error(`Error processing invoice ${opt}:`, error);
         throw new Error(`Failed to process invoice ${opt}.`);
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => MessageResponse)
+  async deleteInvoice(
+    @Ctx() context: MyContext,
+    @Arg("id", () => String) id: string
+  ): Promise<MessageResponse> {
+    return await loggedContext(context, async (em) => {
+      const invoice = await em.findOne(Invoice, {
+        where: { id },
+        relations: { bank: true },
+      });
+
+      if (!invoice) throw new Error(INVOICE_NOT_FOUND);
+
+      if (invoice.bank.userId !== context.userId)
+        throw new Error(USER_BANK_NOT_MATCH);
+
+      try {
+        await em.softRemove(invoice);
+        return { message: "Invoice deleted successfully." };
+      } catch (error) {
+        console.error("Error deleting invoice:", error);
+        throw new Error("Failed to delete invoice.");
       }
     });
   }
