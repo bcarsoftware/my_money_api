@@ -349,9 +349,7 @@ describe("UpdateMoneyInput", () => {
       });
 
       const properties = errors.map((e) => e.property).sort();
-      expect(properties).toEqual(
-        ["description", "objective", "tag"].sort()
-      );
+      expect(properties).toEqual(["description", "objective", "tag"].sort());
     });
   });
 });
