@@ -2,17 +2,25 @@ import "reflect-metadata";
 
 import { Bank } from "@/entities/Bank";
 import { AccountEnum } from "@/enums/AccountEnum";
+import { BankDto, PaginatedBankDto } from "@/resolvers/bank/dto/BankDto";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { loggedContext } from "@/utils/loggedContext";
 import { ILike } from "typeorm";
 import { CreateBankInput, ListBankInput, UpdateBankInput } from "../BankInputs";
 import { BankResolver } from "../BankResolver";
-import { BankDto, PaginatedBankDto } from "../dto/BankDto";
 
-// Mocks
+// ============================================================
+// Mocks (devem vir antes dos imports das funções mockadas)
+// ============================================================
 jest.mock("@/utils/loggedContext");
+jest.mock("@/resolvers/bank/dto/toBankDto", () => ({
+  toBankDto: jest.fn(),
+}));
+
+import { toBankDto } from "../dto/toBankDto";
 
 const mockedLoggedContext = jest.mocked(loggedContext);
+const mockedToBankDto = jest.mocked(toBankDto);
 
 // Helper para criar um mock de EntityManager
 function createMockEm() {
@@ -25,6 +33,7 @@ function createMockEm() {
   };
 }
 
+// CORRIGIDO: balance como string (Bank.balance é decimal -> string)
 function makeBank(overrides: Partial<Bank> = {}): Bank {
   return {
     id: "bank-456",
@@ -34,11 +43,27 @@ function makeBank(overrides: Partial<Bank> = {}): Bank {
     accountType: AccountEnum.CHECKING,
     accountNumber: "123456",
     agency: "0001",
-    balance: 1500.75,
+    balance: "1500.75", // ← string (decimal)
     createdAt: new Date("2025-01-01T10:00:00Z"),
     updatedAt: new Date("2025-01-02T12:00:00Z"),
+    deletedAt: null,
+    user: null as any,
     ...overrides,
   } as Bank;
+}
+
+function toBankDtoMock(bank: Bank): BankDto {
+  return {
+    id: bank.id,
+    userId: bank.userId,
+    code: bank.code,
+    name: bank.name,
+    accountType: bank.accountType,
+    accountNumber: bank.accountNumber,
+    agency: bank.agency,
+    balance: bank.balance, // mantém string
+    createdAt: bank.createdAt,
+  };
 }
 
 describe("BankResolver", () => {
@@ -60,6 +85,9 @@ describe("BankResolver", () => {
     mockedLoggedContext.mockImplementation(async (ctx, callback) => {
       return callback(mockEm as any);
     });
+
+    // Mock do toBankDto para retornar a estrutura correta do DTO
+    mockedToBankDto.mockImplementation((bank: Bank) => toBankDtoMock(bank));
   });
 
   afterEach(() => {
@@ -87,8 +115,10 @@ describe("BankResolver", () => {
 
       const result = await resolver.listBanks(mockContext as any, listInput);
 
+      const expectedItems = mockItems.map(toBankDtoMock);
+
       expect(result).toEqual<PaginatedBankDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -121,8 +151,10 @@ describe("BankResolver", () => {
         inputSemFiltros
       );
 
+      const expectedItems = mockItems.map(toBankDtoMock);
+
       expect(result).toEqual<PaginatedBankDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -161,15 +193,18 @@ describe("BankResolver", () => {
     };
 
     it("deve criar um novo banco com sucesso", async () => {
-      const mockBank = makeBank();
-      const userId = mockBank.userId;
-      const createdBank = { ...mockBank, balance: "1500.75" };
+      const userId = mockContext.userId;
+      const createdBank = makeBank({
+        ...createInput,
+        userId,
+      });
+
       mockEm.create.mockReturnValue(createdBank);
       mockEm.save.mockResolvedValue(createdBank);
 
       const result = await resolver.createBank(mockContext as any, createInput);
 
-      expect(result).toEqual<BankDto>(createdBank);
+      expect(result).toEqual(toBankDtoMock(createdBank));
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
@@ -209,11 +244,12 @@ describe("BankResolver", () => {
       const mockBank = makeBank();
       const userId = mockBank.userId;
       const bankId = mockBank.id;
-      const updatedBank = {
+      const updatedBank = makeBank({
         ...mockBank,
         name: "Novo Nome",
         balance: "2000.00",
-      };
+      });
+
       mockEm.findOneOrFail.mockResolvedValue(mockBank);
       mockEm.save.mockResolvedValue(updatedBank);
 
@@ -223,7 +259,7 @@ describe("BankResolver", () => {
         updateInput
       );
 
-      expect(result).toEqual<BankDto>(updatedBank);
+      expect(result).toEqual(toBankDtoMock(updatedBank));
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
@@ -231,24 +267,21 @@ describe("BankResolver", () => {
       expect(mockEm.findOneOrFail).toHaveBeenCalledWith(Bank, {
         where: { id: bankId, userId },
       });
-      // Verifica se os campos foram atualizados
       expect(mockBank.name).toBe("Novo Nome");
       expect(mockBank.balance).toBe("2000.00");
       expect(mockEm.save).toHaveBeenCalledWith(mockBank);
     });
 
-    it("deve atualizar apenas os campos fornecidos (null/undefined ignorados)", async () => {
+    it("deve atualizar apenas os campos fornecidos (undefined ignorados)", async () => {
       const mockBank = makeBank();
       const bankId = mockBank.id;
-      // @ts-ignore – forçando undefined para testar o operador nullish
-      const inputParcial: UpdateBankInput = { code: undefined, name: null };
-      const updatedBank = { ...mockBank, code: "001" }; // code não deve mudar
+      const inputParcial: UpdateBankInput = { code: undefined };
+
       mockEm.findOneOrFail.mockResolvedValue(mockBank);
-      mockEm.save.mockResolvedValue(updatedBank);
+      mockEm.save.mockResolvedValue(mockBank);
 
       await resolver.updateBank(mockContext as any, bankId, inputParcial);
 
-      // Como code é undefined, não deve ser alterado; name é null, também não
       expect(mockBank.code).toBe("001");
       expect(mockBank.name).toBe("Banco do Brasil");
     });
@@ -288,8 +321,9 @@ describe("BankResolver", () => {
       const mockBank = makeBank();
       const bankId = mockBank.id;
       const userId = mockBank.userId;
+
       mockEm.findOneOrFail.mockResolvedValue(mockBank);
-      mockEm.softRemove.mockResolvedValue({} as any);
+      mockEm.softRemove.mockResolvedValue({} as Bank);
 
       const result = await resolver.deleteBank(mockContext as any, bankId);
 

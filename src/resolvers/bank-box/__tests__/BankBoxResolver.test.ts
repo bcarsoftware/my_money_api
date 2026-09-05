@@ -13,17 +13,23 @@ import {
   UpdateBankBoxInput,
 } from "../BankBoxInputs";
 import { BankBoxResolver } from "../BankBoxResolver";
-import { PaginatedBankBoxDto } from "../dto/BankBoxDto";
+import { BankBoxDto, PaginatedBankBoxDto } from "../dto/BankBoxDto";
 
-// Mocks
+// ============================================================
+// Mocks (devem vir antes dos imports das funções mockadas)
+// ============================================================
 jest.mock("@/utils/loggedContext");
 jest.mock("@/utils/updatableFieldResolve");
+jest.mock("@/resolvers/bank-box/dto/toBankBoxDto", () => ({
+  toBankBoxDto: jest.fn(),
+}));
 
 const mockedLoggedContext = loggedContext as jest.MockedFunction<
   typeof loggedContext
 >;
 const mockedUpdatableFieldResolve =
   updatableFieldResolve as jest.MockedFunction<typeof updatableFieldResolve>;
+const mockedToBankBoxDto = jest.mocked(toBankBoxDto);
 
 // Tipo para o EntityManager mockado
 interface MockEntityManager {
@@ -87,6 +93,17 @@ describe("BankBoxResolver", () => {
     mockedUpdatableFieldResolve.mockImplementation(
       (input, current) => input ?? current
     );
+
+    // Mock do toBankBoxDto para retornar exatamente o que a função real retorna
+    mockedToBankBoxDto.mockImplementation((bankBox: BankBox) => ({
+      id: bankBox.id,
+      bankId: bankBox.bankId,
+      tag: bankBox.tag,
+      objective: bankBox.objective,
+      description: bankBox.description,
+      balance: bankBox.balance,
+      createdAt: bankBox.createdAt,
+    }));
   });
 
   afterEach(() => {
@@ -111,8 +128,18 @@ describe("BankBoxResolver", () => {
 
       const result = await resolver.listBankBox(mockContext, listInput);
 
+      const expectedItems = mockItems.map((bankBox) => ({
+        id: bankBox.id,
+        bankId: bankBox.bankId,
+        tag: bankBox.tag,
+        objective: bankBox.objective,
+        description: bankBox.description,
+        balance: bankBox.balance,
+        createdAt: bankBox.createdAt,
+      }));
+
       expect(result).toEqual<PaginatedBankBoxDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -139,8 +166,18 @@ describe("BankBoxResolver", () => {
 
       const result = await resolver.listBankBox(mockContext, inputSemTag);
 
+      const expectedItems = mockItems.map((bankBox) => ({
+        id: bankBox.id,
+        bankId: bankBox.bankId,
+        tag: bankBox.tag,
+        objective: bankBox.objective,
+        description: bankBox.description,
+        balance: bankBox.balance,
+        createdAt: bankBox.createdAt,
+      }));
+
       expect(result).toEqual<PaginatedBankBoxDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -163,8 +200,18 @@ describe("BankBoxResolver", () => {
 
       const result = await resolver.listBankBox(mockContext, inputSemBankId);
 
+      const expectedItems = mockItems.map((bankBox) => ({
+        id: bankBox.id,
+        bankId: bankBox.bankId,
+        tag: bankBox.tag,
+        objective: bankBox.objective,
+        description: bankBox.description,
+        balance: bankBox.balance,
+        createdAt: bankBox.createdAt,
+      }));
+
       expect(result).toEqual<PaginatedBankBoxDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -193,8 +240,18 @@ describe("BankBoxResolver", () => {
         inputComTagUndefined
       );
 
+      const expectedItems = mockItems.map((bankBox) => ({
+        id: bankBox.id,
+        bankId: bankBox.bankId,
+        tag: bankBox.tag,
+        objective: bankBox.objective,
+        description: bankBox.description,
+        balance: bankBox.balance,
+        createdAt: bankBox.createdAt,
+      }));
+
       expect(result).toEqual<PaginatedBankBoxDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -220,8 +277,18 @@ describe("BankBoxResolver", () => {
         inputComBankIdUndefined
       );
 
+      const expectedItems = mockItems.map((bankBox) => ({
+        id: bankBox.id,
+        bankId: bankBox.bankId,
+        tag: bankBox.tag,
+        objective: bankBox.objective,
+        description: bankBox.description,
+        balance: bankBox.balance,
+        createdAt: bankBox.createdAt,
+      }));
+
       expect(result).toEqual<PaginatedBankBoxDto>({
-        items: mockItems,
+        items: expectedItems,
         total: mockTotal,
       });
 
@@ -261,13 +328,22 @@ describe("BankBoxResolver", () => {
     it("deve criar um BankBox com sucesso", async () => {
       const createdBankBox = makeMockBankBox({
         ...createInput,
-      });
+        userId,
+      } as Partial<BankBox>);
       mockEm.create.mockReturnValue(createdBankBox);
       mockEm.save.mockResolvedValue(createdBankBox);
 
       const result = await resolver.createBankBox(mockContext, createInput);
 
-      expect(result).toEqual(toBankBoxDto(createdBankBox));
+      expect(result).toEqual({
+        id: createdBankBox.id,
+        bankId: createdBankBox.bankId,
+        tag: createdBankBox.tag,
+        objective: createdBankBox.objective,
+        description: createdBankBox.description,
+        balance: createdBankBox.balance,
+        createdAt: createdBankBox.createdAt,
+      });
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
@@ -298,9 +374,8 @@ describe("BankBoxResolver", () => {
   // updateBankBox
   // ============================================================
   describe("updateBankBox", () => {
-    // Usamos CreateBankBoxInput porque o resolver espera esse tipo
     const updateInput: UpdateBankBoxInput = {
-      bankId: "bank-456", // obrigatório para o tipo
+      bankId: "bank-456",
       tag: "Tag Atualizada",
       description: "Nova descrição",
       balance: "9999.99",
@@ -326,7 +401,15 @@ describe("BankBoxResolver", () => {
         updateInput
       );
 
-      expect(result).toEqual(toBankBoxDto(updatedBankBox));
+      expect(result).toEqual({
+        id: updatedBankBox.id,
+        bankId: updatedBankBox.bankId,
+        tag: updatedBankBox.tag,
+        objective: updatedBankBox.objective,
+        description: updatedBankBox.description,
+        balance: updatedBankBox.balance,
+        createdAt: updatedBankBox.createdAt,
+      });
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
@@ -355,9 +438,8 @@ describe("BankBoxResolver", () => {
 
     it("deve ignorar campos undefined (operador nullish)", async () => {
       const inputParcial: UpdateBankBoxInput = {
-        bankId: "bank-456", // obrigatório
+        bankId: "bank-456",
         tag: "Tag Parcial",
-        // description e objective não fornecidos
       };
       const originalDescription = mockBankBox.description;
       const originalObjective = mockBankBox.objective;
@@ -393,7 +475,6 @@ describe("BankBoxResolver", () => {
       mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
       mockEm.save.mockResolvedValue(mockBankBox);
 
-      // Usa mockImplementation para garantir que todas as chamadas usem esta lógica
       mockedUpdatableFieldResolve.mockImplementation((input, current) => {
         if (input === null) return null;
         return input ?? current;
@@ -422,7 +503,6 @@ describe("BankBoxResolver", () => {
       mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
       mockEm.save.mockResolvedValue(mockBankBox);
 
-      // Usa mockImplementation para garantir que todas as chamadas usem esta lógica
       mockedUpdatableFieldResolve.mockImplementation((input, current) => {
         if (input === null) return null;
         return input ?? current;

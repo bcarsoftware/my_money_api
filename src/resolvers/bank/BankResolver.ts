@@ -6,9 +6,10 @@ import { Bank } from "@/entities/Bank";
 import { CreateBankInput, UpdateBankInput } from "@/resolvers/bank/BankInputs";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
+import { MessageResponse } from "../MessageResponse";
 import { ListBankInput } from "./BankInputs";
 import { BankDto, PaginatedBankDto } from "./dto/BankDto";
-import { MessageResponse } from "../MessageResponse";
+import { toBankDto } from "./dto/toBankDto";
 
 @Resolver()
 export class BankResolver {
@@ -30,11 +31,13 @@ export class BankResolver {
           ...(input.accountType && { accountType: input.accountType }),
         };
 
-        const [items, total] = await em.findAndCount(Bank, {
+        const [banks, total] = await em.findAndCount(Bank, {
           where,
           take: limit,
           skip: offset,
         });
+
+        const items = banks.map((bank) => toBankDto(bank));
 
         return { items, total };
       } catch (error) {
@@ -58,8 +61,8 @@ export class BankResolver {
           ...input,
           userId,
         });
-        await em.save(bank);
-        return bank;
+        const newBank = await em.save(bank);
+        return toBankDto(newBank);
       } catch (error) {
         console.error("Error creating bank:", error);
         throw new Error("Failed to create bank");
@@ -87,8 +90,8 @@ export class BankResolver {
         bank.agency = input.agency ?? bank.agency;
         bank.balance = input.balance ?? bank.balance;
 
-        await em.save(bank);
-        return bank;
+        const uptBank = await em.save(bank);
+        return toBankDto(uptBank);
       } catch (error) {
         console.error("Error updating bank:", error);
         throw new Error("Failed to update bank");

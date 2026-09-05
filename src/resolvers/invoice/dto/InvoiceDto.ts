@@ -36,7 +36,7 @@ export class InvoiceDto {
 }
 
 @ObjectType()
-export class InvoicePaginatedDto {
+export class PaginatedInvoiceDto {
   @Field(() => [InvoiceDto])
   items: InvoiceDto[];
 
