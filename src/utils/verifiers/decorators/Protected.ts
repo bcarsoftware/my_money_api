@@ -24,6 +24,8 @@ export const authMiddleware: MiddlewareFn<MyContext> = async (
     throw new Error(TOKEN_INVALID);
   }
 
+  context.userId = claims.userId;
+
   return next();
 };
 

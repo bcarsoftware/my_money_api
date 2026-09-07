@@ -1,4 +1,4 @@
-import { verifyAccessToken } from "@/auth/verifyAccessToken";
+import { TokenPayload, verifyAccessToken } from "@/auth/verifyAccessToken";
 import { TOKEN_INVALID } from "@/constants/constants";
 import { MyContext } from "@/context/MyContext";
 import { accessCookieName } from "@/utils/cookiesUtil";
@@ -7,142 +7,223 @@ import {
   Protected,
 } from "@/utils/verifiers/decorators/Protected";
 import { Request, Response } from "express";
-import "reflect-metadata";
-import { ResolverData, UseMiddleware } from "type-graphql";
+import { ResolverData } from "type-graphql";
 
+// Mocks
 jest.mock("@/auth/verifyAccessToken");
 jest.mock("@/utils/cookiesUtil");
-jest.mock("type-graphql", () => {
-  const original = jest.requireActual("type-graphql");
-  return {
-    ...original,
-    UseMiddleware: jest.fn().mockImplementation((mw) => mw),
-  };
-});
+
+const mockedVerifyAccessToken = jest.mocked(verifyAccessToken);
+const mockedAccessCookieName = jest.mocked(accessCookieName);
 
 describe("Protected Decorator & authMiddleware", () => {
-  let mockContext: MyContext;
-  let mockNext: jest.Mock;
   const mockCookieName = "accessToken";
   const mockToken = "valid.jwt.token";
-  const mockClaims = {
+  const mockClaims: TokenPayload = {
     userId: "550e8400-e29b-41d4-a716-446655440000",
     username: "abelcarvalho",
     email: "abel@example.com",
   };
 
+  let mockContext: MyContext;
+  let mockNext: jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (accessCookieName as jest.Mock).mockReturnValue(mockCookieName);
+
+    mockedAccessCookieName.mockReturnValue(mockCookieName);
 
     mockContext = {
-      req: { cookies: {} } as unknown as Request,
+      req: {} as Request,
       res: {} as Response,
-    };
+    } as MyContext;
 
-    mockNext = jest.fn().mockResolvedValue("target_resolver_result");
+    mockNext = jest.fn().mockResolvedValue("resolver_result");
   });
 
   describe("authMiddleware", () => {
-    it("deve autenticar e prosseguir quando o token estiver presente em context.accessToken", async () => {
-      mockContext.accessToken = mockToken;
-      (verifyAccessToken as jest.Mock).mockResolvedValue(mockClaims);
+    describe("quando o token está disponível", () => {
+      it("deve usar o token de context.accessToken (prioridade máxima) e ignorar cookies", async () => {
+        // Arrange
+        mockContext.accessToken = mockToken;
+        // Atribui um request com cookie diferente para garantir que não será lido
+        mockContext.req = {
+          cookies: { [mockCookieName]: "outro_token" },
+        } as unknown as Request;
 
-      const resolverData = {
-        context: mockContext,
-      } as ResolverData<MyContext>;
+        mockedVerifyAccessToken.mockResolvedValue(mockClaims);
 
-      const result = await authMiddleware(resolverData, mockNext);
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
 
-      expect(verifyAccessToken).toHaveBeenCalledWith(mockToken);
-      expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(result).toBe("target_resolver_result");
+        // Act
+        const result = await authMiddleware(resolverData, mockNext);
+
+        // Assert
+        expect(mockedVerifyAccessToken).toHaveBeenCalledWith(mockToken);
+        expect(mockedAccessCookieName).not.toHaveBeenCalled();
+        expect(mockContext.userId).toBe(mockClaims.userId);
+        expect(mockNext).toHaveBeenCalledTimes(1);
+        expect(result).toBe("resolver_result");
+      });
+
+      it("deve extrair o token do cookie quando context.accessToken for undefined", async () => {
+        // Arrange
+        mockContext.req = {
+          cookies: { [mockCookieName]: mockToken },
+        } as unknown as Request;
+
+        mockedVerifyAccessToken.mockResolvedValue(mockClaims);
+
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
+
+        // Act
+        const result = await authMiddleware(resolverData, mockNext);
+
+        // Assert
+        expect(mockedAccessCookieName).toHaveBeenCalledTimes(1);
+        expect(mockedVerifyAccessToken).toHaveBeenCalledWith(mockToken);
+        expect(mockContext.userId).toBe(mockClaims.userId);
+        expect(mockNext).toHaveBeenCalledTimes(1);
+        expect(result).toBe("resolver_result");
+      });
+
+      it("deve extrair o token do cookie mesmo quando o nome do cookie é dinâmico", async () => {
+        // Arrange
+        const dynamicName = "custom_cookie_name";
+        mockedAccessCookieName.mockReturnValue(dynamicName);
+
+        mockContext.req = {
+          cookies: { [dynamicName]: mockToken },
+        } as unknown as Request;
+
+        mockedVerifyAccessToken.mockResolvedValue(mockClaims);
+
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
+
+        // Act
+        await authMiddleware(resolverData, mockNext);
+
+        // Assert
+        expect(mockedAccessCookieName).toHaveBeenCalled();
+        expect(mockedVerifyAccessToken).toHaveBeenCalledWith(mockToken);
+      });
     });
 
-    it("deve extrair o token de req.cookies quando context.accessToken for undefined", async () => {
-      mockContext.req = {
-        cookies: { [mockCookieName]: mockToken },
-      } as unknown as Request;
+    describe("quando o token não está disponível", () => {
+      it("deve lançar erro TOKEN_INVALID se não houver token em context.accessToken nem em cookies", async () => {
+        // Arrange
+        mockContext.req = { cookies: {} } as unknown as Request;
 
-      (verifyAccessToken as jest.Mock).mockResolvedValue(mockClaims);
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
 
-      const resolverData = {
-        context: mockContext,
-      } as ResolverData<MyContext>;
+        // Act & Assert
+        await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
+          TOKEN_INVALID
+        );
 
-      const result = await authMiddleware(resolverData, mockNext);
+        expect(mockedVerifyAccessToken).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
+      });
 
-      expect(accessCookieName).toHaveBeenCalledTimes(1);
-      expect(verifyAccessToken).toHaveBeenCalledWith(mockToken);
-      expect(mockNext).toHaveBeenCalledTimes(1);
-      expect(result).toBe("target_resolver_result");
+      it("deve lançar erro TOKEN_INVALID se req.cookies for undefined e não houver accessToken", async () => {
+        // Arrange
+        mockContext.req = {} as Request; // Sem cookies
+
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
+
+        // Act & Assert
+        await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
+          TOKEN_INVALID
+        );
+
+        expect(mockedVerifyAccessToken).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
+      });
+
+      it("deve lançar erro TOKEN_INVALID se o cookie existir mas estiver vazio", async () => {
+        // Arrange
+        mockContext.req = {
+          cookies: { [mockCookieName]: "" },
+        } as unknown as Request;
+
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
+
+        // Act & Assert
+        await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
+          TOKEN_INVALID
+        );
+
+        expect(mockedVerifyAccessToken).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
+      });
     });
 
-    it("deve lançar erro se nenhum token for fornecido", async () => {
-      const resolverData = {
-        context: mockContext,
-      } as ResolverData<MyContext>;
+    describe("quando o token é inválido ou a verificação falha", () => {
+      it("deve lançar TOKEN_INVALID se verifyAccessToken retornar null", async () => {
+        // Arrange
+        mockContext.accessToken = mockToken;
+        // Forçamos o retorno null (que o código trata como inválido)
+        // Usamos unknown como ponte seguro, sem any
+        mockedVerifyAccessToken.mockResolvedValue(
+          null as unknown as TokenPayload
+        );
 
-      await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
-        TOKEN_INVALID
-      );
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
 
-      expect(verifyAccessToken).not.toHaveBeenCalled();
-      expect(mockNext).not.toHaveBeenCalled();
-    });
+        // Act & Assert
+        await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
+          TOKEN_INVALID
+        );
 
-    it("deve lançar erro se req.cookies for undefined e não houver accessToken", async () => {
-      mockContext.req = {} as Request;
+        expect(mockNext).not.toHaveBeenCalled();
+      });
 
-      const resolverData = {
-        context: mockContext,
-      } as ResolverData<MyContext>;
+      it("deve propagar a exceção lançada por verifyAccessToken", async () => {
+        // Arrange
+        mockContext.accessToken = "invalid.token";
+        const jwtError = new Error("jwt malformed");
+        mockedVerifyAccessToken.mockRejectedValue(jwtError);
 
-      await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
-        TOKEN_INVALID
-      );
+        const resolverData = {
+          context: mockContext,
+        } as unknown as ResolverData<MyContext>;
 
-      expect(verifyAccessToken).not.toHaveBeenCalled();
-      expect(mockNext).not.toHaveBeenCalled();
-    });
+        // Act & Assert
+        await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
+          jwtError
+        );
 
-    it("deve lançar erro de token inválido se verifyAccessToken retornar null ou undefined", async () => {
-      mockContext.accessToken = mockToken;
-      (verifyAccessToken as jest.Mock).mockResolvedValue(null);
-
-      const resolverData = {
-        context: mockContext,
-      } as ResolverData<MyContext>;
-
-      await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
-        TOKEN_INVALID
-      );
-
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it("deve propagar a exceção lançada por verifyAccessToken", async () => {
-      mockContext.accessToken = "corrupted.jwt.token";
-      const jwtError = new Error("jwt malformed");
-      (verifyAccessToken as jest.Mock).mockRejectedValue(jwtError);
-
-      const resolverData = {
-        context: mockContext,
-      } as ResolverData<MyContext>;
-
-      await expect(authMiddleware(resolverData, mockNext)).rejects.toThrow(
-        jwtError
-      );
-
-      expect(mockNext).not.toHaveBeenCalled();
+        expect(mockNext).not.toHaveBeenCalled();
+      });
     });
   });
 
-  describe("Protected decorator factory", () => {
-    it("deve invocar UseMiddleware repassando authMiddleware", () => {
+  describe("Protected decorator", () => {
+    it("deve invocar UseMiddleware passando o authMiddleware", () => {
+      // Usamos spy para verificar a chamada sem mockar todo o módulo
+      const useMiddlewareSpy = jest.spyOn(
+        require("type-graphql"),
+        "UseMiddleware"
+      );
+
       Protected();
 
-      expect(UseMiddleware).toHaveBeenCalledWith(authMiddleware);
+      expect(useMiddlewareSpy).toHaveBeenCalledTimes(1);
+      expect(useMiddlewareSpy).toHaveBeenCalledWith(authMiddleware);
     });
   });
 });
