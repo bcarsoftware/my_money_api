@@ -1,7 +1,7 @@
 import { CurrencyEnum } from "@/enums/CurrencyEnum";
 import { GenericBank } from "@/entities/GenericBank";
 import { GenericBankInfo } from "@/entities/GenericBankInfo";
-import { toGenericBankDto } from "@/resolvers/genereic-bank/dto/toGenericBankDto";
+import { toGenericBankDto } from "@/resolvers/generic-bank/dto/toGenericBankDto";
 
 // ============================================================
 // Helpers

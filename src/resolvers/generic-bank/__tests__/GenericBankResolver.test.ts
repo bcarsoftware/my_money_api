@@ -9,23 +9,23 @@ import {
   CreateGenericBankInput,
   ListGenericBankInput,
   UpdateGenericBankInput,
-} from "@/resolvers/genereic-bank/GenericBankInputs";
+} from "@/resolvers/generic-bank/GenericBankInputs";
 import {
   GenericBankDto,
   PaginatedGenericBankDto,
-} from "@/resolvers/genereic-bank/dto/GenericBankDto";
-import { toGenericBankDto } from "@/resolvers/genereic-bank/dto/toGenericBankDto";
+} from "@/resolvers/generic-bank/dto/GenericBankDto";
+import { toGenericBankDto } from "@/resolvers/generic-bank/dto/toGenericBankDto";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { EntityManager, ILike } from "typeorm";
-import { GenericBankResolver } from "@/resolvers/genereic-bank/GenericBankResolver";
+import { GenericBankResolver } from "@/resolvers/generic-bank/GenericBankResolver";
 
 // ============================================================
 // Mocks
 // ============================================================
 jest.mock("@/utils/loggedContext");
 jest.mock("@/utils/currencyUtil");
-jest.mock("@/resolvers/genereic-bank/dto/toGenericBankDto", () => ({
+jest.mock("@/resolvers/generic-bank/dto/toGenericBankDto", () => ({
   toGenericBankDto: jest.fn(),
 }));
 

@@ -8,7 +8,7 @@ import {
   UpdateGenericBankInput,
   CreateBankInfoInput,
   UpdateBankInfoInput,
-} from "@/resolvers/genereic-bank/GenericBankInputs";
+} from "@/resolvers/generic-bank/GenericBankInputs";
 
 // ============================================================
 // Helpers
