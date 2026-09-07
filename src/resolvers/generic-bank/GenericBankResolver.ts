@@ -4,19 +4,19 @@ import { GenericBankInfo } from "@/entities/GenericBankInfo";
 import {
   GenericBankDto,
   PaginatedGenericBankDto,
-} from "@/resolvers/genereic-bank/dto/GenericBankDto";
+} from "@/resolvers/generic-bank/dto/GenericBankDto";
 import {
   CreateGenericBankInput,
   ListGenericBankInput,
   UpdateGenericBankInput,
-} from "@/resolvers/genereic-bank/GenericBankInputs";
+} from "@/resolvers/generic-bank/GenericBankInputs";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
 import { MessageResponse } from "@/resolvers/MessageResponse";
-import { toGenericBankDto } from "@/resolvers/genereic-bank/dto/toGenericBankDto";
+import { toGenericBankDto } from "@/resolvers/generic-bank/dto/toGenericBankDto";
 
 @Resolver()
 export class GenericBankResolver {
