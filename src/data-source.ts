@@ -26,6 +26,7 @@ import { CreateGenericBank1787414685365 } from "./migrations/1787414685365-Creat
 import { CreateGenericBankBox1787415068662 } from "./migrations/1787415068662-CreateGenericBankBox";
 import { CreateGenericBankInfo1787415282084 } from "./migrations/1787415282084-CreateGenericBankInfo";
 import { CreateOperation1787415560149 } from "./migrations/1787415560149-CreateOperation";
+import { AddIndexGenericBankInfo1788806787561 } from "./migrations/1788806787561-AddIndexGenericBankInfo";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -62,6 +63,7 @@ export const AppDataSource = new DataSource({
     CreateGenericBankBox1787415068662,
     CreateGenericBankInfo1787415282084,
     CreateOperation1787415560149,
+    AddIndexGenericBankInfo1788806787561,
   ],
   migrationsTransactionMode: "each",
   extra: {
