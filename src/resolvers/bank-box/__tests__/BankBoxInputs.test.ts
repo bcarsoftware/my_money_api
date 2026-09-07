@@ -218,9 +218,9 @@ describe("CreateBankBoxInput", () => {
 // ============================================================
 describe("ListBankBoxInput", () => {
   describe("caminho feliz", () => {
-    it("não retorna erros com objeto vazio (todos os campos opcionais)", async () => {
+    it("retorna erros com objeto vazio (todos os campos opcionais)", async () => {
       const errors = await validateInput(ListBankBoxInput, {});
-      expect(errors).toHaveLength(0);
+      expect(errors).toHaveLength(1);
     });
 
     it("não retorna erros com todos os campos válidos", async () => {
@@ -306,10 +306,10 @@ describe("ListBankBoxInput", () => {
       expect(constraintsFor(errors, "bankId")).toContain("isUuid");
     });
 
-    it("aceita undefined (omitido)", async () => {
+    it("não aceita bankId undefined (omitido)", async () => {
       const input = { bankId: undefined };
       const errors = await validateInput(ListBankBoxInput, input);
-      expect(constraintsFor(errors, "bankId")).toHaveLength(0);
+      expect(constraintsFor(errors, "bankId")).toHaveLength(1);
     });
   });
 

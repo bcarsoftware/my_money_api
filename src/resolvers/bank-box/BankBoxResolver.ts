@@ -1,4 +1,10 @@
+import {
+  BANK_BOX_NOT_FOUND,
+  USER_BANK_NOT_MATCH,
+  USER_NOT_AUTHORIZED,
+} from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
+import { Bank } from "@/entities/Bank";
 import { BankBox } from "@/entities/BankBox";
 import {
   CreateBankBoxInput,
@@ -17,7 +23,6 @@ import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
 import { MessageResponse } from "../MessageResponse";
 import { toBankBoxDto } from "./dto/toBankBoxDto";
-import { Bank } from "@/entities/Bank";
 
 @Resolver()
 export class BankBoxResolver {
@@ -28,13 +33,19 @@ export class BankBoxResolver {
     @Arg("input", () => ListBankBoxInput) input: ListBankBoxInput
   ): Promise<PaginatedBankBoxDto> {
     const { limit, offset } = input;
+    const { userId } = context;
 
     return await loggedContext(context, async (em) => {
+      const bank = await em.findOne(Bank, {
+        where: { id: input.bankId, userId },
+      });
+
+      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+
       try {
         const where = {
-          userId: context.userId,
+          bankId: input.bankId,
           ...(input.tag ? { tag: ILike(`%${input.tag}%`) } : {}),
-          ...(input.bankId ? { bankId: input.bankId } : {}),
         };
 
         const [bankBoxes, total] = await em.findAndCount(BankBox, {
@@ -92,10 +103,18 @@ export class BankBoxResolver {
     @Arg("input", () => UpdateBankBoxInput) input: UpdateBankBoxInput
   ): Promise<BankBoxDto> {
     return await loggedContext(context, async (em) => {
-      try {
-        const where = { id, userId: context.userId };
-        const bankBox = await em.findOneOrFail(BankBox, { where });
+      const where = { id };
+      const bankBox = await em.findOne(BankBox, {
+        where,
+        relations: { bank: true },
+      });
 
+      if (!bankBox) throw new Error(BANK_BOX_NOT_FOUND);
+
+      if (bankBox.bank.userId !== context.userId)
+        throw new Error(USER_NOT_AUTHORIZED);
+
+      try {
         bankBox.tag = input.tag ?? bankBox.tag;
         bankBox.description = updatableFieldResolve<string>(
           input.description,
@@ -124,7 +143,13 @@ export class BankBoxResolver {
     return await loggedContext(context, async (em) => {
       try {
         const where = { id, userId: context.userId };
-        const bankBox = await em.findOneOrFail(BankBox, { where });
+        const bankBox = await em.findOneOrFail(BankBox, {
+          where,
+          relations: { bank: true },
+        });
+
+        if (bankBox.bank.userId !== context.userId)
+          throw new Error(USER_NOT_AUTHORIZED);
 
         await em.softRemove(bankBox);
         return { message: "Bank box deleted successfully." };

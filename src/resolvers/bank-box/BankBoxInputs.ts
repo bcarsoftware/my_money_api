@@ -56,9 +56,8 @@ export class ListBankBoxInput {
   offset?: number;
 
   @Field(() => String, { nullable: true })
-  @IsOptional()
   @IsUUID("4", { message: "Bank ID must be a valid UUID." })
-  bankId?: string;
+  bankId: string;
 
   @Field(() => String, { nullable: true })
   @IsOptional()

@@ -159,7 +159,7 @@ describe("BankBoxResolver", () => {
     });
 
     it("deve retornar lista paginada sem filtro de tag (quando não fornecido)", async () => {
-      const inputSemTag: ListBankBoxInput = { limit: 5, offset: 0 };
+      const inputSemTag: ListBankBoxInput = { limit: 5, offset: 0, bankId: "bank-456" };
       const mockItems = [mockBankBox];
       const mockTotal = 1;
       mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
@@ -192,6 +192,7 @@ describe("BankBoxResolver", () => {
       const inputSemBankId: ListBankBoxInput = {
         limit: 5,
         offset: 0,
+        bankId: "bank-456",
         tag: "caixa",
       };
       const mockItems = [mockBankBox];
@@ -229,6 +230,7 @@ describe("BankBoxResolver", () => {
       const inputComTagUndefined: ListBankBoxInput = {
         limit: 5,
         offset: 0,
+        bankId: "bank-456",
         tag: undefined,
       };
       const mockItems = [mockBankBox];
@@ -262,47 +264,10 @@ describe("BankBoxResolver", () => {
       });
     });
 
-    it("deve ignorar bankId quando for undefined", async () => {
-      const inputComBankIdUndefined: ListBankBoxInput = {
-        limit: 5,
-        offset: 0,
-        bankId: undefined,
-      };
-      const mockItems = [mockBankBox];
-      const mockTotal = 1;
-      mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
-
-      const result = await resolver.listBankBox(
-        mockContext,
-        inputComBankIdUndefined
-      );
-
-      const expectedItems = mockItems.map((bankBox) => ({
-        id: bankBox.id,
-        bankId: bankBox.bankId,
-        tag: bankBox.tag,
-        objective: bankBox.objective,
-        description: bankBox.description,
-        balance: bankBox.balance,
-        createdAt: bankBox.createdAt.toISOString(),
-      }));
-
-      expect(result).toEqual<PaginatedBankBoxDto>({
-        items: expectedItems,
-        total: mockTotal,
-      });
-
-      expect(mockEm.findAndCount).toHaveBeenCalledWith(BankBox, {
-        where: { userId },
-        take: inputComBankIdUndefined.limit,
-        skip: inputComBankIdUndefined.offset,
-      });
-    });
-
     it("deve lançar erro se a consulta falhar", async () => {
       mockEm.findAndCount.mockRejectedValue(new Error("DB error"));
 
-      await expect(resolver.listBankBox(mockContext, {})).rejects.toThrow(
+      await expect(resolver.listBankBox(mockContext, { bankId: "asndjasdjasd" })).rejects.toThrow(
         "Failed to list bank boxes."
       );
 

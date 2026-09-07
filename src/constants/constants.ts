@@ -27,3 +27,5 @@ export const PAYMENT_NOT_FOUND = "Payment not found.";
 export const GENERIC_BANK_NOT_FOUND = "Generic bank not found.";
 
 export const GENERIC_BANK_BOX_NOT_FOUND = "Generic bank box not found.";
+
+export const BANK_BOX_NOT_FOUND = "Bank box not found.";
