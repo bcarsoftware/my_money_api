@@ -26,10 +26,10 @@ export class GenericBankBox extends BaseEntity {
   name: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
-  objective?: string;
+  objective?: string | null;
 
   @Column({ type: "varchar", length: 256, nullable: true })
-  description?: string;
+  description?: string | null;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: string;
