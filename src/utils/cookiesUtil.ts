@@ -1,6 +1,6 @@
 import { __prodLike__ } from "@/constants/constants";
 import { User } from "@/entities/User";
-import { MyContext } from "../context/MyContext";
+import { MyContext } from "@/context/MyContext";
 
 export interface AuthUserData {
   id: string;
