@@ -1,6 +1,8 @@
 import "reflect-metadata";
 
+import { BANK_BOX_NOT_FOUND, USER_NOT_AUTHORIZED } from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
+import { Bank } from "@/entities/Bank";
 import { BankBox } from "@/entities/BankBox";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { toBankBoxDto } from "@/resolvers/bank-box/dto/toBankBoxDto";
@@ -16,7 +18,7 @@ import { BankBoxResolver } from "../BankBoxResolver";
 import { PaginatedBankBoxDto } from "../dto/BankBoxDto";
 
 // ============================================================
-// Mocks (devem vir antes dos imports das funções mockadas)
+// Mocks
 // ============================================================
 jest.mock("@/utils/loggedContext");
 jest.mock("@/utils/updatableFieldResolve");
@@ -31,28 +33,43 @@ const mockedUpdatableFieldResolve =
   updatableFieldResolve as jest.MockedFunction<typeof updatableFieldResolve>;
 const mockedToBankBoxDto = jest.mocked(toBankBoxDto);
 
-// Tipo para o EntityManager mockado
-interface MockEntityManager {
+// ============================================================
+// Types auxiliares
+// ============================================================
+type MockEntityManager = {
+  findOne: jest.Mock;
+  findOneOrFail: jest.Mock;
   create: jest.Mock;
   save: jest.Mock;
-  findOneOrFail: jest.Mock;
   findAndCount: jest.Mock;
   softRemove: jest.Mock;
-}
+};
 
-// Helper para criar um mock de EntityManager
+// ============================================================
+// Factories
+// ============================================================
 function createMockEm(): MockEntityManager {
   return {
+    findOne: jest.fn(),
+    findOneOrFail: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
-    findOneOrFail: jest.fn(),
     findAndCount: jest.fn(),
     softRemove: jest.fn(),
   };
 }
 
-// Factory para criar um BankBox mockado
+function makeMockBank(overrides: Partial<Bank> = {}): Bank {
+  return {
+    id: "bank-456",
+    userId: "user-123",
+    name: "Banco Teste",
+    ...overrides,
+  } as Bank;
+}
+
 function makeMockBankBox(overrides: Partial<BankBox> = {}): BankBox {
+  const bank = overrides.bank !== undefined ? overrides.bank : makeMockBank();
   return {
     id: "bankbox-123",
     userId: "user-123",
@@ -64,37 +81,41 @@ function makeMockBankBox(overrides: Partial<BankBox> = {}): BankBox {
     createdAt: new Date("2025-02-01T10:00:00Z"),
     updatedAt: new Date("2025-02-02T12:00:00Z"),
     deletedAt: null,
-    bank: null,
+    bank,
     ...overrides,
   } as BankBox;
 }
 
+// ============================================================
+// Suite de testes
+// ============================================================
 describe("BankBoxResolver", () => {
   let resolver: BankBoxResolver;
   let mockContext: MyContext;
   let mockEm: MockEntityManager;
+  let mockBank: Bank;
   let mockBankBox: BankBox;
 
   const userId = "user-123";
   const bankBoxId = "bankbox-123";
+  const bankId = "bank-456";
 
   beforeEach(() => {
     resolver = new BankBoxResolver();
     mockContext = { userId } as MyContext;
     mockEm = createMockEm();
+    mockBank = makeMockBank();
     mockBankBox = makeMockBankBox();
 
-    // Mock do loggedContext para executar o callback com o em mockado
     mockedLoggedContext.mockImplementation(async (ctx, callback) => {
       return callback(mockEm as unknown as Parameters<typeof callback>[0]);
     });
 
-    // Mock do updatableFieldResolve para retornar o valor recebido (comportamento padrão)
-    mockedUpdatableFieldResolve.mockImplementation(
-      (input, current) => input ?? current
+    // updatableFieldResolve: retorna input se não for undefined, senão current
+    mockedUpdatableFieldResolve.mockImplementation((input, current) =>
+      input !== undefined ? input : current
     );
 
-    // Mock do toBankBoxDto para retornar exatamente o que a função real retorna
     mockedToBankBoxDto.mockImplementation((bankBox: BankBox) => ({
       id: bankBox.id,
       bankId: bankBox.bankId,
@@ -118,13 +139,15 @@ describe("BankBoxResolver", () => {
       limit: 10,
       offset: 0,
       tag: "caixa",
-      bankId: "bank-456",
+      bankId: bankId,
     };
 
     it("deve retornar uma lista paginada com todos os filtros", async () => {
       const mockItems = [mockBankBox];
       const mockTotal = 1;
-      mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
+
+      mockEm.findOne.mockResolvedValueOnce(mockBank);
+      mockEm.findAndCount.mockResolvedValueOnce([mockItems, mockTotal]);
 
       const result = await resolver.listBankBox(mockContext, listInput);
 
@@ -147,22 +170,40 @@ describe("BankBoxResolver", () => {
         mockContext,
         expect.any(Function)
       );
+      expect(mockEm.findOne).toHaveBeenCalledWith(Bank, {
+        where: { id: listInput.bankId, userId },
+      });
       expect(mockEm.findAndCount).toHaveBeenCalledWith(BankBox, {
         where: {
-          userId,
-          tag: ILike(`%${listInput.tag}%`),
           bankId: listInput.bankId,
+          tag: ILike(`%${listInput.tag}%`),
         },
         take: listInput.limit,
         skip: listInput.offset,
       });
     });
 
+    it("deve lançar erro se o Bank não existir ou não pertencer ao usuário", async () => {
+      mockEm.findOne.mockResolvedValueOnce(null);
+
+      await expect(
+        resolver.listBankBox(mockContext, { bankId: "invalid" })
+      ).rejects.toThrow("User bank not match");
+
+      expect(mockEm.findAndCount).not.toHaveBeenCalled();
+    });
+
     it("deve retornar lista paginada sem filtro de tag (quando não fornecido)", async () => {
-      const inputSemTag: ListBankBoxInput = { limit: 5, offset: 0, bankId: "bank-456" };
+      const inputSemTag: ListBankBoxInput = {
+        limit: 5,
+        offset: 0,
+        bankId: bankId,
+      };
       const mockItems = [mockBankBox];
       const mockTotal = 1;
-      mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
+
+      mockEm.findOne.mockResolvedValueOnce(mockBank);
+      mockEm.findAndCount.mockResolvedValueOnce([mockItems, mockTotal]);
 
       const result = await resolver.listBankBox(mockContext, inputSemTag);
 
@@ -182,47 +223,9 @@ describe("BankBoxResolver", () => {
       });
 
       expect(mockEm.findAndCount).toHaveBeenCalledWith(BankBox, {
-        where: { userId },
+        where: { bankId: inputSemTag.bankId },
         take: inputSemTag.limit,
         skip: inputSemTag.offset,
-      });
-    });
-
-    it("deve retornar lista paginada sem filtro de bankId (quando não fornecido)", async () => {
-      const inputSemBankId: ListBankBoxInput = {
-        limit: 5,
-        offset: 0,
-        bankId: "bank-456",
-        tag: "caixa",
-      };
-      const mockItems = [mockBankBox];
-      const mockTotal = 1;
-      mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
-
-      const result = await resolver.listBankBox(mockContext, inputSemBankId);
-
-      const expectedItems = mockItems.map((bankBox) => ({
-        id: bankBox.id,
-        bankId: bankBox.bankId,
-        tag: bankBox.tag,
-        objective: bankBox.objective,
-        description: bankBox.description,
-        balance: bankBox.balance,
-        createdAt: bankBox.createdAt.toISOString(),
-      }));
-
-      expect(result).toEqual<PaginatedBankBoxDto>({
-        items: expectedItems,
-        total: mockTotal,
-      });
-
-      expect(mockEm.findAndCount).toHaveBeenCalledWith(BankBox, {
-        where: {
-          userId,
-          tag: ILike(`%caixa%`),
-        },
-        take: inputSemBankId.limit,
-        skip: inputSemBankId.offset,
       });
     });
 
@@ -230,51 +233,35 @@ describe("BankBoxResolver", () => {
       const inputComTagUndefined: ListBankBoxInput = {
         limit: 5,
         offset: 0,
-        bankId: "bank-456",
+        bankId: bankId,
         tag: undefined,
       };
       const mockItems = [mockBankBox];
       const mockTotal = 1;
-      mockEm.findAndCount.mockResolvedValue([mockItems, mockTotal]);
+
+      mockEm.findOne.mockResolvedValueOnce(mockBank);
+      mockEm.findAndCount.mockResolvedValueOnce([mockItems, mockTotal]);
 
       const result = await resolver.listBankBox(
         mockContext,
         inputComTagUndefined
       );
 
-      const expectedItems = mockItems.map((bankBox) => ({
-        id: bankBox.id,
-        bankId: bankBox.bankId,
-        tag: bankBox.tag,
-        objective: bankBox.objective,
-        description: bankBox.description,
-        balance: bankBox.balance,
-        createdAt: bankBox.createdAt.toISOString(),
-      }));
-
-      expect(result).toEqual<PaginatedBankBoxDto>({
-        items: expectedItems,
-        total: mockTotal,
-      });
-
       expect(mockEm.findAndCount).toHaveBeenCalledWith(BankBox, {
-        where: { userId },
+        where: { bankId: inputComTagUndefined.bankId },
         take: inputComTagUndefined.limit,
         skip: inputComTagUndefined.offset,
       });
+      expect(result.total).toBe(mockTotal);
     });
 
     it("deve lançar erro se a consulta falhar", async () => {
-      mockEm.findAndCount.mockRejectedValue(new Error("DB error"));
+      mockEm.findOne.mockResolvedValueOnce(mockBank);
+      mockEm.findAndCount.mockRejectedValueOnce(new Error("DB error"));
 
-      await expect(resolver.listBankBox(mockContext, { bankId: "asndjasdjasd" })).rejects.toThrow(
-        "Failed to list bank boxes."
-      );
-
-      expect(mockedLoggedContext).toHaveBeenCalledWith(
-        mockContext,
-        expect.any(Function)
-      );
+      await expect(
+        resolver.listBankBox(mockContext, { bankId: bankId })
+      ).rejects.toThrow("Failed to list bank boxes.");
     });
   });
 
@@ -283,7 +270,7 @@ describe("BankBoxResolver", () => {
   // ============================================================
   describe("createBankBox", () => {
     const createInput: CreateBankBoxInput = {
-      bankId: "bank-456",
+      bankId: bankId,
       tag: "Nova Caixa",
       objective: "2000.00",
       description: "Descrição da nova caixa",
@@ -293,8 +280,10 @@ describe("BankBoxResolver", () => {
     it("deve criar um BankBox com sucesso", async () => {
       const createdBankBox = makeMockBankBox({
         ...createInput,
-        userId,
-      } as Partial<BankBox>);
+        balance: "10000.00",
+      });
+
+      mockEm.findOneOrFail.mockResolvedValueOnce(mockBank);
       mockEm.create.mockReturnValue(createdBankBox);
       mockEm.save.mockResolvedValue(createdBankBox);
 
@@ -313,25 +302,35 @@ describe("BankBoxResolver", () => {
         mockContext,
         expect.any(Function)
       );
+      expect(mockEm.findOneOrFail).toHaveBeenCalledWith(Bank, {
+        where: { id: createInput.bankId, userId },
+      });
       expect(mockEm.create).toHaveBeenCalledWith(BankBox, {
         ...createInput,
         userId,
+        balance: "10000.00",
       });
       expect(mockEm.save).toHaveBeenCalledWith(createdBankBox);
     });
 
-    it("deve lançar erro se a criação falhar", async () => {
-      mockEm.create.mockReturnValue({});
-      mockEm.save.mockRejectedValue(new Error("DB error"));
+    it("deve lançar erro se o Bank não existir", async () => {
+      mockEm.findOneOrFail.mockRejectedValueOnce(new Error("Bank not found"));
 
       await expect(
         resolver.createBankBox(mockContext, createInput)
       ).rejects.toThrow("Failed to create bank box.");
 
-      expect(mockedLoggedContext).toHaveBeenCalledWith(
-        mockContext,
-        expect.any(Function)
-      );
+      expect(mockEm.create).not.toHaveBeenCalled();
+    });
+
+    it("deve lançar erro se a criação falhar", async () => {
+      mockEm.findOneOrFail.mockResolvedValueOnce(mockBank);
+      mockEm.create.mockReturnValue({});
+      mockEm.save.mockRejectedValueOnce(new Error("DB error"));
+
+      await expect(
+        resolver.createBankBox(mockContext, createInput)
+      ).rejects.toThrow("Failed to create bank box.");
     });
   });
 
@@ -345,17 +344,16 @@ describe("BankBoxResolver", () => {
     };
 
     it("deve atualizar um BankBox existente com sucesso", async () => {
-      const originalDescription = mockBankBox.description;
-      const originalObjective = mockBankBox.objective;
-
-      const updatedBankBox = makeMockBankBox({
-        ...mockBankBox,
+      const existingBox = makeMockBankBox();
+      const updatedBox = makeMockBankBox({
+        ...existingBox,
         tag: updateInput.tag,
         description: updateInput.description,
+        objective: existingBox.objective,
       });
 
-      mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
-      mockEm.save.mockResolvedValue(updatedBankBox);
+      mockEm.findOne.mockResolvedValueOnce(existingBox);
+      mockEm.save.mockResolvedValueOnce(updatedBox);
 
       const result = await resolver.updateBankBox(
         mockContext,
@@ -364,80 +362,91 @@ describe("BankBoxResolver", () => {
       );
 
       expect(result).toEqual({
-        id: updatedBankBox.id,
-        bankId: updatedBankBox.bankId,
-        tag: updatedBankBox.tag,
-        objective: updatedBankBox.objective,
-        description: updatedBankBox.description,
-        balance: updatedBankBox.balance,
-        createdAt: updatedBankBox.createdAt.toISOString(),
+        id: updatedBox.id,
+        bankId: updatedBox.bankId,
+        tag: updatedBox.tag,
+        objective: updatedBox.objective,
+        description: updatedBox.description,
+        balance: updatedBox.balance,
+        createdAt: updatedBox.createdAt.toISOString(),
       });
+
       expect(mockedLoggedContext).toHaveBeenCalledWith(
         mockContext,
         expect.any(Function)
       );
-      expect(mockEm.findOneOrFail).toHaveBeenCalledWith(BankBox, {
-        where: { id: bankBoxId, userId },
+      expect(mockEm.findOne).toHaveBeenCalledWith(BankBox, {
+        where: { id: bankBoxId },
+        relations: { bank: true },
       });
 
-      expect(mockBankBox.tag).toBe(updateInput.tag);
+      // Verifica se os campos foram atualizados corretamente
+      expect(existingBox.tag).toBe(updateInput.tag);
+      expect(existingBox.description).toBe(updateInput.description);
+      expect(existingBox.objective).toBe("1000.00"); // não foi alterado
 
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
+      // Verifica as chamadas do updatableFieldResolve
+      // Primeira chamada: description (input, valor atual)
+      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+        1,
         updateInput.description,
-        originalDescription
+        "Descrição da caixa"
       );
-      expect(mockBankBox.description).toBe(updateInput.description);
-
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
-        updateInput.objective,
-        originalObjective
+      // Segunda chamada: objective (undefined, valor atual)
+      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+        2,
+        undefined,
+        "1000.00"
       );
-      expect(mockBankBox.objective).toBe(originalObjective);
 
-      expect(mockEm.save).toHaveBeenCalledWith(mockBankBox);
+      expect(mockEm.save).toHaveBeenCalledWith(existingBox);
+    });
+
+    it("deve lançar erro se o BankBox não existir", async () => {
+      mockEm.findOne.mockResolvedValueOnce(null);
+
+      await expect(
+        resolver.updateBankBox(mockContext, bankBoxId, updateInput)
+      ).rejects.toThrow(BANK_BOX_NOT_FOUND);
+    });
+
+    it("deve lançar erro se o usuário não for autorizado", async () => {
+      const bankDeOutroUsuario = makeMockBank({ userId: "other-user" });
+      const boxComBankDeOutro = makeMockBankBox({ bank: bankDeOutroUsuario });
+
+      mockEm.findOne.mockResolvedValueOnce(boxComBankDeOutro);
+
+      await expect(
+        resolver.updateBankBox(mockContext, bankBoxId, updateInput)
+      ).rejects.toThrow(USER_NOT_AUTHORIZED);
+
+      expect(mockEm.save).not.toHaveBeenCalled();
     });
 
     it("deve ignorar campos undefined (operador nullish)", async () => {
       const inputParcial: UpdateBankBoxInput = {
         tag: "Tag Parcial",
       };
-      const originalDescription = mockBankBox.description;
-      const originalObjective = mockBankBox.objective;
+      const existingBox = makeMockBankBox();
 
-      mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
-      mockEm.save.mockResolvedValue(mockBankBox);
+      mockEm.findOne.mockResolvedValueOnce(existingBox);
+      mockEm.save.mockResolvedValueOnce(existingBox);
 
       await resolver.updateBankBox(mockContext, bankBoxId, inputParcial);
 
-      expect(mockBankBox.tag).toBe("Tag Parcial");
-      expect(mockBankBox.bankId).toBe("bank-456");
-      expect(mockBankBox.balance).toBe("5000.00");
-
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
-        inputParcial.description,
-        originalDescription
-      );
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
-        inputParcial.objective,
-        originalObjective
-      );
-      expect(mockBankBox.description).toBe(originalDescription);
-      expect(mockBankBox.objective).toBe(originalObjective);
+      expect(existingBox.tag).toBe("Tag Parcial");
+      expect(existingBox.description).toBe("Descrição da caixa");
+      expect(existingBox.objective).toBe("1000.00");
     });
 
-    it("deve permitir atualizar description para null (usando updatableFieldResolve)", async () => {
+    it("deve permitir atualizar description para null", async () => {
       const inputComDescriptionNull: UpdateBankBoxInput = {
         description: null,
       };
-      const originalDescription = mockBankBox.description;
+      const existingBox = makeMockBankBox();
 
-      mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
-      mockEm.save.mockResolvedValue(mockBankBox);
-
-      mockedUpdatableFieldResolve.mockImplementation((input, current) => {
-        if (input === null) return null;
-        return input ?? current;
-      });
+      mockEm.findOne.mockResolvedValueOnce(existingBox);
+      mockEm.save.mockResolvedValueOnce(existingBox);
 
       await resolver.updateBankBox(
         mockContext,
@@ -445,26 +454,31 @@ describe("BankBoxResolver", () => {
         inputComDescriptionNull
       );
 
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
+      // Verifica a chamada com null
+      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+        1,
         null,
-        originalDescription
+        "Descrição da caixa"
       );
-      expect(mockBankBox.description).toBeNull();
+      // Segunda chamada: objective (undefined)
+      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+        2,
+        undefined,
+        "1000.00"
+      );
+
+      // O campo deve ter sido atualizado para null
+      expect(existingBox.description).toBeNull();
     });
 
-    it("deve permitir atualizar objective para null (usando updatableFieldResolve)", async () => {
+    it("deve permitir atualizar objective para null", async () => {
       const inputComObjectiveNull: UpdateBankBoxInput = {
         objective: null,
       };
-      const originalObjective = mockBankBox.objective;
+      const existingBox = makeMockBankBox();
 
-      mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
-      mockEm.save.mockResolvedValue(mockBankBox);
-
-      mockedUpdatableFieldResolve.mockImplementation((input, current) => {
-        if (input === null) return null;
-        return input ?? current;
-      });
+      mockEm.findOne.mockResolvedValueOnce(existingBox);
+      mockEm.save.mockResolvedValueOnce(existingBox);
 
       await resolver.updateBankBox(
         mockContext,
@@ -472,29 +486,26 @@ describe("BankBoxResolver", () => {
         inputComObjectiveNull
       );
 
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
+      // Primeira chamada: description (undefined)
+      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+        1,
+        undefined,
+        "Descrição da caixa"
+      );
+      // Segunda chamada: objective (null)
+      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+        2,
         null,
-        originalObjective
+        "1000.00"
       );
-      expect(mockBankBox.objective).toBeNull();
+
+      expect(existingBox.objective).toBeNull();
     });
 
-    it("deve lançar erro se o BankBox não for encontrado", async () => {
-      mockEm.findOneOrFail.mockRejectedValue(new Error("Not found"));
-
-      await expect(
-        resolver.updateBankBox(mockContext, bankBoxId, updateInput)
-      ).rejects.toThrow("Failed to update bank box.");
-
-      expect(mockedLoggedContext).toHaveBeenCalledWith(
-        mockContext,
-        expect.any(Function)
-      );
-    });
-
-    it("deve lançar erro se a atualização falhar", async () => {
-      mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
-      mockEm.save.mockRejectedValue(new Error("DB error"));
+    it("deve lançar erro genérico se a atualização falhar", async () => {
+      const existingBox = makeMockBankBox();
+      mockEm.findOne.mockResolvedValueOnce(existingBox);
+      mockEm.save.mockRejectedValueOnce(new Error("DB error"));
 
       await expect(
         resolver.updateBankBox(mockContext, bankBoxId, updateInput)
@@ -507,8 +518,10 @@ describe("BankBoxResolver", () => {
   // ============================================================
   describe("deleteBankBox", () => {
     it("deve deletar (soft delete) um BankBox com sucesso", async () => {
-      mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
-      mockEm.softRemove.mockResolvedValue({} as BankBox);
+      const bankBoxComBank = makeMockBankBox({ bank: mockBank });
+
+      mockEm.findOneOrFail.mockResolvedValueOnce(bankBoxComBank);
+      mockEm.softRemove.mockResolvedValueOnce({} as BankBox);
 
       const result = await resolver.deleteBankBox(mockContext, bankBoxId);
 
@@ -521,27 +534,39 @@ describe("BankBoxResolver", () => {
       );
       expect(mockEm.findOneOrFail).toHaveBeenCalledWith(BankBox, {
         where: { id: bankBoxId, userId },
+        relations: { bank: true },
       });
-      expect(mockEm.softRemove).toHaveBeenCalledWith(mockBankBox);
+      expect(mockEm.softRemove).toHaveBeenCalledWith(bankBoxComBank);
     });
 
-    it("deve lançar erro se o BankBox não for encontrado", async () => {
-      mockEm.findOneOrFail.mockRejectedValue(new Error("Not found"));
+    it("deve lançar erro genérico se o BankBox não for encontrado", async () => {
+      mockEm.findOneOrFail.mockRejectedValueOnce(new Error("Not found"));
 
       await expect(
         resolver.deleteBankBox(mockContext, bankBoxId)
       ).rejects.toThrow("Failed to delete bank box.");
 
-      expect(mockedLoggedContext).toHaveBeenCalledWith(
-        mockContext,
-        expect.any(Function)
-      );
       expect(mockEm.softRemove).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro se a exclusão falhar", async () => {
-      mockEm.findOneOrFail.mockResolvedValue(mockBankBox);
-      mockEm.softRemove.mockRejectedValue(new Error("DB error"));
+    it("deve lançar erro genérico se o usuário não for autorizado", async () => {
+      const bankDeOutro = makeMockBank({ userId: "other-user" });
+      const boxComBankOutro = makeMockBankBox({ bank: bankDeOutro });
+
+      mockEm.findOneOrFail.mockResolvedValueOnce(boxComBankOutro);
+
+      await expect(
+        resolver.deleteBankBox(mockContext, bankBoxId)
+      ).rejects.toThrow("Failed to delete bank box.");
+
+      expect(mockEm.softRemove).not.toHaveBeenCalled();
+    });
+
+    it("deve lançar erro genérico se a exclusão falhar", async () => {
+      const bankBoxComBank = makeMockBankBox({ bank: mockBank });
+
+      mockEm.findOneOrFail.mockResolvedValueOnce(bankBoxComBank);
+      mockEm.softRemove.mockRejectedValueOnce(new Error("DB error"));
 
       await expect(
         resolver.deleteBankBox(mockContext, bankBoxId)
