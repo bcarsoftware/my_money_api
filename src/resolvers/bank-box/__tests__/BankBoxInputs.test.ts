@@ -360,7 +360,6 @@ describe("UpdateBankBoxInput", () => {
 
     it("não retorna erros com todos os campos válidos", async () => {
       const input = {
-        bankId: "550e8400-e29b-41d4-a716-446655440000",
         tag: "Tag atualizada",
         objective: "2000.00",
         description: "Nova descrição",
@@ -368,32 +367,6 @@ describe("UpdateBankBoxInput", () => {
       };
       const errors = await validateInput(UpdateBankBoxInput, input);
       expect(errors).toHaveLength(0);
-    });
-  });
-
-  describe("bankId (opcional)", () => {
-    it("aceita UUID v4 válido", async () => {
-      const input = { bankId: "550e8400-e29b-41d4-a716-446655440000" };
-      const errors = await validateInput(UpdateBankBoxInput, input);
-      expect(constraintsFor(errors, "bankId")).toHaveLength(0);
-    });
-
-    it("rejeita UUID com versão diferente", async () => {
-      const input = { bankId: "550e8400-e29b-11d4-a716-446655440000" };
-      const errors = await validateInput(UpdateBankBoxInput, input);
-      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
-    });
-
-    it("rejeita string não UUID", async () => {
-      const input = { bankId: "nao-e-uuid" };
-      const errors = await validateInput(UpdateBankBoxInput, input);
-      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
-    });
-
-    it("aceita undefined (omitido)", async () => {
-      const input = { bankId: undefined };
-      const errors = await validateInput(UpdateBankBoxInput, input);
-      expect(constraintsFor(errors, "bankId")).toHaveLength(0);
     });
   });
 
@@ -478,16 +451,13 @@ describe("UpdateBankBoxInput", () => {
   describe("múltiplos erros", () => {
     it("acumula erros de campos diferentes", async () => {
       const input = {
-        bankId: "invalido",
         tag: "a".repeat(65),
         objective: "inválido",
         description: "a".repeat(257),
       };
       const errors = await validateInput(UpdateBankBoxInput, input);
       const properties = errors.map((e) => e.property).sort();
-      expect(properties).toEqual(
-        ["bankId", "description", "objective", "tag"].sort()
-      );
+      expect(properties).toEqual(["description", "objective", "tag"].sort());
     });
   });
 });

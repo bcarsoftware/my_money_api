@@ -70,11 +70,6 @@ export class ListBankBoxInput {
 export class UpdateBankBoxInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
-  @IsUUID("4", { message: "Bank ID must be a valid UUID." })
-  bankId?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
   @MaxLength(64, { message: "Tag must be at most 64 characters long." })
   tag?: string;
 

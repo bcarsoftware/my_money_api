@@ -17,6 +17,7 @@ import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
 import { MessageResponse } from "../MessageResponse";
 import { toBankBoxDto } from "./dto/toBankBoxDto";
+import { Bank } from "@/entities/Bank";
 
 @Resolver()
 export class BankBoxResolver {
@@ -61,8 +62,12 @@ export class BankBoxResolver {
     @Ctx() context: MyContext,
     @Arg("input", () => CreateBankBoxInput) input: CreateBankBoxInput
   ): Promise<BankBoxDto> {
+    const { userId } = context;
+
     return await loggedContext(context, async (em) => {
       try {
+        await em.findOneOrFail(Bank, { where: { id: input.bankId, userId } });
+
         const bankBox = em.create(BankBox, {
           ...input,
           userId: context.userId,
@@ -92,7 +97,6 @@ export class BankBoxResolver {
         const bankBox = await em.findOneOrFail(BankBox, { where });
 
         bankBox.tag = input.tag ?? bankBox.tag;
-        bankBox.bankId = input.bankId ?? bankBox.bankId;
         bankBox.description = updatableFieldResolve<string>(
           input.description,
           bankBox.description

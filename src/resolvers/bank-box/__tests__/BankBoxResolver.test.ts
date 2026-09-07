@@ -375,7 +375,6 @@ describe("BankBoxResolver", () => {
   // ============================================================
   describe("updateBankBox", () => {
     const updateInput: UpdateBankBoxInput = {
-      bankId: "bank-456",
       tag: "Tag Atualizada",
       description: "Nova descrição",
     };
@@ -435,7 +434,6 @@ describe("BankBoxResolver", () => {
 
     it("deve ignorar campos undefined (operador nullish)", async () => {
       const inputParcial: UpdateBankBoxInput = {
-        bankId: "bank-456",
         tag: "Tag Parcial",
       };
       const originalDescription = mockBankBox.description;
@@ -464,7 +462,6 @@ describe("BankBoxResolver", () => {
 
     it("deve permitir atualizar description para null (usando updatableFieldResolve)", async () => {
       const inputComDescriptionNull: UpdateBankBoxInput = {
-        bankId: "bank-456",
         description: null,
       };
       const originalDescription = mockBankBox.description;
@@ -492,7 +489,6 @@ describe("BankBoxResolver", () => {
 
     it("deve permitir atualizar objective para null (usando updatableFieldResolve)", async () => {
       const inputComObjectiveNull: UpdateBankBoxInput = {
-        bankId: "bank-456",
         objective: null,
       };
       const originalObjective = mockBankBox.objective;
