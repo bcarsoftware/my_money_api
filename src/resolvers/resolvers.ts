@@ -1,6 +1,6 @@
 import { BankBoxResolver } from "@/resolvers/bank-box/BankBoxResolver";
 import { BankResolver } from "@/resolvers/bank/BankResolver";
-import { GenericBankResolver } from "@/resolvers/genereic-bank/GenericBankResolver";
+import { GenericBankResolver } from "@/resolvers/generic-bank/GenericBankResolver";
 import { InvoiceResolver } from "@/resolvers/invoice/InvoiceResolver";
 import { MeResolver } from "@/resolvers/me/MeResolver";
 import { MoneyResolver } from "@/resolvers/money/MoneyResolver";
