@@ -1,5 +1,6 @@
 import { BankBoxResolver } from "@/resolvers/bank-box/BankBoxResolver";
 import { BankResolver } from "@/resolvers/bank/BankResolver";
+import { GenericBankBoxResolver } from "@/resolvers/generic-bank-box/GenericBankBoxResolver";
 import { GenericBankResolver } from "@/resolvers/generic-bank/GenericBankResolver";
 import { InvoiceResolver } from "@/resolvers/invoice/InvoiceResolver";
 import { MeResolver } from "@/resolvers/me/MeResolver";
@@ -18,4 +19,5 @@ export const resolvers = [
   InvoiceResolver,
   PaymentResolver,
   GenericBankResolver,
+  GenericBankBoxResolver,
 ] as const;
