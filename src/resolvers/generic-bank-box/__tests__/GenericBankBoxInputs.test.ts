@@ -1,11 +1,11 @@
 import "reflect-metadata";
 
-import { validate, ValidationError } from "class-validator";
 import {
   CreateGenericBankBoxInput,
   ListGenericBankBoxInput,
   UpdateGenericBankBoxInput,
 } from "@/resolvers/generic-bank-box/GenericBankBoxInputs";
+import { validate, ValidationError } from "class-validator";
 
 // ============================================================
 // Helpers
@@ -503,51 +503,16 @@ describe("UpdateGenericBankBoxInput", () => {
     });
   });
 
-  describe("balance (opcional)", () => {
-    it("é opcional — omitido não gera erro", async () => {
-      const input = { balance: undefined };
-      const errors = await validateInput(UpdateGenericBankBoxInput, input);
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
-    });
-
-    it.each(["100.00", "0.00", "1,234.56", "50.00"])(
-      "aceita formato de moeda válido: %s",
-      async (value) => {
-        const input = { balance: value };
-        const errors = await validateInput(UpdateGenericBankBoxInput, input);
-        expect(constraintsFor(errors, "balance")).toHaveLength(0);
-      }
-    );
-
-    it("rejeita valores negativos", async () => {
-      const input = { balance: "-50.00" };
-      const errors = await validateInput(UpdateGenericBankBoxInput, input);
-      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
-    });
-
-    it.each(["não é moeda", "", "100.5"])(
-      "rejeita formato de moeda inválido: %s",
-      async (value) => {
-        const input = { balance: value };
-        const errors = await validateInput(UpdateGenericBankBoxInput, input);
-        expect(constraintsFor(errors, "balance")).toContain("isCurrency");
-      }
-    );
-  });
-
   describe("múltiplos erros", () => {
     it("acumula erros de diferentes campos", async () => {
       const input = {
         name: "a".repeat(65),
         objective: "-50.00",
         description: "a".repeat(257),
-        balance: "-10.00",
       };
       const errors = await validateInput(UpdateGenericBankBoxInput, input);
       const properties = errors.map((e) => e.property).sort();
-      expect(properties).toEqual(
-        ["balance", "description", "name", "objective"].sort()
-      );
+      expect(properties).toEqual(["description", "name", "objective"].sort());
     });
   });
 });

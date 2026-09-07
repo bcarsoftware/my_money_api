@@ -11,6 +11,7 @@ export const USER_NOT_FOUND = "User not found.";
 export const USER_NOT_AUTHENTICATED = "User not authenticated.";
 export const USER_PASSWORD_NOT_MATCH = "User password not match.";
 export const USER_BANK_NOT_MATCH = "User bank not match.";
+export const USER_NOT_AUTHORIZED = "User not authorized.";
 
 export const SALT_ROUNDS_INVALID = "Salt rounds invalid.";
 
@@ -22,3 +23,7 @@ export const INVALID_DAY_MONTH_COMBINATION =
   "Invalid day and month combination.";
 
 export const PAYMENT_NOT_FOUND = "Payment not found.";
+
+export const GENERIC_BANK_NOT_FOUND = "Generic bank not found.";
+
+export const GENERIC_BANK_BOX_NOT_FOUND = "Generic bank box not found.";
