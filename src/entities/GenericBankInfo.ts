@@ -4,6 +4,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -13,6 +14,7 @@ import {
 import { GenericBank } from "@/entities/GenericBank";
 
 @Entity("generic_bank_info")
+@Index("IDX_name_generic_bank_id", ["name", "genericBankId"], { unique: true })
 export class GenericBankInfo extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
