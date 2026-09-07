@@ -56,6 +56,7 @@ export class CreateGenericBankInput {
   currency: CurrencyEnum;
 
   @Field(() => [CreateBankInfoInput], { nullable: true })
+  @IsOptional()
   @ValidateNested({ each: true })
   bankInfo?: CreateBankInfoInput[] | null;
 
