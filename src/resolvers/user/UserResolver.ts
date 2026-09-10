@@ -7,7 +7,7 @@ import { UserDto } from "@/resolvers/user/dto/UserDto";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { comparePassword, hashPassword } from "@/utils/passwordUtil";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 import { MessageResponse } from "../MessageResponse";
@@ -115,7 +115,7 @@ export class UserResolver {
         user.name = input.name ?? user.name;
         user.dateBorn = dateBorn;
         user.gender = input.gender ?? user.gender;
-        user.cpf = updatableFieldResolve<string>(input.cpf, user.cpf);
+        user.cpf = updatableFieldResolver<string>(input.cpf, user.cpf);
         user.email = input.email ?? user.email;
         user.username = input.username ?? user.username;
         user.salary = input.salary ?? user.salary;

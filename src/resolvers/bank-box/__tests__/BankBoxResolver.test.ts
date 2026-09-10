@@ -7,7 +7,7 @@ import { BankBox } from "@/entities/BankBox";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { toBankBoxDto } from "@/resolvers/bank-box/dto/toBankBoxDto";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
 import { ILike } from "typeorm";
 import {
   CreateBankBoxInput,
@@ -21,7 +21,7 @@ import { PaginatedBankBoxDto } from "../dto/BankBoxDto";
 // Mocks
 // ============================================================
 jest.mock("@/utils/loggedContext");
-jest.mock("@/utils/updatableFieldResolve");
+jest.mock("@/utils/updatableFieldResolver");
 jest.mock("@/resolvers/bank-box/dto/toBankBoxDto", () => ({
   toBankBoxDto: jest.fn(),
 }));
@@ -29,8 +29,8 @@ jest.mock("@/resolvers/bank-box/dto/toBankBoxDto", () => ({
 const mockedLoggedContext = loggedContext as jest.MockedFunction<
   typeof loggedContext
 >;
-const mockedUpdatableFieldResolve =
-  updatableFieldResolve as jest.MockedFunction<typeof updatableFieldResolve>;
+const mockedupdatableFieldResolver =
+  updatableFieldResolver as jest.MockedFunction<typeof updatableFieldResolver>;
 const mockedToBankBoxDto = jest.mocked(toBankBoxDto);
 
 // ============================================================
@@ -111,8 +111,8 @@ describe("BankBoxResolver", () => {
       return callback(mockEm as unknown as Parameters<typeof callback>[0]);
     });
 
-    // updatableFieldResolve: retorna input se não for undefined, senão current
-    mockedUpdatableFieldResolve.mockImplementation((input, current) =>
+    // updatableFieldResolver: retorna input se não for undefined, senão current
+    mockedupdatableFieldResolver.mockImplementation((input, current) =>
       input !== undefined ? input : current
     );
 
@@ -385,15 +385,15 @@ describe("BankBoxResolver", () => {
       expect(existingBox.description).toBe(updateInput.description);
       expect(existingBox.objective).toBe("1000.00"); // não foi alterado
 
-      // Verifica as chamadas do updatableFieldResolve
+      // Verifica as chamadas do updatableFieldResolver
       // Primeira chamada: description (input, valor atual)
-      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenNthCalledWith(
         1,
         updateInput.description,
         "Descrição da caixa"
       );
       // Segunda chamada: objective (undefined, valor atual)
-      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenNthCalledWith(
         2,
         undefined,
         "1000.00"
@@ -455,13 +455,13 @@ describe("BankBoxResolver", () => {
       );
 
       // Verifica a chamada com null
-      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenNthCalledWith(
         1,
         null,
         "Descrição da caixa"
       );
       // Segunda chamada: objective (undefined)
-      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenNthCalledWith(
         2,
         undefined,
         "1000.00"
@@ -487,13 +487,13 @@ describe("BankBoxResolver", () => {
       );
 
       // Primeira chamada: description (undefined)
-      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenNthCalledWith(
         1,
         undefined,
         "Descrição da caixa"
       );
       // Segunda chamada: objective (null)
-      expect(mockedUpdatableFieldResolve).toHaveBeenNthCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenNthCalledWith(
         2,
         null,
         "1000.00"

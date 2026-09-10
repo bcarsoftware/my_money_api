@@ -17,7 +17,7 @@ import {
 } from "@/resolvers/bank-box/dto/BankBoxDto";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
@@ -116,11 +116,11 @@ export class BankBoxResolver {
 
       try {
         bankBox.tag = input.tag ?? bankBox.tag;
-        bankBox.description = updatableFieldResolve<string>(
+        bankBox.description = updatableFieldResolver<string>(
           input.description,
           bankBox.description
         );
-        bankBox.objective = updatableFieldResolve<string>(
+        bankBox.objective = updatableFieldResolver<string>(
           input.objective,
           bankBox.objective
         );

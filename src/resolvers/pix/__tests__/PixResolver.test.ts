@@ -5,7 +5,7 @@ import { Pix } from "@/entities/Pix";
 import { PixEnum } from "@/enums/PixEnum";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
 import { ILike } from "typeorm";
 import { CreatePixInput, ListPixInput, UpdatePixInput } from "../PixInputs";
 import { PixResolver } from "../PixResolver";
@@ -14,7 +14,7 @@ import { toPixDto } from "../dto/toPixDto";
 
 // Mocks
 jest.mock("@/utils/loggedContext");
-jest.mock("@/utils/updatableFieldResolve");
+jest.mock("@/utils/updatableFieldResolver");
 jest.mock("@/resolvers/pix/dto/toPixDto", () => ({
   toPixDto: jest.fn(),
 }));
@@ -22,8 +22,8 @@ jest.mock("@/resolvers/pix/dto/toPixDto", () => ({
 const mockedLoggedContext = loggedContext as jest.MockedFunction<
   typeof loggedContext
 >;
-const mockedUpdatableFieldResolve =
-  updatableFieldResolve as jest.MockedFunction<typeof updatableFieldResolve>;
+const mockedupdatableFieldResolver =
+  updatableFieldResolver as jest.MockedFunction<typeof updatableFieldResolver>;
 const mockedToPixDto = jest.mocked(toPixDto);
 
 // Tipo para o EntityManager mockado
@@ -100,7 +100,7 @@ describe("PixResolver", () => {
       return callback(mockEm as unknown as Parameters<typeof callback>[0]);
     });
 
-    mockedUpdatableFieldResolve.mockImplementation(
+    mockedupdatableFieldResolver.mockImplementation(
       (input, current) => input ?? current
     );
 
@@ -462,7 +462,7 @@ describe("PixResolver", () => {
       expect(mockPix.key).toBe(updateInput.key);
       expect(mockPix.typeKey).toBe(updateInput.typeKey);
 
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenCalledWith(
         updateInput.description,
         originalDescription
       );
@@ -486,14 +486,14 @@ describe("PixResolver", () => {
       expect(mockPix.key).toBe("12345678909");
       expect(mockPix.typeKey).toBe(PixEnum.CPF);
 
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenCalledWith(
         inputParcial.description,
         originalDescription
       );
       expect(mockPix.description).toBe("Conta de luz");
     });
 
-    it("deve permitir atualizar description para null (usando updatableFieldResolve)", async () => {
+    it("deve permitir atualizar description para null (usando updatableFieldResolver)", async () => {
       const inputComDescriptionNull: UpdatePixInput = {
         description: null,
       };
@@ -502,14 +502,14 @@ describe("PixResolver", () => {
       mockEm.findOneOrFail.mockResolvedValue(mockPix);
       mockEm.save.mockResolvedValue(mockPix);
 
-      mockedUpdatableFieldResolve.mockImplementationOnce((input, current) => {
+      mockedupdatableFieldResolver.mockImplementationOnce((input, current) => {
         if (input === null) return null;
         return input ?? current;
       });
 
       await resolver.updatePix(mockContext, pixId, inputComDescriptionNull);
 
-      expect(mockedUpdatableFieldResolve).toHaveBeenCalledWith(
+      expect(mockedupdatableFieldResolver).toHaveBeenCalledWith(
         null,
         originalDescription
       );

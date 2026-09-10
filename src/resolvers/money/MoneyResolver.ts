@@ -12,7 +12,7 @@ import { MessageResponse } from "@/resolvers/MessageResponse";
 import { MoneyDto, PaginatedMoney } from "@/resolvers/money/dto/MoneyDto";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { ILike } from "typeorm";
 import { toMoneyDto } from "./dto/toMoneyDto";
@@ -86,11 +86,11 @@ export class MoneyResolver {
 
         money.tag =
           input.tag && money.tag !== input.tag ? input.tag : money.tag;
-        money.objective = updatableFieldResolve<string>(
+        money.objective = updatableFieldResolver<string>(
           input.objective,
           money.objective
         );
-        money.description = updatableFieldResolve<string>(
+        money.description = updatableFieldResolver<string>(
           input.description,
           money.description
         );
