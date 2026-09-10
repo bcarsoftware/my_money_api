@@ -1,4 +1,4 @@
-import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
 
 describe("updatableFieldResolver", () => {
   it("retorna null quando newValue é null (limpeza explícita)", () => {

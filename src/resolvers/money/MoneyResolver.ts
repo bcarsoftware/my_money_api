@@ -10,12 +10,12 @@ import { type MyContext } from "@/context/MyContext";
 import { Money } from "@/entities/Money";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { MoneyDto, PaginatedMoney } from "@/resolvers/money/dto/MoneyDto";
+import { toMoneyDto } from "@/resolvers/money/dto/toMoneyDto";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { ILike } from "typeorm";
-import { toMoneyDto } from "./dto/toMoneyDto";
 
 @Resolver()
 export class MoneyResolver {

@@ -6,18 +6,18 @@ import {
   InvoiceDto,
   PaginatedInvoiceDto,
 } from "@/resolvers/invoice/dto/InvoiceDto";
+import { toInvoiceDto } from "@/resolvers/invoice/dto/toInvoiceDto";
 import {
   CreateInvoiceInput,
   InvoicePayInput,
   ListInvoiceInput,
   UpdateInvoiceInput,
 } from "@/resolvers/invoice/InvoiceInputs";
+import { MessageResponse } from "@/resolvers/MessageResponse";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
-import { toInvoiceDto } from "./dto/toInvoiceDto";
-import { MessageResponse } from "../MessageResponse";
 
 @Resolver()
 export class InvoiceResolver {

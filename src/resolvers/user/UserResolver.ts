@@ -3,16 +3,20 @@ import { USER_NOT_FOUND, USER_PASSWORD_NOT_MATCH } from "@/constants/constants";
 import { cookieOptions } from "@/constants/cookies";
 import { type MyContext } from "@/context/MyContext";
 import { User } from "@/entities/User";
+import { MessageResponse } from "@/resolvers/MessageResponse";
 import { UserDto } from "@/resolvers/user/dto/UserDto";
+import {
+  CreateUserInput,
+  UpdateUserInput,
+  UserLoginInput,
+} from "@/resolvers/user/UserInputs";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { comparePassword, hashPassword } from "@/utils/passwordUtil";
-import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
-import { MessageResponse } from "../MessageResponse";
 import { toUserDto } from "./dto/toUserDto";
-import { CreateUserInput, UpdateUserInput, UserLoginInput } from "./UserInputs";
 
 @Resolver()
 export class UserResolver {

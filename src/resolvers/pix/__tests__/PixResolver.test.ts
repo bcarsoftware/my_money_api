@@ -4,13 +4,13 @@ import { type MyContext } from "@/context/MyContext";
 import { Pix } from "@/entities/Pix";
 import { PixEnum } from "@/enums/PixEnum";
 import { MessageResponse } from "@/resolvers/MessageResponse";
+import { PaginatedPixDto, PixDto } from "@/resolvers/pix/dto/PixDto";
+import { toPixDto } from "@/resolvers/pix/dto/toPixDto";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
 import { ILike } from "typeorm";
 import { CreatePixInput, ListPixInput, UpdatePixInput } from "../PixInputs";
 import { PixResolver } from "../PixResolver";
-import { PaginatedPixDto, PixDto } from "../dto/PixDto";
-import { toPixDto } from "../dto/toPixDto";
 
 // Mocks
 jest.mock("@/utils/loggedContext");

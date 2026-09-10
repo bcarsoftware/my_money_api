@@ -21,7 +21,6 @@ import {
 import { toInvoiceDto } from "@/resolvers/invoice/dto/toInvoiceDto";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
-import { ILike } from "typeorm";
 
 // ============================================================
 // Mocks (devem vir antes dos imports das funções mockadas)
@@ -144,10 +143,16 @@ describe("InvoiceResolver", () => {
     mockedToInvoiceDto.mockImplementation((invoice: Invoice) =>
       makeInvoiceDto(invoice)
     );
+
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   // ============================================================

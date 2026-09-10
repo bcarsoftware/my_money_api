@@ -17,12 +17,12 @@ import {
   ListGenericBankBoxInput,
   UpdateGenericBankBoxInput,
 } from "@/resolvers/generic-bank-box/GenericBankBoxInputs";
+import { MessageResponse } from "@/resolvers/MessageResponse";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { EntityManager, ILike } from "typeorm";
-import { MessageResponse } from "../MessageResponse";
 
 @Resolver()
 export class GenericBankBoxResolver {

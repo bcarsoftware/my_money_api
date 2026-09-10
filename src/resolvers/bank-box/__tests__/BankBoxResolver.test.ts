@@ -5,17 +5,17 @@ import { type MyContext } from "@/context/MyContext";
 import { Bank } from "@/entities/Bank";
 import { BankBox } from "@/entities/BankBox";
 import { MessageResponse } from "@/resolvers/MessageResponse";
-import { toBankBoxDto } from "@/resolvers/bank-box/dto/toBankBoxDto";
-import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolver } from "@/utils/updatableFieldResolverr";
-import { ILike } from "typeorm";
 import {
   CreateBankBoxInput,
   ListBankBoxInput,
   UpdateBankBoxInput,
-} from "../BankBoxInputs";
-import { BankBoxResolver } from "../BankBoxResolver";
-import { PaginatedBankBoxDto } from "../dto/BankBoxDto";
+} from "@/resolvers/bank-box/BankBoxInputs";
+import { BankBoxResolver } from "@/resolvers/bank-box/BankBoxResolver";
+import { PaginatedBankBoxDto } from "@/resolvers/bank-box/dto/BankBoxDto";
+import { toBankBoxDto } from "@/resolvers/bank-box/dto/toBankBoxDto";
+import { loggedContext } from "@/utils/loggedContext";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
+import { ILike } from "typeorm";
 
 // ============================================================
 // Mocks
@@ -125,10 +125,16 @@ describe("BankBoxResolver", () => {
       balance: bankBox.balance,
       createdAt: bankBox.createdAt.toISOString(),
     }));
+
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   // ============================================================
