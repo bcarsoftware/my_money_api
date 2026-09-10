@@ -2,8 +2,11 @@ import { INVALID_CURRENCY_FORMAT } from "@/constants/constants";
 import {
   clearDecimal,
   decimalDivide,
+  decimalGreaterThan,
   decimalMultiply,
+  decimalSubtract,
   decimalSum,
+  decimalSumSequence,
 } from "@/utils/currencyUtil";
 
 describe("clearDecimal", () => {
@@ -30,6 +33,56 @@ describe("clearDecimal", () => {
 
   it("deve manter sinais negativos", () => {
     expect(clearDecimal(" -1,234.56 ")).toBe("-1234.56");
+  });
+});
+
+describe("decimalGreaterThan", () => {
+  it("deve retornar true se o primeiro número for maior que o segundo", () => {
+    expect(decimalGreaterThan("10.00", "5.00")).toBe(true);
+    expect(decimalGreaterThan("5.00", "10.00")).toBe(false);
+    expect(decimalGreaterThan("10.00", "10.00")).toBe(false);
+  });
+
+  it("deve retornar false se o primeiro número não for maior que o segundo", () => {
+    expect(decimalGreaterThan("5.00", "10.00")).toBe(false);
+    expect(decimalGreaterThan("10.00", "10.00")).toBe(false);
+  });
+
+  it("deve lidar com números negativos corretamente", () => {
+    expect(decimalGreaterThan("-5.00", "-10.00")).toBe(true);
+    expect(decimalGreaterThan("-10.00", "-5.00")).toBe(false);
+    expect(decimalGreaterThan("-10.00", "-10.00")).toBe(false);
+  });
+
+  it("deve lidar com zeros corretamente", () => {
+    expect(decimalGreaterThan("0.00", "0.00")).toBe(false);
+    expect(decimalGreaterThan("0.01", "0.00")).toBe(true);
+    expect(decimalGreaterThan("0.00", "0.01")).toBe(false);
+  });
+
+  it("deve lidar com números com casas decimais diferentes", () => {
+    expect(decimalGreaterThan("10.1", "10.01")).toBe(true);
+    expect(decimalGreaterThan("10.01", "10.1")).toBe(false);
+  });
+
+  it("deve lidar com números com zeros à esquerda", () => {
+    expect(decimalGreaterThan("0010.00", "0005.00")).toBe(true);
+    expect(decimalGreaterThan("0005.00", "0010.00")).toBe(false);
+  });
+
+  it("deve lidar com números com sinais negativos e zeros à esquerda", () => {
+    expect(decimalGreaterThan("-0010.00", "-0005.00")).toBe(false);
+    expect(decimalGreaterThan("-0005.00", "-0010.00")).toBe(true);
+  });
+
+  it("deve lidar com números com sinais positivos e zeros à esquerda", () => {
+    expect(decimalGreaterThan("0010.00", "0005.00")).toBe(true);
+    expect(decimalGreaterThan("0005.00", "0010.00")).toBe(false);
+  });
+
+  it("deve lidar com números com sinais positivos e negativos misturados", () => {
+    expect(decimalGreaterThan("10.00", "-5.00")).toBe(true);
+    expect(decimalGreaterThan("-5.00", "10.00")).toBe(false);
   });
 });
 
@@ -94,6 +147,95 @@ describe("decimalSum", () => {
     expect(() => decimalSum("", "10.00")).toThrow(INVALID_CURRENCY_FORMAT);
     expect(() => decimalSum("10.00", "")).toThrow(INVALID_CURRENCY_FORMAT);
     expect(() => decimalSum(" ", "10.00")).toThrow(INVALID_CURRENCY_FORMAT);
+  });
+});
+
+describe("decimalSumSequence", () => {
+  it("deve somar uma sequência de números", () => {
+    expect(decimalSumSequence(["10.00", "20.00", "30.00"])).toBe("60.00");
+    expect(decimalSumSequence(["1.23", "4.56", "7.89"])).toBe("13.68");
+    expect(decimalSumSequence([])).toBe("0.00");
+  });
+
+  it("deve lançar erro INVALID_CURRENCY_FORMAT se algum valor for inválido", () => {
+    const invalidValues = ["abc", "12.345", "12.3.4", "12,34.56", "12.34.56"];
+    invalidValues.forEach((val) => {
+      expect(() => decimalSumSequence([val, "10.00"])).toThrow(
+        INVALID_CURRENCY_FORMAT
+      );
+      expect(() => decimalSumSequence(["10.00", val])).toThrow(
+        INVALID_CURRENCY_FORMAT
+      );
+    });
+  });
+
+  it("deve retornar 0.00 para uma sequência vazia", () => {
+    expect(decimalSumSequence([])).toBe("0.00");
+  });
+});
+
+describe("decimalSubtract", () => {
+  it("deve subtrair dois números com duas casas decimais", () => {
+    expect(decimalSubtract("15.75", "10.25")).toBe("5.50");
+    expect(decimalSubtract("0.10", "0.20")).toBe("-0.10");
+  });
+
+  it("deve subtrair números com uma casa decimal (completa com zero)", () => {
+    expect(decimalSubtract("15.7", "10.2")).toBe("5.50");
+    expect(decimalSubtract("0.5", "0.5")).toBe("0.00");
+  });
+
+  it("deve subtrair números sem casas decimais (considera .00)", () => {
+    expect(decimalSubtract("15", "10")).toBe("5.00");
+    expect(decimalSubtract("0", "0")).toBe("0.00");
+  });
+
+  it("deve subtrair números negativos", () => {
+    expect(decimalSubtract("-15.75", "-10.25")).toBe("-5.50");
+    expect(decimalSubtract("-15.75", "10.25")).toBe("-26.00");
+    expect(decimalSubtract("15.75", "-10.25")).toBe("26.00");
+  });
+
+  it("deve subtrair números com vírgulas (limpa antes)", () => {
+    expect(decimalSubtract("1,234.56", "2,345.67")).toBe("-1111.11");
+    expect(decimalSubtract("1,234.56", "-2,345.67")).toBe("3580.23");
+  });
+
+  it("deve subtrair números com espaços (limpa antes)", () => {
+    expect(decimalSubtract(" 15.75 ", " 10.25 ")).toBe("5.50");
+  });
+
+  it("deve lançar erro INVALID_CURRENCY_FORMAT se o formato for inválido", () => {
+    const invalidValues = [
+      "abc",
+      "12.345",
+      "12.3.4",
+      "12,34.56",
+      "12.34.56",
+      "-",
+      "--123",
+      "12..34",
+      ".",
+      "-.",
+      "1.2.3",
+    ];
+
+    invalidValues.forEach((val) => {
+      expect(() => decimalSubtract(val, "10.00")).toThrow(
+        INVALID_CURRENCY_FORMAT
+      );
+      expect(() => decimalSubtract("10.00", val)).toThrow(
+        INVALID_CURRENCY_FORMAT
+      );
+    });
+  });
+
+  it("deve lançar erro se a string estiver vazia", () => {
+    expect(() => decimalSubtract("", "10.00")).toThrow(INVALID_CURRENCY_FORMAT);
+    expect(() => decimalSubtract("10.00", "")).toThrow(INVALID_CURRENCY_FORMAT);
+    expect(() => decimalSubtract(" ", "10.00")).toThrow(
+      INVALID_CURRENCY_FORMAT
+    );
   });
 });
 
