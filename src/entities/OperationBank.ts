@@ -9,6 +9,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -16,8 +17,14 @@ import {
 } from "typeorm";
 
 @Entity("operations_bank")
+@Index("IDX_bank_operation_register_id", ["operationRegister", "id"], {
+  unique: true,
+})
 export class OperationBank extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
+
+  @Column({ type: "uuid", name: "operation_register" })
+  operationRegister: string;
 
   @Column({ type: "uuid", name: "user_id" })
   userId: string;

@@ -1,5 +1,4 @@
 import { Bank } from "@/entities/Bank";
-import { BankBox } from "@/entities/BankBox";
 import { Invoice } from "@/entities/Invoice";
 import { Money } from "@/entities/Money";
 import { User } from "@/entities/User";
@@ -10,6 +9,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -17,8 +17,14 @@ import {
 } from "typeorm";
 
 @Entity("operations_payment")
+@Index("IDX_payment_operation_register_id", ["operationRegister", "id"], {
+  unique: true,
+})
 export class OperationPayment extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
+
+  @Column({ type: "uuid", name: "operation_register" })
+  operationRegister: string;
 
   @Column({ type: "uuid", name: "user_id" })
   userId: string;
