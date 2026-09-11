@@ -15,7 +15,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-@Entity()
+@Entity("operations_bank")
 export class OperationBank extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
