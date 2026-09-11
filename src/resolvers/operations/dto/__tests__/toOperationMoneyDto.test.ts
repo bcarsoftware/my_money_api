@@ -25,8 +25,8 @@ function makeOperationMoney(
     local: LocalEnum.INTERNAL,
     createdAt: new Date("2026-01-15T10:30:00.000Z"),
     updatedAt: new Date("2026-01-16T11:45:00.000Z"),
-    user: null as unknown as OperationMoney["user"],
-    money: null as unknown as OperationMoney["money"],
+    user: null,
+    money: null,
     ...overrides,
   } as unknown as OperationMoney;
 }

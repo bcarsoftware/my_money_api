@@ -26,8 +26,8 @@ function makeOperationGenericBank(
     local: LocalEnum.INTERNAL,
     createdAt: new Date("2026-01-15T10:30:00.000Z"),
     updatedAt: new Date("2026-01-16T11:45:00.000Z"),
-    user: null as unknown as OperationGenericBank["user"],
-    genericBank: null as unknown as OperationGenericBank["genericBank"],
+    user: null,
+    genericBank: null,
     genericBankBox: null,
     ...overrides,
   } as unknown as OperationGenericBank;
