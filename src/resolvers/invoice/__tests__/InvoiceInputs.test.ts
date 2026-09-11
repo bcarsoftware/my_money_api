@@ -4,7 +4,7 @@ import { InvoiceStatusEnum } from "@/enums/InvoiceStatusEnum";
 import { RepeatEnum } from "@/enums/RepeatEnum";
 import {
   CreateInvoiceInput,
-  InvoicePayInput,
+  InvoiceRefundInput,
   ListInvoiceInput,
   UpdateInvoiceInput,
 } from "@/resolvers/invoice/InvoiceInputs";
@@ -37,7 +37,6 @@ describe("CreateInvoiceInput", () => {
     repeat: RepeatEnum.NO_REPEAT,
     installments: 1,
     balance: "150.00",
-    total: "150.00",
   };
 
   describe("caminho feliz", () => {
@@ -80,6 +79,21 @@ describe("CreateInvoiceInput", () => {
 
     it("rejeita string não UUID", async () => {
       const payload = { ...validPayload, bankId: "nao-e-uuid" };
+      const errors = await validateInput(CreateInvoiceInput, payload);
+      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
+    });
+
+    it("rejeita quando ausente (campo obrigatório)", async () => {
+      const { bankId, ...payload } = validPayload;
+      const errors = await validateInput(CreateInvoiceInput, payload);
+      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
+    });
+
+    it("rejeita null (campo obrigatório)", async () => {
+      const payload = {
+        ...validPayload,
+        bankId: null,
+      } as unknown as CreateInvoiceInput;
       const errors = await validateInput(CreateInvoiceInput, payload);
       expect(constraintsFor(errors, "bankId")).toContain("isUuid");
     });
@@ -199,10 +213,28 @@ describe("CreateInvoiceInput", () => {
       expect(constraintsFor(errors, "installments")).toContain("min");
     });
 
+    it("rejeita valor não inteiro", async () => {
+      const payload = {
+        ...validPayload,
+        installments: 1.5 as unknown as number,
+      };
+      const errors = await validateInput(CreateInvoiceInput, payload);
+      expect(constraintsFor(errors, "installments")).toContain("isInt");
+    });
+
     it("rejeita quando ausente (campo obrigatório)", async () => {
       const { installments, ...payload } = validPayload;
       const errors = await validateInput(CreateInvoiceInput, payload);
-      expect(constraintsFor(errors, "installments")).toContain("min");
+      expect(constraintsFor(errors, "installments")).toContain("isInt");
+    });
+
+    it("rejeita null (campo obrigatório)", async () => {
+      const payload = {
+        ...validPayload,
+        installments: null,
+      } as unknown as CreateInvoiceInput;
+      const errors = await validateInput(CreateInvoiceInput, payload);
+      expect(constraintsFor(errors, "installments")).toContain("isInt");
     });
   });
 
@@ -225,42 +257,25 @@ describe("CreateInvoiceInput", () => {
       }
     );
 
+    it("rejeita valor negativo (allow_negatives: false)", async () => {
+      const payload = { ...validPayload, balance: "-50.00" };
+      const errors = await validateInput(CreateInvoiceInput, payload);
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+
     it("rejeita quando ausente (campo obrigatório)", async () => {
       const { balance, ...payload } = validPayload;
       const errors = await validateInput(CreateInvoiceInput, payload);
       expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
-  });
 
-  describe("total", () => {
-    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
-      "aceita formato de moeda válido: %s",
-      async (value) => {
-        const payload = { ...validPayload, total: value };
-        const errors = await validateInput(CreateInvoiceInput, payload);
-        expect(constraintsFor(errors, "total")).toHaveLength(0);
-      }
-    );
-
-    it.each(["não é moeda", "", "100.5", "100.000"])(
-      "rejeita formato de moeda inválido: %s",
-      async (value) => {
-        const payload = { ...validPayload, total: value };
-        const errors = await validateInput(CreateInvoiceInput, payload);
-        expect(constraintsFor(errors, "total")).toContain("isCurrency");
-      }
-    );
-
-    it("rejeita quando ausente (campo obrigatório)", async () => {
-      const { total, ...payload } = validPayload;
+    it("rejeita null (campo obrigatório)", async () => {
+      const payload = {
+        ...validPayload,
+        balance: null,
+      } as unknown as CreateInvoiceInput;
       const errors = await validateInput(CreateInvoiceInput, payload);
-      expect(constraintsFor(errors, "total")).toContain("isCurrency");
-    });
-
-    it("rejeita total negativo", async () => {
-      const payload = { ...validPayload, total: "-100.00" };
-      const errors = await validateInput(CreateInvoiceInput, payload);
-      expect(constraintsFor(errors, "total")).toContain("isCurrency");
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
   });
 
@@ -271,13 +286,12 @@ describe("CreateInvoiceInput", () => {
         name: "a".repeat(65),
         repeat: "INVALIDO" as unknown as RepeatEnum,
         installments: 0,
-        balance: "inválido",
-        total: "inválido",
+        balance: "-50.00",
       };
       const errors = await validateInput(CreateInvoiceInput, payload);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "bankId", "installments", "name", "repeat", "total"].sort()
+        ["balance", "bankId", "installments", "name", "repeat"].sort()
       );
     });
   });
@@ -316,14 +330,8 @@ describe("UpdateInvoiceInput", () => {
       expect(constraintsFor(errors, "name")).toContain("maxLength");
     });
 
-    it("aceita null", async () => {
-      const input = { description: null } as unknown as UpdateInvoiceInput;
-      const errors = await validateInput(UpdateInvoiceInput, input);
-      expect(constraintsFor(errors, "description")).toHaveLength(0);
-    });
-
     it("aceita undefined (omitido)", async () => {
-      const input = { name: undefined } as unknown as UpdateInvoiceInput;
+      const input = { name: undefined };
       const errors = await validateInput(UpdateInvoiceInput, input);
       expect(constraintsFor(errors, "name")).toHaveLength(0);
     });
@@ -343,7 +351,7 @@ describe("UpdateInvoiceInput", () => {
     });
 
     it("aceita null", async () => {
-      const input = { description: null };
+      const input = { description: null } as unknown as UpdateInvoiceInput;
       const errors = await validateInput(UpdateInvoiceInput, input);
       expect(constraintsFor(errors, "description")).toHaveLength(0);
     });
@@ -369,25 +377,17 @@ describe("UpdateInvoiceInput", () => {
 });
 
 // ============================================================
-// InvoicePayInput
+// InvoiceRefundInput
 // ============================================================
-describe("InvoicePayInput", () => {
+describe("InvoiceRefundInput", () => {
   const validPayload = {
     id: "550e8400-e29b-41d4-a716-446655440000",
     bankId: "550e8400-e29b-41d4-a716-446655440000",
-    payInvoice: true,
-    isRefund: false,
   };
 
   describe("caminho feliz", () => {
     it("não retorna erros com todos os campos válidos", async () => {
-      const errors = await validateInput(InvoicePayInput, validPayload);
-      expect(errors).toHaveLength(0);
-    });
-
-    it("aceita payInvoice como false", async () => {
-      const payload = { ...validPayload, payInvoice: false };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, validPayload);
       expect(errors).toHaveLength(0);
     });
   });
@@ -398,7 +398,7 @@ describe("InvoicePayInput", () => {
         ...validPayload,
         id: "550e8400-e29b-41d4-a716-446655440000",
       };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "id")).toHaveLength(0);
     });
 
@@ -407,19 +407,28 @@ describe("InvoicePayInput", () => {
         ...validPayload,
         id: "550e8400-e29b-11d4-a716-446655440000",
       };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "id")).toContain("isUuid");
     });
 
     it("rejeita string não UUID", async () => {
       const payload = { ...validPayload, id: "nao-e-uuid" };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "id")).toContain("isUuid");
     });
 
     it("rejeita quando ausente (campo obrigatório)", async () => {
       const { id, ...payload } = validPayload;
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
+      expect(constraintsFor(errors, "id")).toContain("isUuid");
+    });
+
+    it("rejeita null (campo obrigatório)", async () => {
+      const payload = {
+        ...validPayload,
+        id: null,
+      } as unknown as InvoiceRefundInput;
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "id")).toContain("isUuid");
     });
   });
@@ -430,7 +439,7 @@ describe("InvoicePayInput", () => {
         ...validPayload,
         bankId: "550e8400-e29b-41d4-a716-446655440000",
       };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "bankId")).toHaveLength(0);
     });
 
@@ -439,42 +448,29 @@ describe("InvoicePayInput", () => {
         ...validPayload,
         bankId: "550e8400-e29b-11d4-a716-446655440000",
       };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "bankId")).toContain("isUuid");
     });
 
     it("rejeita string não UUID", async () => {
       const payload = { ...validPayload, bankId: "nao-e-uuid" };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "bankId")).toContain("isUuid");
     });
 
     it("rejeita quando ausente (campo obrigatório)", async () => {
       const { bankId, ...payload } = validPayload;
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       expect(constraintsFor(errors, "bankId")).toContain("isUuid");
     });
-  });
 
-  describe("payInvoice", () => {
-    it("aceita true", async () => {
-      const payload = { ...validPayload, payInvoice: true };
-      const errors = await validateInput(InvoicePayInput, payload);
-      expect(constraintsFor(errors, "payInvoice")).toHaveLength(0);
-    });
-
-    it("aceita false", async () => {
-      const payload = { ...validPayload, payInvoice: false };
-      const errors = await validateInput(InvoicePayInput, payload);
-      expect(constraintsFor(errors, "payInvoice")).toHaveLength(0);
-    });
-
-    it("rejeita quando ausente (campo obrigatório)", async () => {
-      const { payInvoice, ...payload } = validPayload;
-      const errors = await validateInput(InvoicePayInput, payload);
-
-      const error = errors.find((e) => e.property === "payInvoice");
-      expect(error?.constraints).toHaveProperty("isBoolean");
+    it("rejeita null (campo obrigatório)", async () => {
+      const payload = {
+        ...validPayload,
+        bankId: null,
+      } as unknown as InvoiceRefundInput;
+      const errors = await validateInput(InvoiceRefundInput, payload);
+      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
     });
   });
 
@@ -483,14 +479,10 @@ describe("InvoicePayInput", () => {
       const payload = {
         id: "invalido",
         bankId: "invalido",
-        payInvoice: undefined,
-        isRefund: undefined,
       };
-      const errors = await validateInput(InvoicePayInput, payload);
+      const errors = await validateInput(InvoiceRefundInput, payload);
       const properties = errors.map((e) => e.property).sort();
-      expect(properties).toEqual(
-        ["bankId", "id", "payInvoice", "isRefund"].sort()
-      );
+      expect(properties).toEqual(["bankId", "id"].sort());
     });
   });
 });
@@ -517,8 +509,8 @@ describe("ListInvoiceInput", () => {
     });
   });
 
-  describe("limit", () => {
-    it("aceita 0", async () => {
+  describe("limit (opcional)", () => {
+    it("aceita 0 (valor mínimo)", async () => {
       const input = { limit: 0 };
       const errors = await validateInput(ListInvoiceInput, input);
       expect(constraintsFor(errors, "limit")).toHaveLength(0);
@@ -545,12 +537,12 @@ describe("ListInvoiceInput", () => {
     it("aceita undefined (omitido)", async () => {
       const input = { limit: undefined };
       const errors = await validateInput(ListInvoiceInput, input);
-      expect(constraintsFor(errors, "limit")).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
-  describe("offset", () => {
-    it("aceita 0", async () => {
+  describe("offset (opcional)", () => {
+    it("aceita 0 (valor mínimo)", async () => {
       const input = { offset: 0 };
       const errors = await validateInput(ListInvoiceInput, input);
       expect(constraintsFor(errors, "offset")).toHaveLength(0);
@@ -577,7 +569,7 @@ describe("ListInvoiceInput", () => {
     it("aceita undefined (omitido)", async () => {
       const input = { offset: undefined };
       const errors = await validateInput(ListInvoiceInput, input);
-      expect(constraintsFor(errors, "offset")).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -599,7 +591,7 @@ describe("ListInvoiceInput", () => {
     it("aceita undefined (omitido)", async () => {
       const input = { status: undefined };
       const errors = await validateInput(ListInvoiceInput, input);
-      expect(constraintsFor(errors, "status")).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -621,7 +613,7 @@ describe("ListInvoiceInput", () => {
     it("aceita undefined (omitido)", async () => {
       const input = { repeat: undefined };
       const errors = await validateInput(ListInvoiceInput, input);
-      expect(constraintsFor(errors, "repeat")).toHaveLength(0);
+      expect(errors).toHaveLength(0);
     });
   });
 

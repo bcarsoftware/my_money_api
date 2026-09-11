@@ -1,6 +1,10 @@
 import "reflect-metadata";
 
-import { INVOICE_NOT_FOUND, USER_BANK_NOT_MATCH } from "@/constants/constants";
+import {
+  CREDIT_LIMIT_EXCEEDED,
+  INVOICE_NOT_FOUND,
+  USER_BANK_NOT_MATCH,
+} from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
 import { Bank } from "@/entities/Bank";
 import { Invoice } from "@/entities/Invoice";
@@ -9,7 +13,7 @@ import { RepeatEnum } from "@/enums/RepeatEnum";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import {
   CreateInvoiceInput,
-  InvoicePayInput,
+  InvoiceRefundInput,
   ListInvoiceInput,
   UpdateInvoiceInput,
 } from "@/resolvers/invoice/InvoiceInputs";
@@ -19,7 +23,13 @@ import {
   PaginatedInvoiceDto,
 } from "@/resolvers/invoice/dto/InvoiceDto";
 import { toInvoiceDto } from "@/resolvers/invoice/dto/toInvoiceDto";
-import { clearDecimal } from "@/utils/currencyUtil";
+import {
+  clearDecimal,
+  decimalGreaterThan,
+  decimalMultiply,
+  decimalSubtract,
+  decimalSum,
+} from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 
 // ============================================================
@@ -31,12 +41,12 @@ jest.mock("@/resolvers/invoice/dto/toInvoiceDto", () => ({
   toInvoiceDto: jest.fn(),
 }));
 
-const mockedLoggedContext = loggedContext as jest.MockedFunction<
-  typeof loggedContext
->;
-const mockedClearDecimal = clearDecimal as jest.MockedFunction<
-  typeof clearDecimal
->;
+const mockedLoggedContext = jest.mocked(loggedContext);
+const mockedClearDecimal = jest.mocked(clearDecimal);
+const mockedDecimalMultiply = jest.mocked(decimalMultiply);
+const mockedDecimalGreaterThan = jest.mocked(decimalGreaterThan);
+const mockedDecimalSubtract = jest.mocked(decimalSubtract);
+const mockedDecimalSum = jest.mocked(decimalSum);
 const mockedToInvoiceDto = jest.mocked(toInvoiceDto);
 
 // Tipo para o EntityManager mockado
@@ -48,7 +58,6 @@ interface MockEntityManager {
   softRemove: jest.Mock;
 }
 
-// Helper para criar um mock de EntityManager
 function createMockEm(): MockEntityManager {
   return {
     create: jest.fn(),
@@ -59,26 +68,26 @@ function createMockEm(): MockEntityManager {
   };
 }
 
-// Factory para criar um Bank mockado
 function makeMockBank(overrides: Partial<Bank> = {}): Bank {
   return {
     id: "bank-456",
     userId: "user-123",
     code: "001",
     name: "Banco do Brasil",
-    accountType: "CHECKING" as any,
+    accountType: "CHECKING" as Bank["accountType"],
     accountNumber: "123456",
     agency: "0001",
     balance: "1500.75",
+    actualLimit: "5000.00",
+    creditLimit: "5000.00",
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    user: null as any,
+    user: null as unknown as Bank["user"],
     ...overrides,
   } as Bank;
 }
 
-// Factory para criar um Invoice mockado (NÃO possui userId diretamente)
 function makeMockInvoice(overrides: Partial<Invoice> = {}): Invoice {
   return {
     id: "invoice-123",
@@ -99,7 +108,6 @@ function makeMockInvoice(overrides: Partial<Invoice> = {}): Invoice {
   } as Invoice;
 }
 
-// Helper para criar um DTO mockado (compatível com toInvoiceDto)
 function makeInvoiceDto(invoice: Invoice): InvoiceDto {
   return {
     id: invoice.id,
@@ -131,15 +139,17 @@ describe("InvoiceResolver", () => {
     mockEm = createMockEm();
     mockInvoice = makeMockInvoice();
 
-    // Mock do loggedContext para executar o callback com o em mockado
     mockedLoggedContext.mockImplementation(async (ctx, callback) => {
       return callback(mockEm as unknown as Parameters<typeof callback>[0]);
     });
 
-    // Mock do clearDecimal para retornar o mesmo valor
+    // Mock das funções de currency
     mockedClearDecimal.mockImplementation((value) => value);
+    mockedDecimalMultiply.mockReturnValue("150.00");
+    mockedDecimalGreaterThan.mockReturnValue(false);
+    mockedDecimalSubtract.mockReturnValue("4850.00");
+    mockedDecimalSum.mockReturnValue("5000.00");
 
-    // Mock do toInvoiceDto para retornar a estrutura correta do DTO
     mockedToInvoiceDto.mockImplementation((invoice: Invoice) =>
       makeInvoiceDto(invoice)
     );
@@ -282,51 +292,119 @@ describe("InvoiceResolver", () => {
       repeat: RepeatEnum.NO_REPEAT,
       installments: 1,
       balance: "150.00",
-      total: "150.00",
     };
 
-    it("deve criar uma fatura com sucesso", async () => {
-      // Invoice NÃO tem userId, então não passamos userId no makeMockInvoice
+    it("deve criar a fatura, atualizar o limite do banco e retornar o DTO", async () => {
+      const mockBank = makeMockBank({
+        userId,
+        actualLimit: "5000.00",
+        creditLimit: "5000.00",
+      });
+      mockEm.findOne.mockResolvedValue(mockBank);
+
       const createdInvoice = makeMockInvoice({
         ...createInput,
         status: InvoiceStatusEnum.ACTIVE,
         paidInstallments: 0,
       });
       mockEm.create.mockReturnValue(createdInvoice);
-      mockEm.save.mockResolvedValue(createdInvoice);
+      mockEm.save.mockImplementation(async (entity) => entity);
 
       const result = await resolver.createInvoice(mockContext, createInput);
 
-      expect(result).toEqual(makeInvoiceDto(createdInvoice));
-      expect(mockedLoggedContext).toHaveBeenCalledWith(
-        mockContext,
-        expect.any(Function)
+      // Busca o banco filtrando por id e userId
+      expect(mockEm.findOne).toHaveBeenCalledWith(Bank, {
+        where: { id: createInput.bankId, userId },
+      });
+
+      // Cálculos de currency
+      expect(mockedClearDecimal).toHaveBeenCalledWith("150.00");
+      expect(mockedDecimalMultiply).toHaveBeenCalledWith("150.00", "1.00");
+      expect(mockedDecimalGreaterThan).toHaveBeenCalledWith(
+        "150.00",
+        "5000.00"
       );
+      expect(mockedDecimalSubtract).toHaveBeenCalledWith("5000.00", "150.00");
+
+      // Criação da fatura
       expect(mockEm.create).toHaveBeenCalledWith(Invoice, {
         ...createInput,
-        userId, // ← o resolver passa userId para o create
         status: InvoiceStatusEnum.ACTIVE,
         paidInstallments: 0,
+        userId,
         balance: "150.00",
         total: "150.00",
       });
-      expect(mockedClearDecimal).toHaveBeenCalledWith("150.00");
-      expect(mockedClearDecimal).toHaveBeenCalledTimes(2);
-      expect(mockEm.save).toHaveBeenCalledWith(createdInvoice);
+
+      // Salva a fatura e o banco (2 saves)
+      expect(mockEm.save).toHaveBeenCalledTimes(2);
+      expect(mockEm.save).toHaveBeenNthCalledWith(1, createdInvoice);
+      expect(mockEm.save).toHaveBeenNthCalledWith(
+        2,
+        Bank,
+        expect.objectContaining({ actualLimit: "4850.00" })
+      );
+
+      expect(result).toEqual(makeInvoiceDto(createdInvoice));
+    });
+
+    it("deve calcular o total multiplicando o balance pelo número de parcelas", async () => {
+      const inputComParcelas: CreateInvoiceInput = {
+        ...createInput,
+        installments: 3,
+        balance: "100.00",
+      };
+      const mockBank = makeMockBank({ userId });
+      mockEm.findOne.mockResolvedValue(mockBank);
+
+      mockedClearDecimal.mockImplementation((v) => v);
+      mockedDecimalMultiply.mockReturnValue("300.00");
+      mockedDecimalGreaterThan.mockReturnValue(false);
+
+      mockEm.create.mockReturnValue(makeMockInvoice());
+      mockEm.save.mockImplementation(async (entity) => entity);
+
+      await resolver.createInvoice(mockContext, inputComParcelas);
+
+      expect(mockedDecimalMultiply).toHaveBeenCalledWith("100.00", "3.00");
+    });
+
+    it("deve lançar CREDIT_LIMIT_EXCEEDED quando o total excede o limite do banco", async () => {
+      const mockBank = makeMockBank({ userId, actualLimit: "100.00" });
+      mockEm.findOne.mockResolvedValue(mockBank);
+
+      mockedClearDecimal.mockImplementation((v) => v);
+      mockedDecimalMultiply.mockReturnValue("150.00");
+      mockedDecimalGreaterThan.mockReturnValue(true);
+
+      await expect(
+        resolver.createInvoice(mockContext, createInput)
+      ).rejects.toThrow(CREDIT_LIMIT_EXCEEDED);
+
+      expect(mockEm.create).not.toHaveBeenCalled();
+      expect(mockEm.save).not.toHaveBeenCalled();
+    });
+
+    it("deve lançar USER_BANK_NOT_MATCH se o banco não existir", async () => {
+      mockEm.findOne.mockResolvedValue(null);
+
+      await expect(
+        resolver.createInvoice(mockContext, createInput)
+      ).rejects.toThrow(USER_BANK_NOT_MATCH);
+
+      expect(mockEm.create).not.toHaveBeenCalled();
     });
 
     it("deve lançar erro se a criação falhar", async () => {
+      const mockBank = makeMockBank({ userId });
+      mockEm.findOne.mockResolvedValue(mockBank);
+
       mockEm.create.mockReturnValue({});
       mockEm.save.mockRejectedValue(new Error("DB error"));
 
       await expect(
         resolver.createInvoice(mockContext, createInput)
       ).rejects.toThrow("Failed to create invoice.");
-
-      expect(mockedLoggedContext).toHaveBeenCalledWith(
-        mockContext,
-        expect.any(Function)
-      );
     });
   });
 
@@ -383,7 +461,7 @@ describe("InvoiceResolver", () => {
         description: "Descrição original",
       });
 
-      const inputParcial: UpdateInvoiceInput = { name: undefined };
+      const inputParcial: UpdateInvoiceInput = {};
 
       mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
       mockEm.save.mockResolvedValue(mockInvoiceWithBank);
@@ -435,67 +513,15 @@ describe("InvoiceResolver", () => {
   });
 
   // ============================================================
-  // invoicePaymentOrRefund
+  // invoiceRefund
   // ============================================================
-  describe("invoicePaymentOrRefund", () => {
-    const payInput: InvoicePayInput = {
+  describe("invoiceRefund", () => {
+    const refundInput: InvoiceRefundInput = {
       id: invoiceId,
-      bankId: bankId,
-      payInvoice: true,
-      isRefund: false,
+      bankId,
     };
 
-    const refundInput: InvoicePayInput = {
-      id: invoiceId,
-      bankId: bankId,
-      payInvoice: false,
-      isRefund: true,
-    };
-
-    it("deve processar pagamento com sucesso", async () => {
-      const mockBank = makeMockBank({ userId });
-      const mockInvoiceWithBank = makeMockInvoice({
-        bank: mockBank,
-        bankId: mockBank.id,
-        installments: 3,
-        paidInstallments: 0,
-        status: InvoiceStatusEnum.ACTIVE,
-      });
-
-      mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
-      mockEm.save.mockResolvedValue(mockInvoiceWithBank);
-
-      const result = await resolver.invoicePaymentOrRefund(
-        mockContext,
-        payInput
-      );
-
-      expect(result).toEqual(makeInvoiceDto(mockInvoiceWithBank));
-      expect(mockInvoiceWithBank.paidInstallments).toBe(1);
-      expect(mockInvoiceWithBank.status).toBe(InvoiceStatusEnum.ACTIVE);
-      expect(mockEm.save).toHaveBeenCalledWith(mockInvoiceWithBank);
-    });
-
-    it("deve marcar como COMPLETED quando todas as parcelas são pagas", async () => {
-      const mockBank = makeMockBank({ userId });
-      const mockInvoiceWithBank = makeMockInvoice({
-        bank: mockBank,
-        bankId: mockBank.id,
-        installments: 1,
-        paidInstallments: 0,
-        status: InvoiceStatusEnum.ACTIVE,
-      });
-
-      mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
-      mockEm.save.mockResolvedValue(mockInvoiceWithBank);
-
-      await resolver.invoicePaymentOrRefund(mockContext, payInput);
-
-      expect(mockInvoiceWithBank.paidInstallments).toBe(1);
-      expect(mockInvoiceWithBank.status).toBe(InvoiceStatusEnum.COMPLETED);
-    });
-
-    it("deve processar reembolso com sucesso", async () => {
+    it("deve marcar a fatura como REFUNDED e igualar paidInstallments ao total", async () => {
       const mockBank = makeMockBank({ userId });
       const mockInvoiceWithBank = makeMockInvoice({
         bank: mockBank,
@@ -506,72 +532,71 @@ describe("InvoiceResolver", () => {
       });
 
       mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
-      mockEm.save.mockResolvedValue(mockInvoiceWithBank);
+      mockEm.save.mockImplementation(async (entity) => entity);
 
-      await resolver.invoicePaymentOrRefund(mockContext, refundInput);
+      const result = await resolver.invoiceRefund(mockContext, refundInput);
 
-      expect(mockInvoiceWithBank.paidInstallments).toBe(1);
+      expect(mockEm.findOne).toHaveBeenCalledWith(Invoice, {
+        where: { id: invoiceId, bankId },
+        relations: { bank: true },
+      });
+      expect(mockInvoiceWithBank.paidInstallments).toBe(3);
       expect(mockInvoiceWithBank.status).toBe(InvoiceStatusEnum.REFUNDED);
+      expect(result).toEqual(makeInvoiceDto(mockInvoiceWithBank));
     });
 
-    it("deve decrementar paidInstallments no reembolso", async () => {
-      const mockBank = makeMockBank({ userId });
+    it("deve recalcular o actualLimit do banco com decimalSum", async () => {
+      const mockBank = makeMockBank({
+        userId,
+        actualLimit: "4850.00",
+      });
       const mockInvoiceWithBank = makeMockInvoice({
         bank: mockBank,
         bankId: mockBank.id,
-        installments: 5,
-        paidInstallments: 3,
-        status: InvoiceStatusEnum.ACTIVE,
+        total: "150.00",
       });
 
       mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
-      mockEm.save.mockResolvedValue(mockInvoiceWithBank);
+      mockEm.save.mockImplementation(async (entity) => entity);
 
-      await resolver.invoicePaymentOrRefund(mockContext, refundInput);
+      mockedDecimalSum.mockReturnValue("5000.00");
 
-      expect(mockInvoiceWithBank.paidInstallments).toBe(2);
+      await resolver.invoiceRefund(mockContext, refundInput);
+
+      expect(mockedDecimalSum).toHaveBeenCalledWith("4850.00", "150.00");
+      expect(mockEm.save).toHaveBeenNthCalledWith(
+        2,
+        Bank,
+        expect.objectContaining({ actualLimit: "5000.00" })
+      );
     });
 
-    it("deve lançar erro se payInvoice e isRefund forem ambos true", async () => {
-      const invalidInput: InvoicePayInput = {
-        id: invoiceId,
-        bankId: bankId,
-        payInvoice: true,
-        isRefund: true,
-      };
+    it("deve salvar a fatura e o banco associado", async () => {
+      const mockBank = makeMockBank({ userId });
+      const mockInvoiceWithBank = makeMockInvoice({ bank: mockBank });
 
-      await expect(
-        resolver.invoicePaymentOrRefund(mockContext, invalidInput)
-      ).rejects.toThrow(
-        "You cannot pay and refund the same invoice at the same time."
+      mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
+      mockEm.save.mockImplementation(async (entity) => entity);
+
+      await resolver.invoiceRefund(mockContext, refundInput);
+
+      expect(mockEm.save).toHaveBeenCalledTimes(2);
+      expect(mockEm.save).toHaveBeenNthCalledWith(1, mockInvoiceWithBank);
+      expect(mockEm.save).toHaveBeenNthCalledWith(
+        2,
+        Bank,
+        expect.objectContaining({ id: mockBank.id })
       );
-
-      expect(mockEm.findOne).not.toHaveBeenCalled();
-    });
-
-    it("deve lançar erro se payInvoice e isRefund forem ambos false", async () => {
-      const invalidInput: InvoicePayInput = {
-        id: invoiceId,
-        bankId: bankId,
-        payInvoice: false,
-        isRefund: false,
-      };
-
-      await expect(
-        resolver.invoicePaymentOrRefund(mockContext, invalidInput)
-      ).rejects.toThrow(
-        "You cannot pay and refund the same invoice at the same time."
-      );
-
-      expect(mockEm.findOne).not.toHaveBeenCalled();
     });
 
     it("deve lançar erro se a fatura não for encontrada", async () => {
       mockEm.findOne.mockResolvedValue(null);
 
       await expect(
-        resolver.invoicePaymentOrRefund(mockContext, payInput)
+        resolver.invoiceRefund(mockContext, refundInput)
       ).rejects.toThrow(INVOICE_NOT_FOUND);
+
+      expect(mockEm.save).not.toHaveBeenCalled();
     });
 
     it("deve lançar erro se o banco não pertencer ao usuário", async () => {
@@ -581,11 +606,13 @@ describe("InvoiceResolver", () => {
       mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
 
       await expect(
-        resolver.invoicePaymentOrRefund(mockContext, payInput)
+        resolver.invoiceRefund(mockContext, refundInput)
       ).rejects.toThrow(USER_BANK_NOT_MATCH);
+
+      expect(mockEm.save).not.toHaveBeenCalled();
     });
 
-    it("deve lançar erro se a operação falhar", async () => {
+    it("deve lançar erro se o save falhar", async () => {
       const mockBank = makeMockBank({ userId });
       const mockInvoiceWithBank = makeMockInvoice({ bank: mockBank });
 
@@ -593,19 +620,7 @@ describe("InvoiceResolver", () => {
       mockEm.save.mockRejectedValue(new Error("DB error"));
 
       await expect(
-        resolver.invoicePaymentOrRefund(mockContext, payInput)
-      ).rejects.toThrow("Failed to process invoice payment.");
-    });
-
-    it("deve lançar erro específico para refund quando a operação falhar", async () => {
-      const mockBank = makeMockBank({ userId });
-      const mockInvoiceWithBank = makeMockInvoice({ bank: mockBank });
-
-      mockEm.findOne.mockResolvedValue(mockInvoiceWithBank);
-      mockEm.save.mockRejectedValue(new Error("DB error"));
-
-      await expect(
-        resolver.invoicePaymentOrRefund(mockContext, refundInput)
+        resolver.invoiceRefund(mockContext, refundInput)
       ).rejects.toThrow("Failed to process invoice refund.");
     });
   });

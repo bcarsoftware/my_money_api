@@ -58,12 +58,13 @@ export class BankResolver {
 
     return await loggedContext(context, async (em) => {
       try {
+        const creditLimit = clearDecimal(input.creditLimit);
+
         const bank = em.create(Bank, {
           ...input,
           balance: clearDecimal(input.balance),
-          creditLimit: input.creditLimit
-            ? clearDecimal(input.creditLimit)
-            : input.creditLimit,
+          creditLimit,
+          actualLimit: creditLimit,
           userId,
         });
         const newBank = await em.save(bank);
@@ -93,12 +94,9 @@ export class BankResolver {
         bank.accountType = input.accountType ?? bank.accountType;
         bank.accountNumber = input.accountNumber ?? bank.accountNumber;
         bank.agency = input.agency ?? bank.agency;
-
-        if (input.creditLimit !== undefined) {
-          bank.creditLimit = input.creditLimit
-            ? clearDecimal(input.creditLimit)
-            : input.creditLimit;
-        }
+        bank.creditLimit = input.creditLimit
+          ? clearDecimal(input.creditLimit)
+          : bank.creditLimit;
 
         const uptBank = await em.save(bank);
         return toBankDto(uptBank);

@@ -30,6 +30,9 @@ export class BankDto {
   @Field(() => String, { nullable: true })
   creditLimit?: string | null;
 
+  @Field(() => String, { nullable: true })
+  actualLimit?: string | null;
+
   @Field(() => String)
   createdAt: string;
 }

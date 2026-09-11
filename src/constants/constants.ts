@@ -17,6 +17,8 @@ export const SALT_ROUNDS_INVALID = "Salt rounds invalid.";
 
 export const INVOICE_NOT_FOUND = "Invoice not found.";
 
+export const CREDIT_LIMIT_EXCEEDED = "Credit limit exceeded.";
+
 export const INVALID_CURRENCY_FORMAT =
   "Invalid currency format. Must be a number with up to 2 decimal places.";
 export const INVALID_DAY_MONTH_COMBINATION =

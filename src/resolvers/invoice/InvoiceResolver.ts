@@ -1,5 +1,10 @@
-import { INVOICE_NOT_FOUND, USER_BANK_NOT_MATCH } from "@/constants/constants";
+import {
+  CREDIT_LIMIT_EXCEEDED,
+  INVOICE_NOT_FOUND,
+  USER_BANK_NOT_MATCH,
+} from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
+import { Bank } from "@/entities/Bank";
 import { Invoice } from "@/entities/Invoice";
 import { InvoiceStatusEnum } from "@/enums/InvoiceStatusEnum";
 import {
@@ -9,12 +14,18 @@ import {
 import { toInvoiceDto } from "@/resolvers/invoice/dto/toInvoiceDto";
 import {
   CreateInvoiceInput,
-  InvoicePayInput,
+  InvoiceRefundInput,
   ListInvoiceInput,
   UpdateInvoiceInput,
 } from "@/resolvers/invoice/InvoiceInputs";
 import { MessageResponse } from "@/resolvers/MessageResponse";
-import { clearDecimal } from "@/utils/currencyUtil";
+import {
+  clearDecimal,
+  decimalGreaterThan,
+  decimalMultiply,
+  decimalSubtract,
+  decimalSum,
+} from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
@@ -63,6 +74,19 @@ export class InvoiceResolver {
     const userId = context.userId;
 
     return await loggedContext(context, async (em) => {
+      const bank = await em.findOne(Bank, {
+        where: { id: input.bankId, userId },
+      });
+
+      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+
+      const installs = `${input.installments}.00`;
+
+      const total = decimalMultiply(clearDecimal(input.balance), installs);
+
+      if (decimalGreaterThan(total, bank.actualLimit))
+        throw new Error(CREDIT_LIMIT_EXCEEDED);
+
       try {
         const invoice = em.create(Invoice, {
           ...input,
@@ -70,10 +94,16 @@ export class InvoiceResolver {
           paidInstallments: 0,
           userId,
           balance: clearDecimal(input.balance),
-          total: clearDecimal(input.total),
+          total: clearDecimal(total),
         });
 
         const newInvoice = await em.save(invoice);
+
+        await em.save(Bank, {
+          ...bank,
+          actualLimit: decimalSubtract(bank.creditLimit, clearDecimal(total)),
+        });
+
         return toInvoiceDto(newInvoice);
       } catch (error) {
         console.error("Error creating invoice:", error);
@@ -115,18 +145,10 @@ export class InvoiceResolver {
 
   @Protected()
   @Mutation(() => InvoiceDto)
-  async invoicePaymentOrRefund(
+  async invoiceRefund(
     @Ctx() context: MyContext,
-    @Arg("input", () => InvoicePayInput) input: InvoicePayInput
+    @Arg("input", () => InvoiceRefundInput) input: InvoiceRefundInput
   ): Promise<InvoiceDto> {
-    if (
-      (input.payInvoice && input.isRefund) ||
-      (!input.payInvoice && !input.isRefund)
-    )
-      throw new Error(
-        "You cannot pay and refund the same invoice at the same time."
-      );
-
     return await loggedContext(context, async (em) => {
       const invoice = await em.findOne(Invoice, {
         where: { id: input.id, bankId: input.bankId },
@@ -139,23 +161,20 @@ export class InvoiceResolver {
         throw new Error(USER_BANK_NOT_MATCH);
 
       try {
-        const increment = input.isRefund ? -1 : 1;
-
-        invoice.paidInstallments += increment;
-
-        if (input.isRefund) {
-          invoice.status = InvoiceStatusEnum.REFUNDED;
-        } else if (invoice.paidInstallments === invoice.installments)
-          invoice.status = InvoiceStatusEnum.COMPLETED;
+        invoice.paidInstallments = invoice.installments;
+        invoice.status = InvoiceStatusEnum.REFUNDED;
 
         const updatedInvoice = await em.save(invoice);
 
+        await em.save(Bank, {
+          ...invoice.bank,
+          actualLimit: decimalSum(invoice.bank.actualLimit, invoice.total),
+        });
+
         return toInvoiceDto(updatedInvoice);
       } catch (error) {
-        const opt = input.isRefund ? "refund" : "payment";
-
-        console.error(`Error processing invoice ${opt}:`, error);
-        throw new Error(`Failed to process invoice ${opt}.`);
+        console.error(`Error processing invoice refund:`, error);
+        throw new Error(`Failed to process invoice refund.`);
       }
     });
   }

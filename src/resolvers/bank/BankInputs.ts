@@ -48,13 +48,12 @@ export class CreateBankInput {
   )
   balance: string;
 
-  @Field(() => String, { nullable: true })
-  @IsOptional()
+  @Field(() => String, { defaultValue: "0.00" })
   @IsCurrency(
     { allow_negatives: false },
     { message: "Credit limit must be a valid currency amount." }
   )
-  creditLimit?: string | null;
+  creditLimit: string = "0.00";
 }
 
 @InputType()
@@ -126,5 +125,5 @@ export class UpdateBankInput {
     { allow_negatives: false },
     { message: "Credit limit must be a valid currency amount." }
   )
-  creditLimit?: string | null;
+  creditLimit?: string;
 }

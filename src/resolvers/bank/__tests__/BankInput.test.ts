@@ -242,7 +242,7 @@ describe("CreateBankInput", () => {
     });
   });
 
-  describe("creditLimit (optional or null)", () => {
+  describe("creditLimit", () => {
     it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
@@ -278,12 +278,13 @@ describe("CreateBankInput", () => {
       expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
     });
 
-    it("aceita quando nulo", async () => {
+    it("rejeita quando nulo", async () => {
       const errors = await validateInput(CreateBankInput, {
         ...validPayloadSemHifen,
-        creditLimit: null,
+        creditLimit: null as unknown as string,
       });
-      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+      expect(constraintsFor(errors, "creditLimit")).toHaveLength(1);
+      expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
     });
   });
 });
@@ -605,13 +606,6 @@ describe("UpdateBankInput", () => {
 
     it("aceita quando ausente (campo opcional)", async () => {
       const errors = await validateInput(UpdateBankInput, {});
-      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
-    });
-
-    it("aceita quando nulo", async () => {
-      const errors = await validateInput(UpdateBankInput, {
-        creditLimit: null,
-      });
       expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
     });
   });

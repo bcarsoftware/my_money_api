@@ -13,6 +13,7 @@ function makeBank(overrides: Partial<Bank> = {}): Bank {
     agency: "0001",
     balance: "1500.75",
     creditLimit: "2500.00",
+    actualLimit: "1000.00",
     createdAt: new Date("2025-01-01T10:00:00Z"),
     updatedAt: new Date("2025-01-02T12:00:00Z"),
     ...overrides,
@@ -34,6 +35,7 @@ describe("toBankDto", () => {
       agency: mockBank.agency,
       balance: mockBank.balance,
       creditLimit: mockBank.creditLimit,
+      actualLimit: mockBank.actualLimit,
       createdAt: mockBank.createdAt.toISOString(),
     });
   });
@@ -51,6 +53,7 @@ describe("toBankDto", () => {
     expect(dto.agency).toBe(mockBank.agency);
     expect(dto.balance).toBe(mockBank.balance);
     expect(dto.creditLimit).toBe(mockBank.creditLimit);
+    expect(dto.actualLimit).toBe(mockBank.actualLimit);
     expect(dto.createdAt).toBe(mockBank.createdAt.toISOString());
   });
 
