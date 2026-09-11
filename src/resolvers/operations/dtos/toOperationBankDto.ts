@@ -1,5 +1,5 @@
 import { OperationBank } from "@/entities/OperationBank";
-import { OperationBankDto } from "@/resolvers/operations/dto/OperationBankDto";
+import { OperationBankDto } from "@/resolvers/operations/dtos/OperationBankDto";
 
 export const toOperationBankDto = (
   operationBank: OperationBank

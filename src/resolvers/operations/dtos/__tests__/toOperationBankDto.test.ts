@@ -1,21 +1,22 @@
-import { OperationGenericBank } from "@/entities/OperationGenericBank";
+import { OperationBank } from "@/entities/OperationBank";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
-import { OperationGenericBankDto } from "@/resolvers/operations/dto/OperationGenericBankDto";
-import { toOperationGenericBankDto } from "@/resolvers/operations/dto/toOperationGenericBankDto";
+import { OperationBankDto } from "@/resolvers/operations/dtos/OperationBankDto";
+import { toOperationBankDto } from "@/resolvers/operations/dtos/toOperationBankDto";
 
 // ============================================================
 // Factory
 // ============================================================
-function makeOperationGenericBank(
-  overrides: Partial<OperationGenericBank> = {}
-): OperationGenericBank {
+function makeOperationBank(
+  overrides: Partial<OperationBank> = {}
+): OperationBank {
   return {
-    id: "op-gen-1",
+    id: "op-bank-1",
     operationRegister: "reg-1",
     userId: "user-1",
-    genericBankId: "gen-bank-1",
-    genericBankBoxId: "gen-box-1",
+    bankId: "bank-1",
+    bankBoxId: "box-1",
+    invoiceId: "invoice-1",
     tag: "Compra",
     description: "Descrição qualquer",
     balance: "100.00",
@@ -27,28 +28,30 @@ function makeOperationGenericBank(
     createdAt: new Date("2026-01-15T10:30:00.000Z"),
     updatedAt: new Date("2026-01-16T11:45:00.000Z"),
     user: null,
-    genericBank: null,
-    genericBankBox: null,
+    bank: null,
+    bankBox: null,
+    invoice: null,
     ...overrides,
-  } as unknown as OperationGenericBank;
+  } as unknown as OperationBank;
 }
 
-describe("toOperationGenericBankDto", () => {
+describe("toOperationBankDto", () => {
   // ============================================================
   // Caminho feliz
   // ============================================================
   describe("caminho feliz", () => {
     it("deve mapear todos os campos corretamente", () => {
-      const operationGenericBank = makeOperationGenericBank();
+      const operationBank = makeOperationBank();
 
-      const result = toOperationGenericBankDto(operationGenericBank);
+      const result = toOperationBankDto(operationBank);
 
-      expect(result).toEqual<OperationGenericBankDto>({
-        id: "op-gen-1",
+      expect(result).toEqual<OperationBankDto>({
+        id: "op-bank-1",
         operationRegister: "reg-1",
         userId: "user-1",
-        genericBankId: "gen-bank-1",
-        genericBankBoxId: "gen-box-1",
+        bankId: "bank-1",
+        bankBoxId: "box-1",
+        invoiceId: "invoice-1",
         tag: "Compra",
         description: "Descrição qualquer",
         balance: "100.00",
@@ -62,14 +65,14 @@ describe("toOperationGenericBankDto", () => {
     });
 
     it("deve manter os campos decimais como string", () => {
-      const operationGenericBank = makeOperationGenericBank({
+      const operationBank = makeOperationBank({
         balance: "1234.56",
         discount: "99.99",
         forfeit: "0.01",
         amount: "1134.56",
       });
 
-      const result = toOperationGenericBankDto(operationGenericBank);
+      const result = toOperationBankDto(operationBank);
 
       expect(result.balance).toBe("1234.56");
       expect(result.discount).toBe("99.99");
@@ -78,12 +81,12 @@ describe("toOperationGenericBankDto", () => {
     });
 
     it("deve preservar os valores dos enums", () => {
-      const operationGenericBank = makeOperationGenericBank({
+      const operationBank = makeOperationBank({
         typeOperation: OperationEnum.TED,
         local: LocalEnum.EXTERNAL,
       });
 
-      const result = toOperationGenericBankDto(operationGenericBank);
+      const result = toOperationBankDto(operationBank);
 
       expect(result.typeOperation).toBe(OperationEnum.TED);
       expect(result.local).toBe(LocalEnum.EXTERNAL);
@@ -94,67 +97,75 @@ describe("toOperationGenericBankDto", () => {
   // Campos opcionais → null
   // ============================================================
   describe("campos opcionais definidos como null", () => {
-    it("deve manter null em genericBankBoxId", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ genericBankBoxId: null })
-      );
+    it("deve manter null em bankBoxId", () => {
+      const result = toOperationBankDto(makeOperationBank({ bankBoxId: null }));
 
-      expect(result.genericBankBoxId).toBeNull();
+      expect(result.bankBoxId).toBeNull();
+    });
+
+    it("deve manter null em invoiceId", () => {
+      const result = toOperationBankDto(makeOperationBank({ invoiceId: null }));
+
+      expect(result.invoiceId).toBeNull();
     });
 
     it("deve manter null em description", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ description: null })
+      const result = toOperationBankDto(
+        makeOperationBank({ description: null })
       );
 
       expect(result.description).toBeNull();
     });
 
     it("deve manter null em discount", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ discount: null })
-      );
+      const result = toOperationBankDto(makeOperationBank({ discount: null }));
 
       expect(result.discount).toBeNull();
     });
 
     it("deve manter null em forfeit", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ forfeit: null })
-      );
+      const result = toOperationBankDto(makeOperationBank({ forfeit: null }));
 
       expect(result.forfeit).toBeNull();
     });
   });
 
   describe("campos opcionais definidos como undefined", () => {
-    it("deve converter undefined em null para genericBankBoxId", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ genericBankBoxId: undefined })
+    it("deve converter undefined em null para bankBoxId", () => {
+      const result = toOperationBankDto(
+        makeOperationBank({ bankBoxId: undefined })
       );
 
-      expect(result.genericBankBoxId).toBeNull();
+      expect(result.bankBoxId).toBeNull();
+    });
+
+    it("deve converter undefined em null para invoiceId", () => {
+      const result = toOperationBankDto(
+        makeOperationBank({ invoiceId: undefined })
+      );
+
+      expect(result.invoiceId).toBeNull();
     });
 
     it("deve converter undefined em null para description", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ description: undefined })
+      const result = toOperationBankDto(
+        makeOperationBank({ description: undefined })
       );
 
       expect(result.description).toBeNull();
     });
 
     it("deve converter undefined em null para discount", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ discount: undefined })
+      const result = toOperationBankDto(
+        makeOperationBank({ discount: undefined })
       );
 
       expect(result.discount).toBeNull();
     });
 
     it("deve converter undefined em null para forfeit", () => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ forfeit: undefined })
+      const result = toOperationBankDto(
+        makeOperationBank({ forfeit: undefined })
       );
 
       expect(result.forfeit).toBeNull();
@@ -167,9 +178,7 @@ describe("toOperationGenericBankDto", () => {
   describe("createdAt", () => {
     it("deve converter Date para string ISO", () => {
       const date = new Date("2026-03-20T14:00:00.000Z");
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ createdAt: date })
-      );
+      const result = toOperationBankDto(makeOperationBank({ createdAt: date }));
 
       expect(result.createdAt).toBe("2026-03-20T14:00:00.000Z");
       expect(typeof result.createdAt).toBe("string");
@@ -177,9 +186,7 @@ describe("toOperationGenericBankDto", () => {
 
     it("deve preservar o horário exato com milissegundos", () => {
       const date = new Date("2026-03-20T14:00:00.123Z");
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ createdAt: date })
-      );
+      const result = toOperationBankDto(makeOperationBank({ createdAt: date }));
 
       expect(result.createdAt).toBe(date.toISOString());
     });
@@ -192,9 +199,7 @@ describe("toOperationGenericBankDto", () => {
     it.each(Object.values(OperationEnum))(
       "deve aceitar typeOperation = %s",
       (typeOperation) => {
-        const result = toOperationGenericBankDto(
-          makeOperationGenericBank({ typeOperation })
-        );
+        const result = toOperationBankDto(makeOperationBank({ typeOperation }));
 
         expect(result.typeOperation).toBe(typeOperation);
       }
@@ -203,9 +208,7 @@ describe("toOperationGenericBankDto", () => {
 
   describe("local", () => {
     it.each(Object.values(LocalEnum))("deve aceitar local = %s", (local) => {
-      const result = toOperationGenericBankDto(
-        makeOperationGenericBank({ local })
-      );
+      const result = toOperationBankDto(makeOperationBank({ local }));
 
       expect(result.local).toBe(local);
     });
@@ -216,18 +219,19 @@ describe("toOperationGenericBankDto", () => {
   // ============================================================
   describe("estrutura do DTO", () => {
     it("não deve incluir campos que não pertencem ao DTO", () => {
-      const result = toOperationGenericBankDto(makeOperationGenericBank());
+      const result = toOperationBankDto(makeOperationBank());
 
       expect(result).not.toHaveProperty("updatedAt");
       expect(result).not.toHaveProperty("user");
-      expect(result).not.toHaveProperty("genericBank");
-      expect(result).not.toHaveProperty("genericBankBox");
+      expect(result).not.toHaveProperty("bank");
+      expect(result).not.toHaveProperty("bankBox");
+      expect(result).not.toHaveProperty("invoice");
     });
 
-    it("deve retornar exatamente 14 propriedades", () => {
-      const result = toOperationGenericBankDto(makeOperationGenericBank());
+    it("deve retornar exatamente 15 propriedades", () => {
+      const result = toOperationBankDto(makeOperationBank());
 
-      expect(Object.keys(result)).toHaveLength(14);
+      expect(Object.keys(result)).toHaveLength(15);
     });
   });
 });

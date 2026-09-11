@@ -1,8 +1,8 @@
 import { OperationPayment } from "@/entities/OperationPayment";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
-import { OperationPaymentDto } from "@/resolvers/operations/dto/OperationPaymentDto";
-import { toOperationPaymentDto } from "@/resolvers/operations/dto/toOperationPaymentDto";
+import { OperationPaymentDto } from "@/resolvers/operations/dtos/OperationPaymentDto";
+import { toOperationPaymentDto } from "@/resolvers/operations/dtos/toOperationPaymentDto";
 
 // ============================================================
 // Factory

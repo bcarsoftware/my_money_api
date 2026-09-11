@@ -1,8 +1,8 @@
 import { OperationMoney } from "@/entities/OperationMoney";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
-import { OperationMoneyDto } from "@/resolvers/operations/dto/OperationMoneyDto";
-import { toOperationMoneyDto } from "@/resolvers/operations/dto/toOperationMoneyDto";
+import { OperationMoneyDto } from "@/resolvers/operations/dtos/OperationMoneyDto";
+import { toOperationMoneyDto } from "@/resolvers/operations/dtos/toOperationMoneyDto";
 
 // ============================================================
 // Factory
