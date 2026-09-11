@@ -13,7 +13,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-@Entity()
+@Entity("operations_money")
 export class OperationMoney extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 

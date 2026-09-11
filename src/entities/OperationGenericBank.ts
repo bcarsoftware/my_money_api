@@ -15,7 +15,7 @@ import {
 } from "typeorm";
 
 @Entity("operations_generic_bank")
-export class OperationGenricBank extends BaseEntity {
+export class OperationGenericBank extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
   @Column({ type: "uuid", name: "user_id" })
