@@ -1,6 +1,4 @@
-import { Bank } from "@/entities/Bank";
-import { Invoice } from "@/entities/Invoice";
-import { Money } from "@/entities/Money";
+import { Payment } from "@/entities/Payment";
 import { User } from "@/entities/User";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
@@ -33,26 +31,12 @@ export class OperationPayment extends BaseEntity {
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: User;
 
-  @Column({ type: "uuid", name: "bank_id", nullable: true })
-  bankId?: string | null;
+  @Column({ type: "uuid", name: "payment_id" })
+  paymentId: string;
 
-  @ManyToOne(() => Bank, (bank) => bank.id)
-  @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
-  bank?: Bank | null;
-
-  @Column({ type: "uuid", name: "money_id", nullable: true })
-  moneyId?: string | null;
-
-  @ManyToOne(() => Money, (money) => money.id)
-  @JoinColumn({ name: "money_id", referencedColumnName: "id" })
-  money?: Money | null;
-
-  @Column({ type: "uuid", name: "invoice_id", nullable: true })
-  invoiceId?: string | null;
-
-  @ManyToOne(() => Invoice, (invoice) => invoice.id)
-  @JoinColumn({ name: "invoice_id", referencedColumnName: "id" })
-  invoice?: Invoice | null;
+  @ManyToOne(() => Payment, (payment) => payment.id)
+  @JoinColumn({ name: "payment_id", referencedColumnName: "id" })
+  payment: Payment;
 
   @Column({ type: "varchar", length: 64 })
   tag: string;
