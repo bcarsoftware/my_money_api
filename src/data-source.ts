@@ -10,7 +10,6 @@ import { GenericBankBox } from "@/entities/GenericBankBox";
 import { GenericBankInfo } from "@/entities/GenericBankInfo";
 import { Invoice } from "@/entities/Invoice";
 import { Money } from "@/entities/Money";
-import { Operation } from "@/entities/Operation";
 import { Payment } from "@/entities/Payment";
 import { Pix } from "@/entities/Pix";
 import { User } from "@/entities/User";
@@ -26,7 +25,6 @@ import { CreatePayment1787414478068 } from "@/migrations/1787414478068-CreatePay
 import { CreateGenericBank1787414685365 } from "@/migrations/1787414685365-CreateGenericBank";
 import { CreateGenericBankBox1787415068662 } from "@/migrations/1787415068662-CreateGenericBankBox";
 import { CreateGenericBankInfo1787415282084 } from "@/migrations/1787415282084-CreateGenericBankInfo";
-import { CreateOperation1787415560149 } from "@/migrations/1787415560149-CreateOperation";
 import { AddIndexGenericBankInfo1788806787561 } from "@/migrations/1788806787561-AddIndexGenericBankInfo";
 
 export const AppDataSource = new DataSource({
@@ -49,7 +47,6 @@ export const AppDataSource = new DataSource({
     GenericBank,
     GenericBankBox,
     GenericBankInfo,
-    Operation,
   ],
   migrations: [
     CreateUser1787412038436,
@@ -63,7 +60,6 @@ export const AppDataSource = new DataSource({
     CreateGenericBank1787414685365,
     CreateGenericBankBox1787415068662,
     CreateGenericBankInfo1787415282084,
-    CreateOperation1787415560149,
     AddIndexGenericBankInfo1788806787561,
   ],
   migrationsTransactionMode: "each",

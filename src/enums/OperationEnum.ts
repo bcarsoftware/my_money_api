@@ -2,7 +2,7 @@ export enum OperationEnum {
   TRANSFER = "TRANSFER",
   PIX = "PIX",
   DEPOSIT = "DEPOSIT",
-  WITHDRAWAL = "WITHDRAWAL",
+  WITHDRAWAL = "WITHDRAW",
   PAYMENT = "PAYMENT",
   SEND = "SEND",
   RECEIVE = "RECEIVE",
