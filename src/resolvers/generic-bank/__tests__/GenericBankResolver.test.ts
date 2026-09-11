@@ -80,6 +80,7 @@ function makeGenericBankDto(genericBank: GenericBank): GenericBankDto {
     name: genericBank.name,
     currency: genericBank.currency,
     balance: genericBank.balance,
+    creditLimit: genericBank.creditLimit,
     bankInfo: genericBank.bankInfo.map((info) => ({
       id: info.id,
       name: info.name,

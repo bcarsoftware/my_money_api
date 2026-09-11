@@ -61,6 +61,9 @@ export class BankResolver {
         const bank = em.create(Bank, {
           ...input,
           balance: clearDecimal(input.balance),
+          creditLimit: input.creditLimit
+            ? clearDecimal(input.creditLimit)
+            : input.creditLimit,
           userId,
         });
         const newBank = await em.save(bank);
@@ -90,6 +93,12 @@ export class BankResolver {
         bank.accountType = input.accountType ?? bank.accountType;
         bank.accountNumber = input.accountNumber ?? bank.accountNumber;
         bank.agency = input.agency ?? bank.agency;
+
+        if (input.creditLimit !== undefined) {
+          bank.creditLimit = input.creditLimit
+            ? clearDecimal(input.creditLimit)
+            : input.creditLimit;
+        }
 
         const uptBank = await em.save(bank);
         return toBankDto(uptBank);

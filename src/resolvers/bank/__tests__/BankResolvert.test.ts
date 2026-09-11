@@ -5,7 +5,7 @@ import { AccountEnum } from "@/enums/AccountEnum";
 import { BankDto, PaginatedBankDto } from "@/resolvers/bank/dto/BankDto";
 import { MessageResponse } from "@/resolvers/MessageResponse";
 import { loggedContext } from "@/utils/loggedContext";
-import { ILike } from "typeorm";
+import { EntityManager, ILike } from "typeorm";
 import { CreateBankInput, ListBankInput, UpdateBankInput } from "../BankInputs";
 import { BankResolver } from "../BankResolver";
 
@@ -47,7 +47,8 @@ function makeBank(overrides: Partial<Bank> = {}): Bank {
     createdAt: new Date("2025-01-01T10:00:00Z"),
     updatedAt: new Date("2025-01-02T12:00:00Z"),
     deletedAt: null,
-    user: null as any,
+    creditLimit: "2500.00",
+    user: null,
     ...overrides,
   } as Bank;
 }
@@ -62,6 +63,7 @@ function toBankDtoMock(bank: Bank): BankDto {
     accountNumber: bank.accountNumber,
     agency: bank.agency,
     balance: bank.balance, // mantém string
+    creditLimit: bank.creditLimit,
     createdAt: bank.createdAt.toISOString(),
   };
 }
@@ -83,7 +85,7 @@ describe("BankResolver", () => {
 
     // Configura o mock do loggedContext para executar o callback com o em mockado
     mockedLoggedContext.mockImplementation(async (ctx, callback) => {
-      return callback(mockEm as any);
+      return callback(mockEm as unknown as EntityManager);
     });
 
     // Mock do toBankDto para retornar a estrutura correta do DTO

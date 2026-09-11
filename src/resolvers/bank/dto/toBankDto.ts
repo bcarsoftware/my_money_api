@@ -1,6 +1,7 @@
 import { Bank } from "@/entities/Bank";
+import { BankDto } from "./BankDto";
 
-export const toBankDto = (bank: Bank) => ({
+export const toBankDto = (bank: Bank): BankDto => ({
   id: bank.id,
   userId: bank.userId,
   code: bank.code,
