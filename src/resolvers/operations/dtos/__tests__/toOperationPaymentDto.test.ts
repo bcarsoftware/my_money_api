@@ -14,9 +14,7 @@ function makeOperationPayment(
     id: "op-payment-1",
     operationRegister: "reg-1",
     userId: "user-1",
-    bankId: "bank-1",
-    moneyId: "money-1",
-    invoiceId: "invoice-1",
+    paymentId: "payment-1",
     tag: "Pagamento",
     description: "Descrição qualquer",
     balance: "100.00",
@@ -27,10 +25,8 @@ function makeOperationPayment(
     local: LocalEnum.INTERNAL,
     createdAt: new Date("2026-01-15T10:30:00.000Z"),
     updatedAt: new Date("2026-01-16T11:45:00.000Z"),
-    user: null as unknown as OperationPayment["user"],
-    bank: null,
-    money: null,
-    invoice: null,
+    user: null,
+    payment: null,
     ...overrides,
   } as unknown as OperationPayment;
 }
@@ -49,9 +45,7 @@ describe("toOperationPaymentDto", () => {
         id: "op-payment-1",
         operationRegister: "reg-1",
         userId: "user-1",
-        bankId: "bank-1",
-        moneyId: "money-1",
-        invoiceId: "invoice-1",
+        paymentId: "payment-1",
         tag: "Pagamento",
         description: "Descrição qualquer",
         balance: "100.00",
@@ -97,30 +91,6 @@ describe("toOperationPaymentDto", () => {
   // Campos opcionais → null
   // ============================================================
   describe("campos opcionais definidos como null", () => {
-    it("deve manter null em bankId", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({ bankId: null })
-      );
-
-      expect(result.bankId).toBeNull();
-    });
-
-    it("deve manter null em moneyId", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({ moneyId: null })
-      );
-
-      expect(result.moneyId).toBeNull();
-    });
-
-    it("deve manter null em invoiceId", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({ invoiceId: null })
-      );
-
-      expect(result.invoiceId).toBeNull();
-    });
-
     it("deve manter null em description", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({ description: null })
@@ -147,30 +117,6 @@ describe("toOperationPaymentDto", () => {
   });
 
   describe("campos opcionais definidos como undefined", () => {
-    it("deve converter undefined em null para bankId", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({ bankId: undefined })
-      );
-
-      expect(result.bankId).toBeNull();
-    });
-
-    it("deve converter undefined em null para moneyId", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({ moneyId: undefined })
-      );
-
-      expect(result.moneyId).toBeNull();
-    });
-
-    it("deve converter undefined em null para invoiceId", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({ invoiceId: undefined })
-      );
-
-      expect(result.invoiceId).toBeNull();
-    });
-
     it("deve converter undefined em null para description", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({ description: undefined })
@@ -200,60 +146,32 @@ describe("toOperationPaymentDto", () => {
   // Combinações de campos opcionais
   // ============================================================
   describe("combinações de campos opcionais", () => {
-    it("deve mapear corretamente quando bankId, moneyId e invoiceId estão todos null", () => {
+    it("deve mapear corretamente quando todos os campos opcionais estão null", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({
-          bankId: null,
-          moneyId: null,
-          invoiceId: null,
+          description: null,
+          discount: null,
+          forfeit: null,
         })
       );
 
-      expect(result.bankId).toBeNull();
-      expect(result.moneyId).toBeNull();
-      expect(result.invoiceId).toBeNull();
+      expect(result.description).toBeNull();
+      expect(result.discount).toBeNull();
+      expect(result.forfeit).toBeNull();
     });
 
-    it("deve aceitar apenas bankId preenchido", () => {
+    it("deve mapear corretamente quando todos os campos opcionais estão undefined", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({
-          bankId: "bank-1",
-          moneyId: null,
-          invoiceId: null,
+          description: undefined,
+          discount: undefined,
+          forfeit: undefined,
         })
       );
 
-      expect(result.bankId).toBe("bank-1");
-      expect(result.moneyId).toBeNull();
-      expect(result.invoiceId).toBeNull();
-    });
-
-    it("deve aceitar apenas moneyId preenchido", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({
-          bankId: null,
-          moneyId: "money-1",
-          invoiceId: null,
-        })
-      );
-
-      expect(result.bankId).toBeNull();
-      expect(result.moneyId).toBe("money-1");
-      expect(result.invoiceId).toBeNull();
-    });
-
-    it("deve aceitar apenas invoiceId preenchido", () => {
-      const result = toOperationPaymentDto(
-        makeOperationPayment({
-          bankId: null,
-          moneyId: null,
-          invoiceId: "invoice-1",
-        })
-      );
-
-      expect(result.bankId).toBeNull();
-      expect(result.moneyId).toBeNull();
-      expect(result.invoiceId).toBe("invoice-1");
+      expect(result.description).toBeNull();
+      expect(result.discount).toBeNull();
+      expect(result.forfeit).toBeNull();
     });
   });
 
