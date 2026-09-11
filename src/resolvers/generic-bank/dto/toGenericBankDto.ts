@@ -1,5 +1,5 @@
 import { GenericBank } from "@/entities/GenericBank";
-import { GenericBankDto } from "@/resolvers/genereic-bank/dto/GenericBankDto";
+import { GenericBankDto } from "@/resolvers/generic-bank/dto/GenericBankDto";
 
 export const toGenericBankDto = (genericBank: GenericBank): GenericBankDto => ({
   id: genericBank.id,
@@ -8,6 +8,7 @@ export const toGenericBankDto = (genericBank: GenericBank): GenericBankDto => ({
   name: genericBank.name,
   currency: genericBank.currency,
   balance: genericBank.balance,
+  creditLimit: genericBank.creditLimit,
   bankInfo: genericBank.bankInfo
     ? genericBank.bankInfo.map((info) => ({
         id: info.id,

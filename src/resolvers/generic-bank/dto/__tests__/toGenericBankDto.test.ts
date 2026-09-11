@@ -30,6 +30,7 @@ function makeGenericBank(overrides: Partial<GenericBank> = {}): GenericBank {
     name: "Generic Bank",
     currency: CurrencyEnum.BRL,
     balance: "1000.00",
+    creditLimit: "2500.00",
     bankInfo: [],
     createdAt: new Date("2025-01-01T10:00:00.000Z"),
     updatedAt: new Date("2025-01-02T12:00:00.000Z"),
@@ -53,6 +54,7 @@ describe("toGenericBankDto", () => {
       name: mockGenericBank.name,
       currency: mockGenericBank.currency,
       balance: mockGenericBank.balance,
+      creditLimit: mockGenericBank.creditLimit,
       bankInfo: [],
       createdAt: mockGenericBank.createdAt.toISOString(),
     });
@@ -68,6 +70,7 @@ describe("toGenericBankDto", () => {
     expect(dto.name).toBe(mockGenericBank.name);
     expect(dto.currency).toBe(mockGenericBank.currency);
     expect(dto.balance).toBe(mockGenericBank.balance);
+    expect(dto.creditLimit).toBe(mockGenericBank.creditLimit);
     expect(dto.createdAt).toBe(mockGenericBank.createdAt.toISOString());
   });
 
@@ -78,6 +81,12 @@ describe("toGenericBankDto", () => {
 
     expect(dto.createdAt).toBe("2025-06-15T14:30:00.000Z");
     expect(typeof dto.createdAt).toBe("string");
+  });
+
+  it("deve preservar o tipo string do creditLimit", () => {
+    const mockGenericBank = makeGenericBank();
+    const dto = toGenericBankDto(mockGenericBank);
+    expect(typeof dto.creditLimit).toBe("string");
   });
 
   it("deve mapear bankInfo quando houver itens", () => {

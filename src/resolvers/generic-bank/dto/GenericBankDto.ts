@@ -33,6 +33,9 @@ export class GenericBankDto {
   @Field(() => String)
   balance: string;
 
+  @Field(() => String, { nullable: true })
+  creditLimit?: string | null;
+
   @Field(() => [GenBankInfoDto], { nullable: true })
   bankInfo?: GenBankInfoDto[] | null;
 

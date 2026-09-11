@@ -5,5 +5,5 @@ export enum OwnerEnum {
   GENERIC_BANK_BOX = "GENERIC_BANK_BOX",
   MONEY = "MONEY",
   PAYMENT = "PAYMENT",
-  INVOICE = "INVOICE"
+  INVOICE = "INVOICE",
 }
