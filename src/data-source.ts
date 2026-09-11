@@ -13,6 +13,7 @@ import { Money } from "@/entities/Money";
 import { OperationBank } from "@/entities/OperationBank";
 import { OperationGenericBank } from "@/entities/OperationGenericBank";
 import { OperationMoney } from "@/entities/OperationMoney";
+import { OperationPayment } from "@/entities/OperationPayment";
 import { Payment } from "@/entities/Payment";
 import { Pix } from "@/entities/Pix";
 import { User } from "@/entities/User";
@@ -34,6 +35,7 @@ import { AddCreditLimitToGenericBank1789085342041 } from "@/migrations/178908534
 import { CreateOperationBank1789091625348 } from "@/migrations/1789091625348-CreateOperationBank";
 import { CreateOperationGenericBank1789092353575 } from "@/migrations/1789092353575-CreateOperationGenericBank";
 import { CreateOperationMoney1789092836106 } from "@/migrations/1789092836106-CreateOperationMoney";
+import { CreateOperationPayment1789093434886 } from "@/migrations/1789093434886-CreateOperationPayment";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -58,6 +60,7 @@ export const AppDataSource = new DataSource({
     OperationBank,
     OperationGenericBank,
     OperationMoney,
+    OperationPayment,
   ],
   migrations: [
     CreateUser1787412038436,
@@ -77,6 +80,7 @@ export const AppDataSource = new DataSource({
     CreateOperationBank1789091625348,
     CreateOperationGenericBank1789092353575,
     CreateOperationMoney1789092836106,
+    CreateOperationPayment1789093434886,
   ],
   migrationsTransactionMode: "each",
   extra: {

@@ -11,7 +11,7 @@ export class CreateOperationBank1789091625348 implements MigrationInterface {
       `CREATE TYPE "public"."operation_bank_local_enum" AS ENUM('INTERNAL', 'EXTERNAL')`
     );
     await queryRunner.query(
-      `CREATE TABLE "operations_bank" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL, "bank_id" uuid NOT NULL, "bank_box_id" uuid, "invoice_id" uuid, "tag" character varying(64) NOT NULL, "description" character varying(256), "balance" numeric(10,2) NOT NULL, "discount" numeric(10,2), "forfeit" numeric(10,2), "amount" numeric(10,2) NOT NULL, "type_operation" "public"."operation_bank_type_operation_enum" NOT NULL, "local" "public"."operation_bank_local_enum" NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_operation_bank" PRIMARY KEY ("id"))`
+      `CREATE TABLE "operations_bank" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "user_id" uuid NOT NULL, "bank_id" uuid NOT NULL, "bank_box_id" uuid, "invoice_id" uuid, "tag" character varying(64) NOT NULL, "description" character varying(256), "balance" numeric(10,2) NOT NULL, "discount" numeric(10,2), "forfeit" numeric(10,2), "amount" numeric(10,2) NOT NULL, "type_operation" "public"."operation_bank_type_operation_enum" NOT NULL, "local" "public"."operation_bank_local_enum" NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_operations_bank" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `ALTER TABLE "operations_bank" ADD CONSTRAINT "FK_operations_bank_user" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`

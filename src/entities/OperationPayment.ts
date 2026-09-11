@@ -16,7 +16,7 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-@Entity()
+@Entity("operations_payment")
 export class OperationPayment extends BaseEntity {
   @PrimaryGeneratedColumn("uuid") id: string;
 
@@ -40,13 +40,6 @@ export class OperationPayment extends BaseEntity {
   @ManyToOne(() => Money, (money) => money.id)
   @JoinColumn({ name: "money_id", referencedColumnName: "id" })
   money?: Money | null;
-
-  @Column({ type: "uuid", name: "bank_box_id", nullable: true })
-  bankBoxId?: string | null;
-
-  @ManyToOne(() => BankBox, (bankBox) => bankBox.id)
-  @JoinColumn({ name: "bank_box_id", referencedColumnName: "id" })
-  bankBox?: BankBox | null;
 
   @Column({ type: "uuid", name: "invoice_id", nullable: true })
   invoiceId?: string | null;
