@@ -47,6 +47,14 @@ export class CreateBankInput {
     { message: "Balance must be a valid currency amount." }
   )
   balance: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Credit limit must be a valid currency amount." }
+  )
+  creditLimit?: string | null;
 }
 
 @InputType()
@@ -111,4 +119,12 @@ export class UpdateBankInput {
   @MaxLength(32, { message: "Agency must be at most 32 characters long." })
   @IsNumberString({}, { message: "Agency must contain only numbers." })
   agency?: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Credit limit must be a valid currency amount." }
+  )
+  creditLimit?: string | null;
 }

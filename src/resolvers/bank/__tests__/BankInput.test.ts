@@ -34,6 +34,7 @@ describe("CreateBankInput", () => {
     accountNumber: "12345-6", // atenção: @IsNumberString não permite hífen
     agency: "0001",
     balance: "1500.75",
+    creditLimit: "2500.00",
   };
 
   // Ajuste: accountNumber com hífen pode falhar no IsNumberString, então para teste válido usamos só números
@@ -44,6 +45,7 @@ describe("CreateBankInput", () => {
     accountNumber: "123456",
     agency: "0001",
     balance: "1500.75",
+    creditLimit: "2500.00",
   };
 
   describe("caminho feliz", () => {
@@ -237,6 +239,51 @@ describe("CreateBankInput", () => {
       const { balance, ...rest } = validPayloadSemHifen;
       const errors = await validateInput(CreateBankInput, rest);
       expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+  });
+
+  describe("creditLimit (optional or null)", () => {
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
+      "aceita formato de moeda válido: %s",
+      async (value) => {
+        const errors = await validateInput(CreateBankInput, {
+          ...validPayloadSemHifen,
+          creditLimit: value,
+        });
+        expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+      }
+    );
+
+    it("rejeita formato de moeda inválido", async () => {
+      const errors = await validateInput(CreateBankInput, {
+        creditLimit: "-100.00",
+      });
+      expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+    });
+
+    it.each(["não é número", "", "100.5", "100.000"])(
+      "rejeita formato de moeda inválido: %s",
+      async (value) => {
+        const errors = await validateInput(CreateBankInput, {
+          ...validPayloadSemHifen,
+          creditLimit: value,
+        });
+        expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+      }
+    );
+
+    it("aceita quando ausente (campo opcional)", async () => {
+      const { creditLimit, ...rest } = validPayloadSemHifen;
+      const errors = await validateInput(CreateBankInput, rest);
+      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+    });
+
+    it("aceita quando nulo", async () => {
+      const errors = await validateInput(CreateBankInput, {
+        ...validPayloadSemHifen,
+        creditLimit: null,
+      });
+      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
     });
   });
 });
@@ -525,6 +572,47 @@ describe("UpdateBankInput", () => {
         agency: undefined,
       });
       expect(constraintsFor(errors, "agency")).toHaveLength(0);
+    });
+  });
+
+  describe("creditLimit (optional or null)", () => {
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
+      "aceita formato de moeda válido: %s",
+      async (value) => {
+        const errors = await validateInput(UpdateBankInput, {
+          creditLimit: value,
+        });
+        expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+      }
+    );
+
+    it("rejeita formato de moeda inválido", async () => {
+      const errors = await validateInput(UpdateBankInput, {
+        creditLimit: "-100.00",
+      });
+      expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+    });
+
+    it.each(["não é número", "", "100.5", "100.000"])(
+      "rejeita formato de moeda inválido: %s",
+      async (value) => {
+        const errors = await validateInput(UpdateBankInput, {
+          creditLimit: value,
+        });
+        expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+      }
+    );
+
+    it("aceita quando ausente (campo opcional)", async () => {
+      const errors = await validateInput(UpdateBankInput, {});
+      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+    });
+
+    it("aceita quando nulo", async () => {
+      const errors = await validateInput(UpdateBankInput, {
+        creditLimit: null,
+      });
+      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
     });
   });
 });

@@ -66,6 +66,14 @@ export class CreateGenericBankInput {
     { message: "Balance must be a valid currency amount." }
   )
   balance: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Credit limit must be a valid currency amount." }
+  )
+  creditLimit?: string | null;
 }
 
 @InputType()
@@ -109,4 +117,12 @@ export class UpdateGenericBankInput {
   @IsOptional()
   @ValidateNested({ each: true })
   bankInfo?: UpdateBankInfoInput[] | null;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Credit limit must be a valid currency amount." }
+  )
+  creditLimit?: string | null;
 }

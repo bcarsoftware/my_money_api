@@ -1,6 +1,5 @@
 import "reflect-metadata";
 
-import { validate, ValidationError } from "class-validator";
 import { CurrencyEnum } from "@/enums/CurrencyEnum";
 import {
   CreateBankInfoInput,
@@ -9,6 +8,7 @@ import {
   UpdateBankInfoInput,
   UpdateGenericBankInput,
 } from "@/resolvers/generic-bank/GenericBankInputs";
+import { validate, ValidationError } from "class-validator";
 
 // ============================================================
 // Helpers
@@ -252,6 +252,7 @@ describe("CreateGenericBankInput", () => {
     name: "Banco Genérico",
     currency: CurrencyEnum.BRL,
     balance: "1000.00",
+    creditLimit: "2500.00",
   };
 
   describe("caminho feliz", () => {
@@ -415,6 +416,51 @@ describe("CreateGenericBankInput", () => {
       } as unknown as CreateGenericBankInput;
       const errors = await validateInput(CreateGenericBankInput, payload);
       expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+
+    describe("creditLimit (optional or null)", () => {
+      it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
+        "aceita formato de moeda válido: %s",
+        async (value) => {
+          const errors = await validateInput(CreateGenericBankInput, {
+            ...basePayload,
+            creditLimit: value,
+          });
+          expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+        }
+      );
+
+      it("rejeita formato de moeda inválido", async () => {
+        const errors = await validateInput(CreateGenericBankInput, {
+          creditLimit: "-100.00",
+        });
+        expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+      });
+
+      it.each(["não é número", "", "100.5", "100.000"])(
+        "rejeita formato de moeda inválido: %s",
+        async (value) => {
+          const errors = await validateInput(CreateGenericBankInput, {
+            ...basePayload,
+            creditLimit: value,
+          });
+          expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+        }
+      );
+
+      it("aceita quando ausente (campo opcional)", async () => {
+        const { creditLimit, ...rest } = basePayload;
+        const errors = await validateInput(CreateGenericBankInput, rest);
+        expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+      });
+
+      it("aceita quando nulo", async () => {
+        const errors = await validateInput(CreateGenericBankInput, {
+          ...basePayload,
+          creditLimit: null,
+        });
+        expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+      });
     });
   });
 
@@ -726,6 +772,47 @@ describe("UpdateGenericBankInput", () => {
       const input = { bankInfo: [] };
       const errors = await validateInput(UpdateGenericBankInput, input);
       expect(errors).toHaveLength(0);
+    });
+  });
+
+  describe("creditLimit (optional or null)", () => {
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "100"])(
+      "aceita formato de moeda válido: %s",
+      async (value) => {
+        const errors = await validateInput(UpdateGenericBankInput, {
+          creditLimit: value,
+        });
+        expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+      }
+    );
+
+    it("rejeita formato de moeda inválido", async () => {
+      const errors = await validateInput(UpdateGenericBankInput, {
+        creditLimit: "-100.00",
+      });
+      expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+    });
+
+    it.each(["não é número", "", "100.5", "100.000"])(
+      "rejeita formato de moeda inválido: %s",
+      async (value) => {
+        const errors = await validateInput(UpdateGenericBankInput, {
+          creditLimit: value,
+        });
+        expect(constraintsFor(errors, "creditLimit")).toContain("isCurrency");
+      }
+    );
+
+    it("aceita quando ausente (campo opcional)", async () => {
+      const errors = await validateInput(UpdateGenericBankInput, {});
+      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
+    });
+
+    it("aceita quando nulo", async () => {
+      const errors = await validateInput(UpdateGenericBankInput, {
+        creditLimit: null,
+      });
+      expect(constraintsFor(errors, "creditLimit")).toHaveLength(0);
     });
   });
 
