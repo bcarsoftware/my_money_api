@@ -42,7 +42,7 @@ export class OperationMoney extends BaseEntity {
   tag: string;
 
   @Column({ type: "varchar", length: 256, nullable: true })
-  description?: string;
+  description?: string | null;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: string;
