@@ -488,7 +488,7 @@ export class OperationBankResolver {
 
       if (decimalGreaterThan(amount, bank.balance))
         throw new Error(INSUFFICIENT_BALANCE);
-      
+
       bank.balance = decimalSubtract(bank.balance, amount);
       invoice.installments += 1;
 
