@@ -5,6 +5,10 @@ import { GenericBankResolver } from "@/resolvers/generic-bank/GenericBankResolve
 import { InvoiceResolver } from "@/resolvers/invoice/InvoiceResolver";
 import { MeResolver } from "@/resolvers/me/MeResolver";
 import { MoneyResolver } from "@/resolvers/money/MoneyResolver";
+import { OperationBankResolver } from "@/resolvers/operations/OperationBankResolvert";
+import { OperationGenericBankResolver } from "@/resolvers/operations/OperationGenericBankResolver";
+import { OperationMoneyResolver } from "@/resolvers/operations/OperationMoneyResolver";
+import { OperationPaymentResolver } from "@/resolvers/operations/OperationPaymentResolver";
 import { PaymentResolver } from "@/resolvers/payment/PaymentResolver";
 import { PixResolver } from "@/resolvers/pix/PixResolver";
 import { UserResolver } from "@/resolvers/user/UserResolver";
@@ -20,4 +24,8 @@ export const resolvers = [
   PaymentResolver,
   GenericBankResolver,
   GenericBankBoxResolver,
+  OperationBankResolver,
+  OperationGenericBankResolver,
+  OperationMoneyResolver,
+  OperationPaymentResolver,
 ] as const;

@@ -49,6 +49,6 @@ export class PaginatedOperationMoneyDto {
   @Field(() => [OperationMoneyDto])
   items: OperationMoneyDto[];
 
-  @Field(() => String)
-  total: string;
+  @Field(() => Number)
+  total: number;
 }

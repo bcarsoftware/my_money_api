@@ -48,10 +48,10 @@ export class OperationGenericBankDto {
 }
 
 @ObjectType()
-export class PaginatedOpertionGenericBankDto {
+export class PaginatedOperationGenericBankDto {
   @Field(() => [OperationGenericBankDto])
   items: OperationGenericBankDto[];
 
-  @Field(() => String)
-  total: string;
+  @Field(() => Number)
+  total: number;
 }
