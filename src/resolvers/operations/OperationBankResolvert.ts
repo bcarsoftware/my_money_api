@@ -1,13 +1,16 @@
 import {
   BALANCE_INVALID,
   INSUFFICIENT_BALANCE,
+  INVOICE_NOT_FOUND,
   OPERATION_NOT_FOUND,
   USER_BANK_NOT_MATCH,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
 import { Bank } from "@/entities/Bank";
+import { Invoice } from "@/entities/Invoice";
 import { OperationBank } from "@/entities/OperationBank";
+import { InvoiceStatusEnum } from "@/enums/InvoiceStatusEnum";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
 import { OperationError } from "@/errors/OperationError";
@@ -25,6 +28,7 @@ import {
   BankDepositVerify,
   BankTransferVerify,
   BankWithdrawVerify,
+  InvoiceVerify,
 } from "@/resolvers/operations/utils/OperationVerify";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
 import {
@@ -34,7 +38,9 @@ import {
 import {
   decimalGreaterThan,
   decimalMultiply,
+  decimalSubtract,
   decimalSum,
+  decimalSumSequence,
 } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { randomUUID } from "@/utils/randomUUID";
@@ -367,7 +373,7 @@ export class OperationBankResolver {
           const sendOperation = await em.save(OperationBank, {
             ...operations.origin,
             userId,
-            tag: "Transfer Sent.",
+            tag: `Transfer Sent: ${operations.origin.typeOperation}.`,
             description: `Transfer Sent. Using ${operations.origin.typeOperation}. Total: ${operations.origin.balance}`,
             amount: operations.origin.balance,
             operationRegister,
@@ -376,7 +382,7 @@ export class OperationBankResolver {
           const receiveOperation = await em.save(OperationBank, {
             ...operations.destination,
             userId,
-            tag: "Transfer Received.",
+            tag: `Transfer Received: ${operations.origin.typeOperation}.`,
             description: `Transfer Received. Using ${operations.destination.typeOperation}. Total: ${operations.destination.balance}`,
             amount: operations.destination.balance,
             operationRegister,
@@ -406,8 +412,8 @@ export class OperationBankResolver {
 
         const tag =
           operations.origin.balance[0] === "-"
-            ? "Transfer Received."
-            : "Transfer Sent.";
+            ? `Transfer Received: ${operations.origin.typeOperation}.`
+            : `Transfer Sent: ${operations.origin.typeOperation}.`;
 
         const operationBank = await em.save(OperationBank, {
           ...operations.origin,
@@ -423,6 +429,95 @@ export class OperationBankResolver {
         console.error("Error occurred during bank transfer:", error);
 
         throw new Error("Failed to complete bank operation transfer.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationBankDto)
+  async operationBankPayInvoice(
+    @Ctx() context: MyContext,
+    @Arg("input", () => CreateOperationBankInput)
+    input: CreateOperationBankInput
+  ): Promise<OperationBankDto> {
+    if (input.local !== LocalEnum.INTERNAL)
+      throw new Error("Operation bank payment invoice must be INTERNAL.");
+
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    const amount = decimalSumSequence([
+      input.balance,
+      input.forfeit ?? "0.00",
+      input.discount ?? "0.00",
+    ]);
+
+    const invoiceValidate: InvoiceVerify = {
+      ...input,
+      amount,
+    };
+
+    const operationErrors = await validate(invoiceValidate);
+
+    if (operationErrors.length > 0) throw new OperationError(operationErrors);
+
+    return await loggedContext(context, async (em) => {
+      if (!input.invoiceId)
+        throw new Error(
+          "Invoice ID must be provided for bank invoice operation."
+        );
+
+      if (!uuidFourVerify(input.invoiceId))
+        throw new Error("Invoice ID must be a valid UUID.");
+
+      const bank = await em.findOne(Bank, {
+        where: { id: input.bankId, userId },
+      });
+
+      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+
+      const invoice = await em.findOne(Invoice, {
+        where: { id: input.invoiceId, bankId: input.bankId },
+      });
+
+      if (!invoice) throw new Error(INVOICE_NOT_FOUND);
+
+      if (invoice.status === InvoiceStatusEnum.COMPLETED)
+        throw new Error("Invoice has already been completed.");
+
+      if (decimalGreaterThan(amount, bank.balance))
+        throw new Error(INSUFFICIENT_BALANCE);
+      
+      bank.balance = decimalSubtract(bank.balance, amount);
+      invoice.installments += 1;
+
+      if (invoice.installments === invoice.paidInstallments)
+        invoice.status = InvoiceStatusEnum.COMPLETED;
+
+      const operationRegister = randomUUID(7);
+
+      bank.creditLimit = decimalSum(bank.creditLimit, invoice.balance);
+
+      try {
+        const operationBank = em.create(OperationBank, {
+          bank,
+          invoice,
+          tag: `${input.tag}. Using: ${input.typeOperation}.`,
+          description: `${input.description}. Total: ${amount}`,
+          amount,
+          operationRegister,
+        });
+
+        await bank.save();
+        await invoice.save();
+
+        const newOperationBank = await em.save(operationBank);
+
+        return toOperationBankDto(newOperationBank);
+      } catch (error) {
+        console.error("Failed to complete bank invoice payment:", error);
+        throw new Error("Failed to complete bank invoice paymeent.");
       }
     });
   }
