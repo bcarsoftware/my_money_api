@@ -1,5 +1,6 @@
 import {
   BALANCE_INVALID,
+  INSUFFICIENT_BALANCE,
   USER_BANK_NOT_MATCH,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
@@ -18,13 +19,20 @@ import {
   CreateOperationBankInput,
   ListOperationBankInput,
 } from "@/resolvers/operations/inputs/OperationBankInputs";
-import { BankDepositVerify } from "@/resolvers/operations/utils/OperationVerify";
+import {
+  BankDepositVerify,
+  BankWithdrawVerify,
+} from "@/resolvers/operations/utils/OperationVerify";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
 import {
   balanceCurrencyVerify,
   uuidFourVerify,
 } from "@/resolvers/operations/utils/operationUtils";
-import { decimalSum } from "@/utils/currencyUtil";
+import {
+  decimalGreaterThan,
+  decimalMultiply,
+  decimalSum,
+} from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { randomUUID } from "@/utils/randomUUID";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
@@ -139,6 +147,78 @@ export class OperationBankResolver {
         console.error(error);
 
         throw new Error("Failed to deposit to bank.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationBankDto)
+  async operationBankWithdraw(
+    @Ctx() context: MyContext,
+    @Arg("bankId", () => String) bankId: string,
+    @Arg("balance", () => String) balance: string
+  ): Promise<OperationBankDto> {
+    if (!balanceCurrencyVerify(balance)) throw new Error(BALANCE_INVALID);
+
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    if (!uuidFourVerify(bankId))
+      throw new Error("Bank ID is not a valid UUID.");
+
+    return await loggedContext(context, async (em) => {
+      const bank = await em.findOne(Bank, { where: { id: bankId, userId } });
+
+      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+
+      const operationRegister = randomUUID(7);
+
+      const operation: CreateOperationBankInput = {
+        bankId,
+        balance,
+        discount: null,
+        forfeit: null,
+        typeOperation: OperationEnum.WITHDRAW,
+        local: LocalEnum.EXTERNAL,
+        tag: `Withdraw from bank ${bank.name}.`,
+        description: `Withdraw of ${balance} from bank ${bank.name}`,
+      };
+
+      const errorsInitial = await validate(operation);
+
+      if (errorsInitial.length > 0) throw new OperationError(errorsInitial);
+
+      const withdraw: BankWithdrawVerify = {
+        discount: null,
+        forfeit: null,
+        amount: balance,
+        ...operation,
+      };
+
+      const withdrawErrors = await validate(withdraw);
+
+      if (withdrawErrors.length > 0) throw new OperationError(withdrawErrors);
+
+      const withdBalance = decimalMultiply(operation.balance, "-1.00");
+
+      if (decimalGreaterThan(withdBalance, bank.balance))
+        throw new Error(INSUFFICIENT_BALANCE);
+
+      try {
+        const savedOperation = await em.save(OperationBank, {
+          ...operation,
+          operationRegister,
+        });
+        bank.balance = decimalSum(bank.balance, operation.balance);
+
+        await bank.save();
+
+        return toOperationBankDto(savedOperation);
+      } catch (error) {
+        console.error(error);
+
+        throw new Error("Failed to withdraw from bank.");
       }
     });
   }
