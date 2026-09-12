@@ -18,6 +18,21 @@ export class CreateOperationPaymentInput {
   @IsUUID("4", { message: "Payment ID must be a valid UUID." })
   paymentId: string;
 
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsUUID("4", { message: "Bank ID must be a valid UUID." })
+  bankId?: string | null;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsUUID("4", { message: "Generic Bank ID must be a valid UUID." })
+  genericBankId?: string | null;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsUUID("4", { message: "Money ID must be a valid UUID." })
+  moneyId?: string | null;
+
   @Field(() => String)
   @MaxLength(64, { message: "Tag must be at most 64 characters long." })
   tag: string;
