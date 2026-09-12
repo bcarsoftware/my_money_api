@@ -1,6 +1,7 @@
 import {
   BALANCE_INVALID,
   INSUFFICIENT_BALANCE,
+  OPERATION_NOT_FOUND,
   USER_BANK_NOT_MATCH,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
@@ -18,6 +19,7 @@ import { toOperationBankDto } from "@/resolvers/operations/dtos/toOperationBankD
 import {
   CreateOperationBankInput,
   ListOperationBankInput,
+  UpdateOperationBankInput,
 } from "@/resolvers/operations/inputs/OperationBankInputs";
 import {
   BankDepositVerify,
@@ -81,6 +83,40 @@ export class OperationBankResolver {
         console.error(error);
 
         throw new Error("Failed to fetch operation bank list.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationBankDto)
+  async operationBankUpdate(
+    @Ctx() context: MyContext,
+    @Arg("id", () => String) id: string,
+    @Arg("input", () => UpdateOperationBankInput)
+    input: UpdateOperationBankInput
+  ): Promise<OperationBankDto> {
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    return await loggedContext(context, async (em) => {
+      const operation = await em.findOne(OperationBank, {
+        where: { id, userId },
+      });
+
+      if (!operation) throw new Error(OPERATION_NOT_FOUND);
+
+      operation.tag = input.tag ?? operation.tag;
+      operation.description = input.description ?? operation.description;
+
+      try {
+        const uptOpreation = await operation.save();
+
+        return toOperationBankDto(uptOpreation);
+      } catch (error) {
+        console.error(error);
+
+        throw new Error("Failed to update operation bank.");
       }
     });
   }
