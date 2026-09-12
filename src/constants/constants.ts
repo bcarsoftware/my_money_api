@@ -33,7 +33,8 @@ export const GENERIC_BANK_BOX_NOT_FOUND = "Generic bank box not found.";
 export const BANK_BOX_NOT_FOUND = "Bank box not found.";
 
 export const START_DATE_AFTER_END_DATE = "Start date cannot be after end date.";
-export const MIN_AMOUNT_GREATER_THAN_MAX_AMOUNT = "Min amount cannot be greater than max amount.";
+export const MIN_AMOUNT_GREATER_THAN_MAX_AMOUNT =
+  "Min amount cannot be greater than max amount.";
 
 export const BALANCE_INVALID = "Balance is not a valid currency.";
 

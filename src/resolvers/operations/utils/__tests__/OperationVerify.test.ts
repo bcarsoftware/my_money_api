@@ -7,6 +7,7 @@ import {
   BankTransferVerify,
   BankVerify,
   BankWithdrawVerify,
+  InvoiceVerify,
   MoneyReceiveVerify,
   MoneySendVerify,
   MoneyTransferVerify,
@@ -959,6 +960,174 @@ describe("PaymentVerify", () => {
     it("rejeita quando ausente (isEnum)", async () => {
       const { typeOperation, ...payload } = validPayload;
       const errors = await validateInput(PaymentVerify, payload);
+      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
+    });
+  });
+});
+
+// ============================================================
+// InvoiceVerify
+// ============================================================
+describe("InvoiceVerify", () => {
+  const validPayload = {
+    balance: "100.00",
+    amount: "50.00",
+    typeOperation: OperationEnum.PAYMENT,
+  };
+
+  describe("caminho feliz", () => {
+    it("não retorna erros com todos os campos válidos", async () => {
+      const errors = await validateInput(InvoiceVerify, validPayload);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita discount negativo", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        discount: "-10.00",
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita forfeit positivo", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        forfeit: "5.00",
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita discount e forfeit como null (opcionais)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        discount: null,
+        forfeit: null,
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita discount e forfeit como undefined (omitidos)", async () => {
+      const errors = await validateInput(InvoiceVerify, validPayload);
+      expect(constraintsFor(errors, "discount")).toHaveLength(0);
+      expect(constraintsFor(errors, "forfeit")).toHaveLength(0);
+    });
+  });
+
+  describe("balance", () => {
+    it("rejeita balance negativo (isCurrency + matches)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        balance: "-50.00",
+      });
+      const constraints = constraintsFor(errors, "balance");
+      expect(constraints).toContain("isCurrency");
+      expect(constraints).toContain("matches");
+    });
+
+    it("rejeita balance zero (isNotZero)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        balance: "0.00",
+      });
+      expect(constraintsFor(errors, "balance")).toContain("isNotZero");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { balance, ...payload } = validPayload;
+      const errors = await validateInput(InvoiceVerify, payload);
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+  });
+
+  describe("amount", () => {
+    it("rejeita amount negativo (isCurrency + matches)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        amount: "-50.00",
+      });
+      const constraints = constraintsFor(errors, "amount");
+      expect(constraints).toContain("isCurrency");
+      expect(constraints).toContain("matches");
+    });
+
+    it("rejeita amount zero (isNotZero)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        amount: "0.00",
+      });
+      expect(constraintsFor(errors, "amount")).toContain("isNotZero");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { amount, ...payload } = validPayload;
+      const errors = await validateInput(InvoiceVerify, payload);
+      expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+    });
+  });
+
+  describe("discount (deve ser negativo quando presente)", () => {
+    it("rejeita discount positivo (matches)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        discount: "10.00",
+      });
+      expect(constraintsFor(errors, "discount")).toContain("matches");
+    });
+
+    it("rejeita discount zero (matches)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        discount: "0.00",
+      });
+      expect(constraintsFor(errors, "discount")).toContain("matches");
+    });
+
+    it("rejeita discount com formato de moeda inválido", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        discount: "nao-e-moeda",
+      });
+      expect(constraintsFor(errors, "discount")).toContain("isCurrency");
+    });
+  });
+
+  describe("forfeit (deve ser positivo quando presente)", () => {
+    it("rejeita forfeit negativo (isCurrency + matches)", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        forfeit: "-5.00",
+      });
+      const constraints = constraintsFor(errors, "forfeit");
+      expect(constraints).toContain("isCurrency");
+      expect(constraints).toContain("matches");
+    });
+  });
+
+  describe("typeOperation", () => {
+    it("aceita apenas PAYMENT", async () => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        typeOperation: OperationEnum.PAYMENT,
+      });
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
+    });
+
+    it.each([
+      OperationEnum.TRANSFER,
+      OperationEnum.PIX,
+      OperationEnum.DEPOSIT,
+      OperationEnum.WITHDRAW,
+    ])("rejeita typeOperation = %s (equals)", async (typeOperation) => {
+      const errors = await validateInput(InvoiceVerify, {
+        ...validPayload,
+        typeOperation,
+      });
+      expect(constraintsFor(errors, "typeOperation")).toContain("equals");
+    });
+
+    it("rejeita quando ausente (isEnum)", async () => {
+      const { typeOperation, ...payload } = validPayload;
+      const errors = await validateInput(InvoiceVerify, payload);
       expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
     });
   });

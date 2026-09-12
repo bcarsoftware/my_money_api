@@ -8,7 +8,10 @@ import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
 import { clearDecimal, decimalGreaterThan } from "@/utils/currencyUtil";
 import { Between, ILike, LessThan, MoreThan } from "typeorm";
-import { generalQueryFilter, GeneralFilter } from "@/resolvers/operations/utils/generalQueryFilter";
+import {
+  generalQueryFilter,
+  GeneralFilter,
+} from "@/resolvers/operations/utils/generalQueryFilter";
 
 // ============================================================
 // Mocks

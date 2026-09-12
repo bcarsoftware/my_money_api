@@ -326,6 +326,56 @@ export class PaymentVerify {
   typeOperation: OperationEnum;
 }
 
+export class InvoiceVerify {
+  @IsCurrency(
+    { allow_negatives: false, allow_decimal: true },
+    {
+      message: "Balance must be a valid currency balance and not negative.",
+    }
+  )
+  @IsNotZero({ message: "Balance must not be zero." })
+  @Matches(/^\d/, { message: "Balance must be greater than zero." })
+  balance: string;
+
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: true, allow_decimal: true },
+    {
+      message: "Discount must be a valid currency amount and negative.",
+    }
+  )
+  @Matches(/^-/, { message: "Discount must be smaller than zero." })
+  discount?: string | null;
+
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: false, allow_decimal: true },
+    {
+      message: "Forfeit must be a valid currency amount and not negative.",
+    }
+  )
+  @Matches(/^\d/, { message: "Forfeit must be greater than zero." })
+  forfeit?: string | null;
+
+  @IsCurrency(
+    { allow_negatives: false, allow_decimal: true },
+    {
+      message: "Amount must be a valid currency balance and not negative.",
+    }
+  )
+  @IsNotZero({ message: "Amount must not be zero." })
+  @Matches(/^\d/, { message: "Amount must be greater than zero." })
+  amount: string;
+
+  @IsEnum(OperationEnum, {
+    message: "Operation type must be a valid OperationEnum value.",
+  })
+  @Equals(OperationEnum.PAYMENT, {
+    message: "Operation type must be exactly PAYMENT.",
+  })
+  typeOperation: OperationEnum;
+}
+
 export class BankVerify {
   @IsIn(
     [
