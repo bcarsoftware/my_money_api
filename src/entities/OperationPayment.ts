@@ -1,3 +1,6 @@
+import { Bank } from "@/entities/Bank";
+import { GenericBank } from "@/entities/GenericBank";
+import { Money } from "@/entities/Money";
 import { Payment } from "@/entities/Payment";
 import { User } from "@/entities/User";
 import { LocalEnum } from "@/enums/LocalEnum";
@@ -37,6 +40,27 @@ export class OperationPayment extends BaseEntity {
   @ManyToOne(() => Payment, (payment) => payment.id)
   @JoinColumn({ name: "payment_id", referencedColumnName: "id" })
   payment: Payment;
+
+  @Column({ type: "uuid", name: "bank_id", nullable: true })
+  bankId?: string | null;
+
+  @ManyToOne(() => Bank, (bank) => bank.id)
+  @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
+  bank?: Bank | null;
+
+  @Column({ type: "uuid", name: "generic_bank_id", nullable: true })
+  genericBankId?: string | null;
+
+  @ManyToOne(() => GenericBank, (genericBank) => genericBank.id)
+  @JoinColumn({ name: "generic_bank_id", referencedColumnName: "id" })
+  genericBank?: GenericBank | null;
+
+  @Column({ type: "uuid", name: "money_id", nullable: true })
+  moneyId?: string | null;
+
+  @ManyToOne(() => Money, (money) => money.id)
+  @JoinColumn({ name: "money_id", referencedColumnName: "id" })
+  money?: Money | null;
 
   @Column({ type: "varchar", length: 64 })
   tag: string;

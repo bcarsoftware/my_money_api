@@ -13,13 +13,22 @@ export class CreateOperationPayment1789093434886 implements MigrationInterface {
       `CREATE TYPE "public"."operations_payment_local_enum" AS ENUM('INTERNAL', 'EXTERNAL')`
     );
     await queryRunner.query(
-      `CREATE TABLE "operations_payment" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "operation_register" uuid NOT NULL, "user_id" uuid NOT NULL, "payment_id" uuid NOT NULL, "tag" character varying(64) NOT NULL, "description" character varying(256), "balance" numeric(10,2) NOT NULL, "discount" numeric(10,2), "forfeit" numeric(10,2), "amount" numeric(10,2) NOT NULL, "type_operation" "public"."operations_payment_type_operation_enum" NOT NULL, "local" "public"."operations_payment_local_enum" NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_operations_payment" PRIMARY KEY ("id"))`
+      `CREATE TABLE "operations_payment" ("id" uuid NOT NULL DEFAULT gen_random_uuid(), "operation_register" uuid NOT NULL, "user_id" uuid NOT NULL, "payment_id" uuid NOT NULL, "bank_id" uuid, "generic_bank_id" uuid, "money_id" uuid, "tag" character varying(64) NOT NULL, "description" character varying(256), "balance" numeric(10,2) NOT NULL, "discount" numeric(10,2), "forfeit" numeric(10,2), "amount" numeric(10,2) NOT NULL, "type_operation" "public"."operations_payment_type_operation_enum" NOT NULL, "local" "public"."operations_payment_local_enum" NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_operations_payment" PRIMARY KEY ("id"))`
     );
     await queryRunner.query(
       `ALTER TABLE "operations_payment" ADD CONSTRAINT "FK_operations_payment_user" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
     await queryRunner.query(
       `ALTER TABLE "operations_payment" ADD CONSTRAINT "FK_operations_payment_payment" FOREIGN KEY ("payment_id") REFERENCES "payments"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "operations_payment" ADD CONSTRAINT "FK_operations_payment_bank" FOREIGN KEY ("bank_id") REFERENCES "banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "operations_payment" ADD CONSTRAINT "FK_operations_payment_generic_bank" FOREIGN KEY ("generic_bank_id") REFERENCES "generic_banks"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "operations_payment" ADD CONSTRAINT "FK_operations_payment_money" FOREIGN KEY ("money_id") REFERENCES "money"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
 
     await queryRunner.query(
@@ -75,6 +84,15 @@ export class CreateOperationPayment1789093434886 implements MigrationInterface {
 
     await queryRunner.query(
       `ALTER TABLE "operations_payment" DROP CONSTRAINT "FK_operations_payment_payment"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "operations_payment" DROP CONSTRAINT "FK_operations_payment_bank"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "operations_payment" DROP CONSTRAINT "FK_operations_payment_generic_bank"`
+    );
+    await queryRunner.query(
+      `ALTER TABLE "operations_payment" DROP CONSTRAINT "FK_operations_payment_money"`
     );
     await queryRunner.query(
       `ALTER TABLE "operations_payment" DROP CONSTRAINT "FK_operations_payment_user"`
