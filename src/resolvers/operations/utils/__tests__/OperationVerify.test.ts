@@ -6,7 +6,7 @@ import {
   BankDepositVerify,
   BankTransferVerify,
   BankVerify,
-  BankWithdrawalVerify,
+  BankWithdrawVerify,
   MoneyReceiveVerify,
   MoneySendVerify,
   MoneyTransferVerify,
@@ -44,7 +44,7 @@ describe("BankTransferVerify", () => {
     originBankId: UUID,
     destinationBankId: UUID_2,
     local: LocalEnum.INTERNAL,
-    operationType: OperationEnum.TRANSFER,
+    typeOperation: OperationEnum.TRANSFER,
   };
 
   describe("caminho feliz", () => {
@@ -210,32 +210,32 @@ describe("BankTransferVerify", () => {
     });
   });
 
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it.each([
       OperationEnum.PAYMENT,
       OperationEnum.TRANSFER,
       OperationEnum.PIX,
       OperationEnum.DOC,
       OperationEnum.TED,
-    ])("aceita operationType = %s", async (operationType) => {
+    ])("aceita typeOperation = %s", async (typeOperation) => {
       const errors = await validateInput(BankTransferVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([
       OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAWAL,
+      OperationEnum.WITHDRAW,
       OperationEnum.SEND,
       OperationEnum.RECEIVE,
-    ])("rejeita operationType = %s", async (operationType) => {
+    ])("rejeita typeOperation = %s", async (typeOperation) => {
       const errors = await validateInput(BankTransferVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toContain("isIn");
+      expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
     });
   });
 });
@@ -250,7 +250,7 @@ describe("MoneyTransferVerify", () => {
     originMoneyId: UUID,
     destinationMoneyId: UUID_2,
     local: LocalEnum.INTERNAL,
-    operationType: OperationEnum.SEND,
+    typeOperation: OperationEnum.SEND,
   };
 
   describe("caminho feliz", () => {
@@ -345,32 +345,32 @@ describe("MoneyTransferVerify", () => {
     });
   });
 
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it.each([
       OperationEnum.SEND,
       OperationEnum.RECEIVE,
       OperationEnum.TRANSFER,
       OperationEnum.PAYMENT,
-    ])("aceita operationType = %s", async (operationType) => {
+    ])("aceita typeOperation = %s", async (typeOperation) => {
       const errors = await validateInput(MoneyTransferVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([
       OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAWAL,
+      OperationEnum.WITHDRAW,
       OperationEnum.PIX,
       OperationEnum.DOC,
       OperationEnum.TED,
-    ])("rejeita operationType = %s", async (operationType) => {
+    ])("rejeita typeOperation = %s", async (typeOperation) => {
       const errors = await validateInput(MoneyTransferVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toContain("isIn");
+      expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
     });
   });
 });
@@ -382,7 +382,7 @@ describe("BankDepositVerify", () => {
   const validPayload = {
     balance: "100.00",
     amount: "50.00",
-    operationType: OperationEnum.DEPOSIT,
+    typeOperation: OperationEnum.DEPOSIT,
   };
 
   describe("caminho feliz", () => {
@@ -483,50 +483,50 @@ describe("BankDepositVerify", () => {
     });
   });
 
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it("aceita apenas DEPOSIT", async () => {
       const errors = await validateInput(BankDepositVerify, {
         ...validPayload,
-        operationType: OperationEnum.DEPOSIT,
+        typeOperation: OperationEnum.DEPOSIT,
       });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([
-      OperationEnum.WITHDRAWAL,
+      OperationEnum.WITHDRAW,
       OperationEnum.PIX,
       OperationEnum.TRANSFER,
       OperationEnum.TED,
-    ])("rejeita operationType = %s (equals)", async (operationType) => {
+    ])("rejeita typeOperation = %s (equals)", async (typeOperation) => {
       const errors = await validateInput(BankDepositVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toContain("equals");
+      expect(constraintsFor(errors, "typeOperation")).toContain("equals");
     });
   });
 });
 
 // ============================================================
-// BankWithdrawalVerify
+// BankWithdrawVerify
 // ============================================================
-describe("BankWithdrawalVerify", () => {
+describe("BankWithdrawVerify", () => {
   const validPayload = {
     balance: "-100.00",
     amount: "-50.00",
-    operationType: OperationEnum.WITHDRAWAL,
+    typeOperation: OperationEnum.WITHDRAW,
   };
 
   describe("caminho feliz", () => {
     it("não retorna erros com todos os campos válidos", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, validPayload);
+      const errors = await validateInput(BankWithdrawVerify, validPayload);
       expect(errors).toHaveLength(0);
     });
   });
 
   describe("balance (deve ser negativo)", () => {
     it("rejeita balance positivo (matches)", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
         balance: "100.00",
       });
@@ -534,7 +534,7 @@ describe("BankWithdrawalVerify", () => {
     });
 
     it("rejeita balance zero (matches + isNotZero)", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
         balance: "0.00",
       });
@@ -544,7 +544,7 @@ describe("BankWithdrawalVerify", () => {
     });
 
     it("aceita valor negativo", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
         balance: "-1.00",
       });
@@ -554,7 +554,7 @@ describe("BankWithdrawalVerify", () => {
 
   describe("amount (deve ser negativo)", () => {
     it("rejeita amount positivo (matches)", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
         amount: "50.00",
       });
@@ -562,7 +562,7 @@ describe("BankWithdrawalVerify", () => {
     });
 
     it("rejeita amount zero (matches + isNotZero)", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
         amount: "0.00",
       });
@@ -574,7 +574,7 @@ describe("BankWithdrawalVerify", () => {
 
   describe("discount / forfeit", () => {
     it("rejeita discount com valor", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
         discount: "10.00",
       });
@@ -582,7 +582,7 @@ describe("BankWithdrawalVerify", () => {
     });
 
     it("rejeita forfeit com valor", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
         forfeit: "5.00",
       });
@@ -590,23 +590,23 @@ describe("BankWithdrawalVerify", () => {
     });
   });
 
-  describe("operationType", () => {
-    it("aceita apenas WITHDRAWAL", async () => {
-      const errors = await validateInput(BankWithdrawalVerify, {
+  describe("typeOperation", () => {
+    it("aceita apenas WITHDRAW", async () => {
+      const errors = await validateInput(BankWithdrawVerify, {
         ...validPayload,
-        operationType: OperationEnum.WITHDRAWAL,
+        typeOperation: OperationEnum.WITHDRAW,
       });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([OperationEnum.DEPOSIT, OperationEnum.TRANSFER, OperationEnum.PIX])(
-      "rejeita operationType = %s (equals)",
-      async (operationType) => {
-        const errors = await validateInput(BankWithdrawalVerify, {
+      "rejeita typeOperation = %s (equals)",
+      async (typeOperation) => {
+        const errors = await validateInput(BankWithdrawVerify, {
           ...validPayload,
-          operationType,
+          typeOperation,
         });
-        expect(constraintsFor(errors, "operationType")).toContain("equals");
+        expect(constraintsFor(errors, "typeOperation")).toContain("equals");
       }
     );
   });
@@ -619,7 +619,7 @@ describe("MoneySendVerify", () => {
   const validPayload = {
     balance: "-100.00",
     amount: "-50.00",
-    operationType: OperationEnum.SEND,
+    typeOperation: OperationEnum.SEND,
   };
 
   describe("caminho feliz", () => {
@@ -675,25 +675,25 @@ describe("MoneySendVerify", () => {
     });
   });
 
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it("aceita apenas SEND", async () => {
       const errors = await validateInput(MoneySendVerify, {
         ...validPayload,
-        operationType: OperationEnum.SEND,
+        typeOperation: OperationEnum.SEND,
       });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([
       OperationEnum.RECEIVE,
       OperationEnum.TRANSFER,
       OperationEnum.PAYMENT,
-    ])("rejeita operationType = %s (equals)", async (operationType) => {
+    ])("rejeita typeOperation = %s (equals)", async (typeOperation) => {
       const errors = await validateInput(MoneySendVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toContain("equals");
+      expect(constraintsFor(errors, "typeOperation")).toContain("equals");
     });
   });
 });
@@ -705,7 +705,7 @@ describe("MoneyReceiveVerify", () => {
   const validPayload = {
     balance: "100.00",
     amount: "50.00",
-    operationType: OperationEnum.RECEIVE,
+    typeOperation: OperationEnum.RECEIVE,
   };
 
   describe("caminho feliz", () => {
@@ -773,25 +773,25 @@ describe("MoneyReceiveVerify", () => {
     });
   });
 
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it("aceita apenas RECEIVE", async () => {
       const errors = await validateInput(MoneyReceiveVerify, {
         ...validPayload,
-        operationType: OperationEnum.RECEIVE,
+        typeOperation: OperationEnum.RECEIVE,
       });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([
       OperationEnum.SEND,
       OperationEnum.TRANSFER,
       OperationEnum.PAYMENT,
-    ])("rejeita operationType = %s (equals)", async (operationType) => {
+    ])("rejeita typeOperation = %s (equals)", async (typeOperation) => {
       const errors = await validateInput(MoneyReceiveVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toContain("equals");
+      expect(constraintsFor(errors, "typeOperation")).toContain("equals");
     });
   });
 });
@@ -803,7 +803,7 @@ describe("PaymentVerify", () => {
   const validPayload = {
     balance: "100.00",
     amount: "50.00",
-    operationType: OperationEnum.PAYMENT,
+    typeOperation: OperationEnum.PAYMENT,
   };
 
   describe("caminho feliz", () => {
@@ -934,32 +934,32 @@ describe("PaymentVerify", () => {
     });
   });
 
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it("aceita apenas PAYMENT", async () => {
       const errors = await validateInput(PaymentVerify, {
         ...validPayload,
-        operationType: OperationEnum.PAYMENT,
+        typeOperation: OperationEnum.PAYMENT,
       });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([
       OperationEnum.TRANSFER,
       OperationEnum.PIX,
       OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAWAL,
-    ])("rejeita operationType = %s (equals)", async (operationType) => {
+      OperationEnum.WITHDRAW,
+    ])("rejeita typeOperation = %s (equals)", async (typeOperation) => {
       const errors = await validateInput(PaymentVerify, {
         ...validPayload,
-        operationType,
+        typeOperation,
       });
-      expect(constraintsFor(errors, "operationType")).toContain("equals");
+      expect(constraintsFor(errors, "typeOperation")).toContain("equals");
     });
 
     it("rejeita quando ausente (isEnum)", async () => {
-      const { operationType, ...payload } = validPayload;
+      const { typeOperation, ...payload } = validPayload;
       const errors = await validateInput(PaymentVerify, payload);
-      expect(constraintsFor(errors, "operationType")).toContain("isEnum");
+      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
     });
   });
 });
@@ -968,31 +968,31 @@ describe("PaymentVerify", () => {
 // BankVerify
 // ============================================================
 describe("BankVerify", () => {
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it.each([
       OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAWAL,
+      OperationEnum.WITHDRAW,
       OperationEnum.TRANSFER,
       OperationEnum.PAYMENT,
       OperationEnum.PIX,
       OperationEnum.DOC,
       OperationEnum.TED,
-    ])("aceita operationType = %s", async (operationType) => {
-      const errors = await validateInput(BankVerify, { operationType });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+    ])("aceita typeOperation = %s", async (typeOperation) => {
+      const errors = await validateInput(BankVerify, { typeOperation });
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([OperationEnum.SEND, OperationEnum.RECEIVE])(
-      "rejeita operationType = %s (isIn)",
-      async (operationType) => {
-        const errors = await validateInput(BankVerify, { operationType });
-        expect(constraintsFor(errors, "operationType")).toContain("isIn");
+      "rejeita typeOperation = %s (isIn)",
+      async (typeOperation) => {
+        const errors = await validateInput(BankVerify, { typeOperation });
+        expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
       }
     );
 
     it("rejeita quando ausente (isIn)", async () => {
       const errors = await validateInput(BankVerify, {});
-      expect(constraintsFor(errors, "operationType")).toContain("isIn");
+      expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
     });
   });
 });
@@ -1001,31 +1001,31 @@ describe("BankVerify", () => {
 // MoneyVerify
 // ============================================================
 describe("MoneyVerify", () => {
-  describe("operationType", () => {
+  describe("typeOperation", () => {
     it.each([
       OperationEnum.SEND,
       OperationEnum.RECEIVE,
       OperationEnum.TRANSFER,
       OperationEnum.PAYMENT,
-    ])("aceita operationType = %s", async (operationType) => {
-      const errors = await validateInput(MoneyVerify, { operationType });
-      expect(constraintsFor(errors, "operationType")).toHaveLength(0);
+    ])("aceita typeOperation = %s", async (typeOperation) => {
+      const errors = await validateInput(MoneyVerify, { typeOperation });
+      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
     });
 
     it.each([
       OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAWAL,
+      OperationEnum.WITHDRAW,
       OperationEnum.PIX,
       OperationEnum.DOC,
       OperationEnum.TED,
-    ])("rejeita operationType = %s (isIn)", async (operationType) => {
-      const errors = await validateInput(MoneyVerify, { operationType });
-      expect(constraintsFor(errors, "operationType")).toContain("isIn");
+    ])("rejeita typeOperation = %s (isIn)", async (typeOperation) => {
+      const errors = await validateInput(MoneyVerify, { typeOperation });
+      expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
     });
 
     it("rejeita quando ausente (isIn)", async () => {
       const errors = await validateInput(MoneyVerify, {});
-      expect(constraintsFor(errors, "operationType")).toContain("isIn");
+      expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
     });
   });
 });

@@ -5,7 +5,7 @@ export enum OperationEnum {
   DEPOSIT = "DEPOSIT",
   PAYMENT = "PAYMENT",
   TRANSFER = "TRANSFER",
-  WITHDRAWAL = "WITHDRAW",
+  WITHDRAW = "WITHDRAW",
   SEND = "SEND",
   RECEIVE = "RECEIVE",
 }

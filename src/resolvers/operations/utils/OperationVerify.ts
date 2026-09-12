@@ -60,7 +60,7 @@ export class BankTransferVerify {
     ],
     { message: "Operation type must be one of the valid bank operation types." }
   )
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
 export class MoneyTransferVerify {
@@ -113,7 +113,7 @@ export class MoneyTransferVerify {
       message: "Operation type must be one of the valid money operation types.",
     }
   )
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
 export class BankDepositVerify {
@@ -153,10 +153,10 @@ export class BankDepositVerify {
   @Equals(OperationEnum.DEPOSIT, {
     message: "Operation type must be exactly DEPOSIT.",
   })
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
-export class BankWithdrawalVerify {
+export class BankWithdrawVerify {
   @IsCurrency(
     { allow_negatives: true, allow_decimal: true },
     {
@@ -190,10 +190,10 @@ export class BankWithdrawalVerify {
   @IsEnum(OperationEnum, {
     message: "Operation type must be a valid OperationEnum value.",
   })
-  @Equals(OperationEnum.WITHDRAWAL, {
-    message: "Operation type must be exactly WITHDRAWAL.",
+  @Equals(OperationEnum.WITHDRAW, {
+    message: "Operation type must be exactly WITHDRAW.",
   })
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
 export class MoneySendVerify {
@@ -233,7 +233,7 @@ export class MoneySendVerify {
   @Equals(OperationEnum.SEND, {
     message: "Operation type must be exactly SEND.",
   })
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
 export class MoneyReceiveVerify {
@@ -273,7 +273,7 @@ export class MoneyReceiveVerify {
   @Equals(OperationEnum.RECEIVE, {
     message: "Operation type must be exactly RECEIVE.",
   })
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
 export class PaymentVerify {
@@ -323,14 +323,14 @@ export class PaymentVerify {
   @Equals(OperationEnum.PAYMENT, {
     message: "Operation type must be exactly PAYMENT.",
   })
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
 export class BankVerify {
   @IsIn(
     [
       OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAWAL,
+      OperationEnum.WITHDRAW,
       OperationEnum.TRANSFER,
       OperationEnum.PAYMENT,
       OperationEnum.PIX,
@@ -339,7 +339,7 @@ export class BankVerify {
     ],
     { message: "Operation type must be one of the valid bank operation types." }
   )
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }
 
 export class MoneyVerify {
@@ -354,5 +354,5 @@ export class MoneyVerify {
       message: "Operation type must be one of the valid money operation types.",
     }
   )
-  operationType: OperationEnum;
+  typeOperation: OperationEnum;
 }

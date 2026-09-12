@@ -1,13 +1,35 @@
-import { USER_NOT_AUTHENTICATED } from "@/constants/constants";
+import {
+  BALANCE_INVALID,
+  USER_BANK_NOT_MATCH,
+  USER_NOT_AUTHENTICATED,
+} from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
+import { Bank } from "@/entities/Bank";
 import { OperationBank } from "@/entities/OperationBank";
-import { PaginatedOperationBankDto } from "@/resolvers/operations/dtos/OperationBankDto";
+import { LocalEnum } from "@/enums/LocalEnum";
+import { OperationEnum } from "@/enums/OperationEnum";
+import { OperationError } from "@/errors/OperationError";
+import {
+  OperationBankDto,
+  PaginatedOperationBankDto,
+} from "@/resolvers/operations/dtos/OperationBankDto";
 import { toOperationBankDto } from "@/resolvers/operations/dtos/toOperationBankDto";
-import { ListOperationBankInput } from "@/resolvers/operations/inputs/OperationBankInputs";
+import {
+  CreateOperationBankInput,
+  ListOperationBankInput,
+} from "@/resolvers/operations/inputs/OperationBankInputs";
+import { BankDepositVerify } from "@/resolvers/operations/utils/OperationVerify";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
+import {
+  balanceCurrencyVerify,
+  uuidFourVerify,
+} from "@/resolvers/operations/utils/operationUtils";
+import { decimalSum } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
+import { randomUUID } from "@/utils/randomUUID";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { validate } from "class-validator";
+import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 
 @Resolver()
 export class OperationBankResolver {
@@ -50,6 +72,73 @@ export class OperationBankResolver {
         console.error(error);
 
         throw new Error("Failed to fetch operation bank list.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationBankDto)
+  async operationBankDeposit(
+    @Ctx() context: MyContext,
+    @Arg("bankId", () => String) bankId: string,
+    @Arg("balance", () => String) balance: string
+  ): Promise<OperationBankDto> {
+    if (!balanceCurrencyVerify(balance)) throw new Error(BALANCE_INVALID);
+
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    if (!uuidFourVerify(bankId))
+      throw new Error("Bank ID is not a valid UUID.");
+
+    return await loggedContext(context, async (em) => {
+      const bank = await em.findOne(Bank, { where: { id: bankId, userId } });
+
+      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+
+      const operationRegister = randomUUID(7);
+
+      const operation: CreateOperationBankInput = {
+        bankId,
+        balance,
+        discount: null,
+        forfeit: null,
+        typeOperation: OperationEnum.DEPOSIT,
+        local: LocalEnum.EXTERNAL,
+        tag: `Deposit to bank ${bank.name}.`,
+        description: `Deposit of ${balance} to bank ${bank.name}`,
+      };
+
+      const errorsInitial = await validate(operation);
+
+      if (errorsInitial.length > 0) throw new OperationError(errorsInitial);
+
+      const deposit: BankDepositVerify = {
+        discount: null,
+        forfeit: null,
+        amount: balance,
+        ...operation,
+      };
+
+      const depositErrors = await validate(deposit);
+
+      if (depositErrors.length > 0) throw new OperationError(depositErrors);
+
+      try {
+        const savedOperation = await em.save(OperationBank, {
+          ...operation,
+          operationRegister,
+        });
+        bank.balance = decimalSum(bank.balance, operation.balance);
+
+        await bank.save();
+
+        return toOperationBankDto(savedOperation);
+      } catch (error) {
+        console.error(error);
+
+        throw new Error("Failed to deposit to bank.");
       }
     });
   }
