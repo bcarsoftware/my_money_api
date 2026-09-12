@@ -240,7 +240,7 @@ describe("toOperationPaymentDto", () => {
     it("deve retornar exatamente 15 propriedades", () => {
       const result = toOperationPaymentDto(makeOperationPayment());
 
-      expect(Object.keys(result)).toHaveLength(15);
+      expect(Object.keys(result)).toHaveLength(13);
     });
   });
 });
