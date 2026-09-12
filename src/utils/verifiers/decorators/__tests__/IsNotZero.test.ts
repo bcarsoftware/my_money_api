@@ -183,7 +183,18 @@ describe("IsNotZero decorator", () => {
   });
 
   it("rejeita múltiplos valores zerados", async () => {
-    const values = ["0", "00", "000", "0.0", "0.00", ".0", ".00"];
+    const values = [
+      "0",
+      "00",
+      "000",
+      "0.0",
+      "0.00",
+      ".0",
+      ".00",
+      "0,0",
+      "0,00",
+      "0.0.00",
+    ];
     for (const value of values) {
       const input = new TestInput(value);
       const errors = await validate(input);

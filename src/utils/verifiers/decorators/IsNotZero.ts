@@ -7,7 +7,7 @@ import {
 export const IS_NOT_ZERO = "isNotZero";
 
 const zeroVerify = (value: string): boolean => {
-  const regex = /^(0+)?(\.?0+)$/;
+  const regex = /^[0.,]+$/;
   return !regex.test(value);
 };
 
