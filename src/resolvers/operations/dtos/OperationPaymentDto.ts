@@ -16,6 +16,15 @@ export class OperationPaymentDto {
   @Field(() => String)
   paymentId: string;
 
+  @Field(() => String, { nullable: true })
+  bankId?: string | null;
+
+  @Field(() => String, { nullable: true })
+  genericBankId?: string | null;
+
+  @Field(() => String, { nullable: true })
+  moneyId?: string | null;
+
   @Field(() => String)
   tag: string;
 

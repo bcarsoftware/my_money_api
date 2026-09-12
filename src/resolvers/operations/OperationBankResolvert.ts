@@ -385,7 +385,7 @@ export class OperationBankResolver {
             tag: `Transfer Received: ${operations.origin.typeOperation}.`,
             description: `Transfer Received. Using ${operations.destination.typeOperation}. Total: ${operations.destination.balance}`,
             amount: operations.destination.balance,
-            operationRegister,
+            operationRegister: randomUUID(7),
           });
 
           const items = [

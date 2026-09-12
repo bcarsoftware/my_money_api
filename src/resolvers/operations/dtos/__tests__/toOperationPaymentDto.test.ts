@@ -15,6 +15,9 @@ function makeOperationPayment(
     operationRegister: "reg-1",
     userId: "user-1",
     paymentId: "payment-1",
+    bankId: "bank-1",
+    genericBankId: "generic-bank-1",
+    moneyId: "money-1",
     tag: "Pagamento",
     description: "Descrição qualquer",
     balance: "100.00",
@@ -46,6 +49,9 @@ describe("toOperationPaymentDto", () => {
         operationRegister: "reg-1",
         userId: "user-1",
         paymentId: "payment-1",
+        bankId: "bank-1",
+        genericBankId: "generic-bank-1",
+        moneyId: "money-1",
         tag: "Pagamento",
         description: "Descrição qualquer",
         balance: "100.00",
@@ -88,9 +94,33 @@ describe("toOperationPaymentDto", () => {
   });
 
   // ============================================================
-  // Campos opcionais → null
+  // Campos nullable → null
   // ============================================================
-  describe("campos opcionais definidos como null", () => {
+  describe("campos nullable definidos como null", () => {
+    it("deve manter null em bankId", () => {
+      const result = toOperationPaymentDto(
+        makeOperationPayment({ bankId: null })
+      );
+
+      expect(result.bankId).toBeNull();
+    });
+
+    it("deve manter null em genericBankId", () => {
+      const result = toOperationPaymentDto(
+        makeOperationPayment({ genericBankId: null })
+      );
+
+      expect(result.genericBankId).toBeNull();
+    });
+
+    it("deve manter null em moneyId", () => {
+      const result = toOperationPaymentDto(
+        makeOperationPayment({ moneyId: null })
+      );
+
+      expect(result.moneyId).toBeNull();
+    });
+
     it("deve manter null em description", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({ description: null })
@@ -116,7 +146,31 @@ describe("toOperationPaymentDto", () => {
     });
   });
 
-  describe("campos opcionais definidos como undefined", () => {
+  describe("campos nullable definidos como undefined", () => {
+    it("deve converter undefined em null para bankId", () => {
+      const result = toOperationPaymentDto(
+        makeOperationPayment({ bankId: undefined })
+      );
+
+      expect(result.bankId).toBeNull();
+    });
+
+    it("deve converter undefined em null para genericBankId", () => {
+      const result = toOperationPaymentDto(
+        makeOperationPayment({ genericBankId: undefined })
+      );
+
+      expect(result.genericBankId).toBeNull();
+    });
+
+    it("deve converter undefined em null para moneyId", () => {
+      const result = toOperationPaymentDto(
+        makeOperationPayment({ moneyId: undefined })
+      );
+
+      expect(result.moneyId).toBeNull();
+    });
+
     it("deve converter undefined em null para description", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({ description: undefined })
@@ -143,32 +197,44 @@ describe("toOperationPaymentDto", () => {
   });
 
   // ============================================================
-  // Combinações de campos opcionais
+  // Combinações de campos nullable
   // ============================================================
-  describe("combinações de campos opcionais", () => {
-    it("deve mapear corretamente quando todos os campos opcionais estão null", () => {
+  describe("combinações de campos nullable", () => {
+    it("deve mapear corretamente quando todos os campos nullable estão null", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({
+          bankId: null,
+          genericBankId: null,
+          moneyId: null,
           description: null,
           discount: null,
           forfeit: null,
         })
       );
 
+      expect(result.bankId).toBeNull();
+      expect(result.genericBankId).toBeNull();
+      expect(result.moneyId).toBeNull();
       expect(result.description).toBeNull();
       expect(result.discount).toBeNull();
       expect(result.forfeit).toBeNull();
     });
 
-    it("deve mapear corretamente quando todos os campos opcionais estão undefined", () => {
+    it("deve mapear corretamente quando todos os campos nullable estão undefined", () => {
       const result = toOperationPaymentDto(
         makeOperationPayment({
+          bankId: undefined,
+          genericBankId: undefined,
+          moneyId: undefined,
           description: undefined,
           discount: undefined,
           forfeit: undefined,
         })
       );
 
+      expect(result.bankId).toBeNull();
+      expect(result.genericBankId).toBeNull();
+      expect(result.moneyId).toBeNull();
       expect(result.description).toBeNull();
       expect(result.discount).toBeNull();
       expect(result.forfeit).toBeNull();
@@ -232,15 +298,42 @@ describe("toOperationPaymentDto", () => {
 
       expect(result).not.toHaveProperty("updatedAt");
       expect(result).not.toHaveProperty("user");
+      expect(result).not.toHaveProperty("payment");
       expect(result).not.toHaveProperty("bank");
       expect(result).not.toHaveProperty("money");
       expect(result).not.toHaveProperty("invoice");
+      expect(result).not.toHaveProperty("genericBank");
     });
 
-    it("deve retornar exatamente 15 propriedades", () => {
+    it("deve retornar exatamente 16 propriedades", () => {
       const result = toOperationPaymentDto(makeOperationPayment());
 
-      expect(Object.keys(result)).toHaveLength(13);
+      expect(Object.keys(result)).toHaveLength(16);
+    });
+
+    it("deve incluir todos os campos esperados do DTO", () => {
+      const result = toOperationPaymentDto(makeOperationPayment());
+
+      const expectedKeys = [
+        "id",
+        "operationRegister",
+        "userId",
+        "paymentId",
+        "bankId",
+        "genericBankId",
+        "moneyId",
+        "tag",
+        "description",
+        "balance",
+        "discount",
+        "forfeit",
+        "amount",
+        "typeOperation",
+        "local",
+        "createdAt",
+      ];
+
+      expect(Object.keys(result).sort()).toEqual(expectedKeys.sort());
     });
   });
 });
