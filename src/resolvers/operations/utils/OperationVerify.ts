@@ -435,3 +435,27 @@ export class MoneyVerify {
   )
   typeOperation: OperationEnum;
 }
+
+export class GenericBankVerify {
+  @IsCurrency(
+    { allow_negatives: true, allow_decimal: true, require_decimal: true },
+    {
+      message: "Balance must be a valid currency balance.",
+    }
+  )
+  @IsNotZero({ message: "Balance must not be zero." })
+  @Matches(/^\d/, { message: "Balance must be greater than zero." })
+  balance: string;
+
+  @IsUUID("4", { message: "Generic Bank ID must be a valid UUID." })
+  genericBankId: string;
+
+  @IsIn(
+    [OperationEnum.DEPOSIT, OperationEnum.WITHDRAW, OperationEnum.TRANSFER],
+    {
+      message:
+        "Operation type must be one of the valid generic bank operation types.",
+    }
+  )
+  typeOperation: OperationEnum;
+}

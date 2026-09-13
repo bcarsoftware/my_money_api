@@ -1,13 +1,37 @@
-import { USER_NOT_AUTHENTICATED } from "@/constants/constants";
+import {
+  GENERIC_BANK_NOT_FOUND,
+  INSUFFICIENT_BALANCE,
+  USER_NOT_AUTHENTICATED,
+} from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
+import { GenericBank } from "@/entities/GenericBank";
 import { OperationGenericBank } from "@/entities/OperationGenericBank";
-import { PaginatedOperationGenericBankDto } from "@/resolvers/operations/dtos/OperationGenericBankDto";
+import { LocalEnum } from "@/enums/LocalEnum";
+import { OperationEnum } from "@/enums/OperationEnum";
+import { OperationError } from "@/errors/OperationError";
+import {
+  OperationGenericBankDto,
+  PaginatedOperationGenericBankDto,
+} from "@/resolvers/operations/dtos/OperationGenericBankDto";
 import { toOperationGenericBankDto } from "@/resolvers/operations/dtos/toOperationGenericBankDto";
-import { ListOperationGenericBankInput } from "@/resolvers/operations/inputs/OperationGenericBankInputs";
+import {
+  CreateOperationGenericBankInput,
+  ListOperationGenericBankInput,
+} from "@/resolvers/operations/inputs/OperationGenericBankInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
+import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
+import {
+  clearDecimal,
+  decimalGreaterThan,
+  decimalMultiply,
+  decimalSum,
+} from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
+import { randomUUID } from "@/utils/randomUUID";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
-import { Arg, Ctx, Query, Resolver } from "type-graphql";
+import { validate } from "class-validator";
+import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { GenericBankVerify } from "./utils/OperationVerify";
 
 @Resolver()
 export class OperationGenericBankResolver {
@@ -55,6 +79,154 @@ export class OperationGenericBankResolver {
         console.error(error);
 
         throw new Error("Failed to fetch operation generic bank list.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationGenericBankDto)
+  async operationGenericBankTransfer(
+    @Ctx() context: MyContext,
+    @Arg("balance", () => String) balance: string,
+    @Arg("originId", () => String) originId: string,
+    @Arg("destinationId", () => String) destinationId?: string
+  ): Promise<PaginatedOperationGenericBankDto> {
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    if (!uuidFourVerify(originId))
+      throw new Error("Origin Bank ID is not a valid UUID.");
+
+    if (destinationId && !uuidFourVerify(destinationId))
+      throw new Error("Destination Bank ID is not a valid UUID.");
+
+    balance = clearDecimal(balance);
+
+    if (destinationId) balance = balance.replace("-", "");
+
+    const operations: Record<string, CreateOperationGenericBankInput | null> = {
+      origin: {
+        genericBankId: originId,
+        balance: destinationId ? decimalMultiply(balance, "-1.00") : balance,
+        tag: "TRANSFER",
+        description: "Transfer to destination bank",
+        typeOperation: OperationEnum.TRANSFER,
+        local: destinationId ? LocalEnum.INTERNAL : LocalEnum.EXTERNAL,
+      } as CreateOperationGenericBankInput,
+      destination: destinationId
+        ? ({
+            genericBankId: destinationId,
+            balance,
+            tag: "TRANSFER",
+            description: "Transfer from origin bank",
+            typeOperation: OperationEnum.TRANSFER,
+            local: LocalEnum.INTERNAL,
+          } as CreateOperationGenericBankInput)
+        : null,
+    };
+
+    let errors = await validate(
+      operations.origin as CreateOperationGenericBankInput
+    );
+
+    if (errors.length > 0) throw new OperationError(errors);
+
+    errors = await validate({
+      ...operations.origin,
+    } as GenericBankVerify);
+
+    if (errors.length > 0) throw new OperationError(errors);
+
+    if (operations.destination) {
+      errors = await validate(
+        operations.destination as CreateOperationGenericBankInput
+      );
+
+      if (errors.length > 0) throw new OperationError(errors);
+
+      errors = await validate({
+        ...operations.destination,
+      } as GenericBankVerify);
+
+      if (errors.length > 0) throw new OperationError(errors);
+    }
+
+    return await loggedContext(context, async (em) => {
+      const originBank = await em.findOne(GenericBank, {
+        where: { id: operations.origin?.genericBankId, userId },
+      });
+
+      if (!originBank) throw new Error(GENERIC_BANK_NOT_FOUND);
+
+      const destinationBank = await em.findOne(GenericBank, {
+        where: { id: operations.destination?.genericBankId, userId },
+      });
+
+      if (operations.destination && !destinationBank)
+        throw new Error(GENERIC_BANK_NOT_FOUND);
+
+      if (decimalGreaterThan(balance.replace("-", ""), originBank.balance))
+        throw new Error(INSUFFICIENT_BALANCE);
+
+      try {
+        originBank.balance = decimalSum(
+          originBank.balance,
+          operations.origin?.balance ?? "0.00"
+        );
+
+        await em.save(GenericBank, originBank);
+
+        if (operations.destination && destinationBank) {
+          destinationBank.balance = decimalSum(
+            destinationBank.balance,
+            operations.destination.balance
+          );
+
+          await em.save(GenericBank, destinationBank);
+        }
+
+        const origin = operations.origin
+          ? await em.save(OperationGenericBank, {
+              ...operations.origin,
+              tag: `Sent trasference of ${operations.destination?.balance}.`,
+              description: `Sent {${operations.destination?.balance}} to bank ${destinationBank?.name}.`,
+              operationRegister: randomUUID(7),
+              amount: operations.origin?.balance,
+            })
+          : null;
+
+        const destination = operations.destination
+          ? await em.save(OperationGenericBank, {
+              ...operations.destination,
+              tag: `Received trasference of ${operations.destination?.balance}.`,
+              description: `Received {${operations.destination?.balance}} to bank ${destinationBank?.name}.`,
+              operationRegister: randomUUID(7),
+              amount: operations.destination?.balance,
+            })
+          : null;
+
+        const items = [];
+        let total = 0;
+
+        if (origin) {
+          items.push(toOperationGenericBankDto(origin));
+          total += 1;
+        }
+
+        if (destination) {
+          items.push(toOperationGenericBankDto(destination));
+          total += 1;
+        }
+
+        return { items, total };
+      } catch (error) {
+        console.error(
+          "Failed to perform operation generic bank transfer:",
+          error
+        );
+
+        throw new Error("Failed to perform operation generic bank transfer.");
       }
     });
   }
