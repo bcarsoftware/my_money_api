@@ -47,3 +47,5 @@ export const OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX =
   "Invalid balance for bank to bank box operation.";
 
 export const GENERIC_BANK_BOX_REQUIRED = "Generic bank box is required.";
+
+export const BALANCE_MUST_BE_POSITIVE = "Balance must be greater than 0.";
