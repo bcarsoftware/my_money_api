@@ -145,6 +145,8 @@ export class OperationBankResolver {
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
+    balance = clearDecimal(balance);
+
     if (!uuidFourVerify(bankId))
       throw new Error("Bank ID is not a valid UUID.");
 
@@ -211,6 +213,8 @@ export class OperationBankResolver {
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    balance = clearDecimal(balance);
 
     if (!uuidFourVerify(bankId))
       throw new Error("Bank ID is not a valid UUID.");
@@ -285,6 +289,8 @@ export class OperationBankResolver {
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    balance = clearDecimal(balance);
 
     if (!uuidFourVerify(originBankId))
       throw new Error("Origin Bank ID is not a valid UUID.");
