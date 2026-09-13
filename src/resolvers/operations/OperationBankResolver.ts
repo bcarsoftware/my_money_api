@@ -121,7 +121,7 @@ export class OperationBankResolver {
       operation.description = input.description ?? operation.description;
 
       try {
-        const uptOpreation = await operation.save();
+        const uptOpreation = await em.save(OperationBank, operation);
 
         return toOperationBankDto(uptOpreation);
       } catch (error) {
@@ -188,7 +188,7 @@ export class OperationBankResolver {
         });
         bank.balance = decimalSum(bank.balance, operation.balance);
 
-        await bank.save();
+        await em.save(Bank, bank);
 
         return toOperationBankDto(savedOperation);
       } catch (error) {
@@ -260,7 +260,7 @@ export class OperationBankResolver {
         });
         bank.balance = decimalSum(bank.balance, operation.balance);
 
-        await bank.save();
+        await em.save(Bank, bank);
 
         return toOperationBankDto(savedOperation);
       } catch (error) {
@@ -372,8 +372,8 @@ export class OperationBankResolver {
             operations.destination.balance
           );
 
-          await em.save(banks.origin);
-          await em.save(banks.destination);
+          await em.save(Bank, banks.origin);
+          await em.save(Bank, banks.destination);
 
           const sendOperation = await em.save(OperationBank, {
             ...operations.origin,
@@ -413,7 +413,7 @@ export class OperationBankResolver {
           operations.origin.balance
         );
 
-        await em.save(banks.origin);
+        await em.save(Bank, banks.origin);
 
         const tag =
           operations.origin.balance[0] === "-"
@@ -497,7 +497,7 @@ export class OperationBankResolver {
         throw new Error(INSUFFICIENT_BALANCE);
 
       bank.balance = decimalSubtract(bank.balance, amount);
-      invoice.installments += 1;
+      invoice.paidInstallments += 1;
 
       if (invoice.installments === invoice.paidInstallments)
         invoice.status = InvoiceStatusEnum.COMPLETED;
@@ -516,10 +516,10 @@ export class OperationBankResolver {
           operationRegister,
         });
 
-        await bank.save();
-        await invoice.save();
+        await em.save(Bank, bank);
+        await em.save(Invoice, invoice);
 
-        const newOperationBank = await em.save(operationBank);
+        const newOperationBank = await em.save(OperationBank, operationBank);
 
         return toOperationBankDto(newOperationBank);
       } catch (error) {
@@ -578,6 +578,17 @@ export class OperationBankResolver {
 
       if (!bankBox) throw new Error(BANK_BOX_NOT_FOUND);
 
+      switch (true) {
+        case input.typeOperation === OperationEnum.DEPOSIT &&
+          decimalGreaterThan(input.balance, bank.balance):
+        case input.typeOperation === OperationEnum.WITHDRAW &&
+          decimalGreaterThan(
+            decimalMultiply(input.balance, "-1.00"),
+            bankBox.balance
+          ):
+          throw new Error(INSUFFICIENT_BALANCE);
+      }
+
       try {
         bankBox.balance = decimalSum(bankBox.balance, input.balance);
         bank.balance = decimalSum(
@@ -594,7 +605,7 @@ export class OperationBankResolver {
           amount: input.balance,
         });
 
-        const newOperation = await em.save(operation);
+        const newOperation = await em.save(OperationBank, operation);
 
         return toOperationBankDto(newOperation);
       } catch (error) {

@@ -5,7 +5,7 @@ import { GenericBankResolver } from "@/resolvers/generic-bank/GenericBankResolve
 import { InvoiceResolver } from "@/resolvers/invoice/InvoiceResolver";
 import { MeResolver } from "@/resolvers/me/MeResolver";
 import { MoneyResolver } from "@/resolvers/money/MoneyResolver";
-import { OperationBankResolver } from "@/resolvers/operations/OperationBankResolvert";
+import { OperationBankResolver } from "@/resolvers/operations/OperationBankResolver";
 import { OperationGenericBankResolver } from "@/resolvers/operations/OperationGenericBankResolver";
 import { OperationMoneyResolver } from "@/resolvers/operations/OperationMoneyResolver";
 import { OperationPaymentResolver } from "@/resolvers/operations/OperationPaymentResolver";
