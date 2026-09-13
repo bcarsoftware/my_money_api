@@ -134,6 +134,13 @@ describe("toGenericBankDto", () => {
     expect(dto.bankInfo).toBeNull();
   });
 
+  it("deve retornar null quando bankId for undefined (relação não carregada)", () => {
+    const mockGenericBank = makeGenericBank({ bankId: undefined });
+    const dto = toGenericBankDto(mockGenericBank);
+
+    expect(dto.bankId).toBeNull();
+  });
+
   it("deve ignorar campos extras da entidade (updatedAt, deletedAt, user, bank)", () => {
     const mockGenericBank = makeGenericBank();
     const dto = toGenericBankDto(mockGenericBank);
