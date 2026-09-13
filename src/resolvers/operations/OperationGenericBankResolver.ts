@@ -1,10 +1,14 @@
 import {
+  GENERIC_BANK_BOX_NOT_FOUND,
+  GENERIC_BANK_BOX_REQUIRED,
   GENERIC_BANK_NOT_FOUND,
   INSUFFICIENT_BALANCE,
+  OPERATION_TYPE_INVALID,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
 import { GenericBank } from "@/entities/GenericBank";
+import { GenericBankBox } from "@/entities/GenericBankBox";
 import { OperationGenericBank } from "@/entities/OperationGenericBank";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
@@ -387,6 +391,100 @@ export class OperationGenericBankResolver {
         );
 
         throw new Error("Failed to perform operation generic bank withdraw.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationGenericBankDto)
+  async operationGenericBankToGenericBankBox(
+    @Ctx() context: MyContext,
+    @Arg("input", () => CreateOperationGenericBankInput)
+    input: CreateOperationGenericBankInput
+  ): Promise<OperationGenericBankDto> {
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    const { genericBankBoxId } = input;
+
+    if (!genericBankBoxId) throw new Error(GENERIC_BANK_BOX_REQUIRED);
+
+    input.balance = clearDecimal(input.balance);
+
+    const genericVerify: GenericBankVerify = {
+      ...input,
+    };
+
+    let errors = await validate(genericVerify);
+
+    if (errors.length > 0) throw new OperationError(errors);
+
+    const omitted: DiscountForfeitOmitted = { ...input };
+
+    errors = await validate(omitted);
+
+    switch (input.typeOperation) {
+      case OperationEnum.DEPOSIT:
+        const deposit: DepositVerify = { ...input };
+        errors = await validate(deposit);
+        if (errors.length > 0) throw new OperationError(errors);
+        break;
+      case OperationEnum.WITHDRAW:
+        const withdraw: WithdrawVerify = { ...input };
+        errors = await validate(withdraw);
+        if (errors.length > 0) throw new OperationError(errors);
+        break;
+      default:
+        throw new Error(OPERATION_TYPE_INVALID);
+    }
+
+    return await loggedContext(context, async (em) => {
+      const genericBank = await em.findOne(GenericBank, {
+        where: { id: input.genericBankId, userId },
+      });
+
+      if (!genericBank) throw new Error(GENERIC_BANK_NOT_FOUND);
+
+      const genericBankBox = await em.findOne(GenericBankBox, {
+        where: { id: genericBankBoxId, genericBankId: input.genericBankId },
+      });
+
+      if (!genericBankBox) throw new Error(GENERIC_BANK_BOX_NOT_FOUND);
+
+      const genericBankBalance = decimalMultiply(input.balance, "-1.00");
+
+      if (
+        input.typeOperation === OperationEnum.DEPOSIT &&
+        decimalGreaterThan(input.balance, genericBank.balance)
+      ) {
+        throw new Error(INSUFFICIENT_BALANCE);
+      }
+
+      genericBank.balance = decimalSum(genericBank.balance, genericBankBalance);
+
+      try {
+        await em.save(GenericBank, genericBank);
+
+        const operationRegister = randomUUID(7);
+
+        const operation = em.create(OperationGenericBank, {
+          ...input,
+          operationRegister,
+          amount: input.balance,
+        });
+
+        const newOperation = await em.save(OperationGenericBank, operation);
+
+        return toOperationGenericBankDto(newOperation);
+      } catch (error) {
+        console.error(
+          "Error saving generic bank operation to generic bank box:",
+          error
+        );
+        throw new Error(
+          "Failed to perform operation generic bank to generic bank box."
+        );
       }
     });
   }

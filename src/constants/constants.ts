@@ -41,6 +41,9 @@ export const BALANCE_INVALID = "Balance is not a valid currency.";
 export const INSUFFICIENT_BALANCE = "Insufficient balance.";
 
 export const OPERATION_NOT_FOUND = "Operation not found.";
+export const OPERATION_TYPE_INVALID = "Operation type invalid.";
 
 export const OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX =
   "Invalid balance for bank to bank box operation.";
+
+export const GENERIC_BANK_BOX_REQUIRED = "Generic bank box is required.";
