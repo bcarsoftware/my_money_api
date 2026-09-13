@@ -376,20 +376,49 @@ export class InvoiceVerify {
   typeOperation: OperationEnum;
 }
 
-export class BankVerify {
-  @IsIn(
-    [
-      OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAW,
-      OperationEnum.TRANSFER,
-      OperationEnum.PAYMENT,
-      OperationEnum.PIX,
-      OperationEnum.DOC,
-      OperationEnum.TED,
-    ],
-    { message: "Operation type must be one of the valid bank operation types." }
-  )
+export class BankBoxVerify {
+  @IsIn([OperationEnum.DEPOSIT, OperationEnum.WITHDRAW], {
+    message: "Operation type must be DEPOSIT or WITHDRAW.",
+  })
   typeOperation: OperationEnum;
+
+  @IsOptional()
+  @IsIn([null, undefined], {
+    message: "Invoice ID must not be provided for bank box operations.",
+  })
+  invoiceId?: string | null;
+
+  @IsUUID("4", { message: "Bank ID must be a valid UUID." })
+  bankId: string;
+
+  @IsUUID("4", { message: "Bank Box ID must be a valid UUID." })
+  bankBoxId?: string | null;
+
+  @IsCurrency(
+    { allow_negatives: true, allow_decimal: true, require_decimal: true },
+    {
+      message: "Balance must be a valid currency balance.",
+    }
+  )
+  @IsNotZero({ message: "Balance must not be zero." })
+  balance: string;
+
+  @IsOptional()
+  @IsIn([null, undefined], {
+    message: "Forfeit must not be provided for bank box operations.",
+  })
+  forfeit?: string | null;
+
+  @IsOptional()
+  @IsIn([null, undefined], {
+    message: "Discount must not be provided for bank box operations.",
+  })
+  discount?: string | null;
+
+  @Equals(LocalEnum.INTERNAL, {
+    message: "Local must be exactly INTERNAL.",
+  })
+  local: LocalEnum;
 }
 
 export class MoneyVerify {

@@ -3,9 +3,9 @@ import "reflect-metadata";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
 import {
+  BankBoxVerify,
   BankDepositVerify,
   BankTransferVerify,
-  BankVerify,
   BankWithdrawVerify,
   InvoiceVerify,
   MoneyReceiveVerify,
@@ -132,7 +132,6 @@ describe("BankTransferVerify", () => {
       expect(constraintsFor(errors, "amount")).toContain("isCurrency");
     });
 
-    // Regex atual: strings compostas só de 0, . e , são tratadas como zero.
     it.each(["00.0.0", "0.0.0", "0,0", ".,", "..."])(
       "trata %s como zero (isCurrency + isNotZero)",
       async (amount) => {
@@ -146,7 +145,6 @@ describe("BankTransferVerify", () => {
       }
     );
 
-    // Contraprova: valores com caractere não-zero permanecem válidos para o isNotZero.
     it.each(["100", "0.01", "-0", "1.0"])(
       "não trata %s como zero",
       async (amount) => {
@@ -1134,34 +1132,175 @@ describe("InvoiceVerify", () => {
 });
 
 // ============================================================
-// BankVerify
+// BankBoxVerify
 // ============================================================
-describe("BankVerify", () => {
-  describe("typeOperation", () => {
-    it.each([
-      OperationEnum.DEPOSIT,
-      OperationEnum.WITHDRAW,
-      OperationEnum.TRANSFER,
-      OperationEnum.PAYMENT,
-      OperationEnum.PIX,
-      OperationEnum.DOC,
-      OperationEnum.TED,
-    ])("aceita typeOperation = %s", async (typeOperation) => {
-      const errors = await validateInput(BankVerify, { typeOperation });
-      expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
+describe("BankBoxVerify", () => {
+  const validPayload = {
+    typeOperation: OperationEnum.DEPOSIT,
+    bankId: UUID,
+    bankBoxId: UUID_2,
+    balance: "100.00",
+    local: LocalEnum.INTERNAL,
+  };
+
+  describe("caminho feliz", () => {
+    it("não retorna erros com todos os campos válidos", async () => {
+      const errors = await validateInput(BankBoxVerify, validPayload);
+      expect(errors).toHaveLength(0);
     });
 
-    it.each([OperationEnum.SEND, OperationEnum.RECEIVE])(
-      "rejeita typeOperation = %s (isIn)",
+    it("aceita typeOperation = WITHDRAW", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        typeOperation: OperationEnum.WITHDRAW,
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita balance negativo (allow_negatives: true)", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        balance: "-100.00",
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita invoiceId, forfeit e discount como null", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        invoiceId: null,
+        forfeit: null,
+        discount: null,
+      });
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita invoiceId, forfeit e discount omitidos (undefined)", async () => {
+      const errors = await validateInput(BankBoxVerify, validPayload);
+      expect(constraintsFor(errors, "invoiceId")).toHaveLength(0);
+      expect(constraintsFor(errors, "forfeit")).toHaveLength(0);
+      expect(constraintsFor(errors, "discount")).toHaveLength(0);
+    });
+  });
+
+  describe("typeOperation", () => {
+    it.each([OperationEnum.DEPOSIT, OperationEnum.WITHDRAW])(
+      "aceita typeOperation = %s",
       async (typeOperation) => {
-        const errors = await validateInput(BankVerify, { typeOperation });
-        expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
+        const errors = await validateInput(BankBoxVerify, {
+          ...validPayload,
+          typeOperation,
+        });
+        expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
       }
     );
 
-    it("rejeita quando ausente (isIn)", async () => {
-      const errors = await validateInput(BankVerify, {});
+    it.each([
+      OperationEnum.TRANSFER,
+      OperationEnum.PAYMENT,
+      OperationEnum.PIX,
+      OperationEnum.SEND,
+      OperationEnum.RECEIVE,
+    ])("rejeita typeOperation = %s (isIn)", async (typeOperation) => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        typeOperation,
+      });
       expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
+    });
+
+    it("rejeita quando ausente (isIn)", async () => {
+      const { typeOperation, ...payload } = validPayload;
+      const errors = await validateInput(BankBoxVerify, payload);
+      expect(constraintsFor(errors, "typeOperation")).toContain("isIn");
+    });
+  });
+
+  describe("invoiceId (deve ser null/undefined)", () => {
+    it("rejeita invoiceId com valor preenchido", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        invoiceId: UUID,
+      });
+      expect(constraintsFor(errors, "invoiceId")).toContain("isIn");
+    });
+  });
+
+  describe("bankId", () => {
+    it("rejeita bankId não UUID", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        bankId: "nao-e-uuid",
+      });
+      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
+    });
+
+    it("rejeita bankId ausente", async () => {
+      const { bankId, ...payload } = validPayload;
+      const errors = await validateInput(BankBoxVerify, payload);
+      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
+    });
+  });
+
+  describe("bankBoxId", () => {
+    it("rejeita bankBoxId não UUID quando presente", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        bankBoxId: "nao-e-uuid",
+      });
+      expect(constraintsFor(errors, "bankBoxId")).toContain("isUuid");
+    });
+  });
+
+  describe("balance", () => {
+    it("rejeita balance zero (isNotZero)", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        balance: "0.00",
+      });
+      expect(constraintsFor(errors, "balance")).toContain("isNotZero");
+    });
+
+    it("rejeita formato de moeda inválido", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        balance: "nao-e-moeda",
+      });
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+    });
+  });
+
+  describe("forfeit / discount (devem ser null/undefined)", () => {
+    it("rejeita forfeit com valor", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        forfeit: "5.00",
+      });
+      expect(constraintsFor(errors, "forfeit")).toContain("isIn");
+    });
+
+    it("rejeita discount com valor", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        discount: "10.00",
+      });
+      expect(constraintsFor(errors, "discount")).toContain("isIn");
+    });
+  });
+
+  describe("local (deve ser INTERNAL)", () => {
+    it("rejeita local diferente de INTERNAL (equals)", async () => {
+      const errors = await validateInput(BankBoxVerify, {
+        ...validPayload,
+        local: LocalEnum.EXTERNAL,
+      });
+      expect(constraintsFor(errors, "local")).toContain("equals");
+    });
+
+    it("rejeita local ausente (equals)", async () => {
+      const { local, ...payload } = validPayload;
+      const errors = await validateInput(BankBoxVerify, payload);
+      expect(constraintsFor(errors, "local")).toContain("equals");
     });
   });
 });

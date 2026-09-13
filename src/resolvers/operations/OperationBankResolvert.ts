@@ -1,13 +1,16 @@
 import {
   BALANCE_INVALID,
+  BANK_BOX_NOT_FOUND,
   INSUFFICIENT_BALANCE,
   INVOICE_NOT_FOUND,
+  OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX,
   OPERATION_NOT_FOUND,
   USER_BANK_NOT_MATCH,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
 import { Bank } from "@/entities/Bank";
+import { BankBox } from "@/entities/BankBox";
 import { Invoice } from "@/entities/Invoice";
 import { OperationBank } from "@/entities/OperationBank";
 import { InvoiceStatusEnum } from "@/enums/InvoiceStatusEnum";
@@ -25,6 +28,7 @@ import {
   UpdateOperationBankInput,
 } from "@/resolvers/operations/inputs/OperationBankInputs";
 import {
+  BankBoxVerify,
   BankDepositVerify,
   BankTransferVerify,
   BankWithdrawVerify,
@@ -36,6 +40,7 @@ import {
   uuidFourVerify,
 } from "@/resolvers/operations/utils/operationUtils";
 import {
+  clearDecimal,
   decimalGreaterThan,
   decimalMultiply,
   decimalSubtract,
@@ -440,6 +445,8 @@ export class OperationBankResolver {
     @Arg("input", () => CreateOperationBankInput)
     input: CreateOperationBankInput
   ): Promise<OperationBankDto> {
+    input.balance = clearDecimal(input.balance);
+
     if (input.local !== LocalEnum.INTERNAL)
       throw new Error("Operation bank payment invoice must be INTERNAL.");
 
@@ -518,6 +525,81 @@ export class OperationBankResolver {
       } catch (error) {
         console.error("Failed to complete bank invoice payment:", error);
         throw new Error("Failed to complete bank invoice paymeent.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationBankDto)
+  async operationBankToBankBox(
+    @Ctx() context: MyContext,
+    @Arg("input", () => CreateOperationBankInput)
+    input: CreateOperationBankInput
+  ): Promise<OperationBankDto> {
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    input.balance = clearDecimal(input.balance);
+
+    const bankBox: BankBoxVerify = {
+      typeOperation: input.typeOperation,
+      invoiceId: input.invoiceId,
+      bankId: input.bankId,
+      bankBoxId: input.bankBoxId,
+      balance: input.balance,
+      forfeit: input.forfeit,
+      discount: input.discount,
+      local: input.local,
+    };
+
+    const errorsBankBox = await validate(bankBox);
+
+    if (errorsBankBox.length > 0) throw new OperationError(errorsBankBox);
+
+    const isNegative = decimalGreaterThan("0.00", input.balance);
+
+    switch (true) {
+      case input.typeOperation === OperationEnum.WITHDRAW && !isNegative:
+      case input.typeOperation === OperationEnum.DEPOSIT && isNegative:
+        throw new Error(OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX);
+    }
+
+    return await loggedContext(context, async (em) => {
+      const bank = await em.findOne(Bank, {
+        where: { id: input.bankId, userId },
+      });
+
+      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+
+      const bankBox = await em.findOne(BankBox, {
+        where: { id: input.bankBoxId ?? undefined },
+      });
+
+      if (!bankBox) throw new Error(BANK_BOX_NOT_FOUND);
+
+      try {
+        bankBox.balance = decimalSum(bankBox.balance, input.balance);
+        bank.balance = decimalSum(
+          bank.balance,
+          decimalMultiply(input.balance, "-1.00")
+        );
+
+        const registerOperation = randomUUID(7);
+
+        const operation = em.create(OperationBank, {
+          ...input,
+          registerOperation,
+          userId,
+          amount: input.balance,
+        });
+
+        const newOperation = await em.save(operation);
+
+        return toOperationBankDto(newOperation);
+      } catch (error) {
+        console.error("Failed to complete bank to bank box operation:", error);
+        throw new Error("Failed to complete bank to bank box operation.");
       }
     });
   }
