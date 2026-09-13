@@ -298,21 +298,6 @@ describe("CreateGenericBankInput", () => {
       const errors = await validateInput(CreateGenericBankInput, payload);
       expect(constraintsFor(errors, "bankId")).toContain("isUuid");
     });
-
-    it("rejeita quando ausente (campo obrigatório)", async () => {
-      const { bankId, ...payload } = basePayload;
-      const errors = await validateInput(CreateGenericBankInput, payload);
-      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
-    });
-
-    it("rejeita null (campo obrigatório)", async () => {
-      const payload = {
-        ...basePayload,
-        bankId: null,
-      } as unknown as CreateGenericBankInput;
-      const errors = await validateInput(CreateGenericBankInput, payload);
-      expect(constraintsFor(errors, "bankId")).toContain("isUuid");
-    });
   });
 
   describe("name", () => {

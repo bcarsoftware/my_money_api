@@ -43,9 +43,10 @@ export class UpdateBankInfoInput {
 
 @InputType()
 export class CreateGenericBankInput {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsUUID("4", { message: "Bank ID must be a valid UUID." })
-  bankId: string;
+  bankId?: string | null;
 
   @Field(() => String)
   @MaxLength(64, { message: "Name must be at most 64 characters long." })
