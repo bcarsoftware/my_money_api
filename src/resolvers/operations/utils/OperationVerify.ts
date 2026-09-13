@@ -459,3 +459,38 @@ export class GenericBankVerify {
   )
   typeOperation: OperationEnum;
 }
+
+export class DiscountForfeitOmitted {
+  @IsIn([null, undefined], {
+    message: "Discount must not be provided for this operation.",
+  })
+  discount?: string | null;
+
+  @IsIn([null, undefined], {
+    message: "Forfeit must not be provided for this operation.",
+  })
+  forfeit?: string | null;
+}
+
+export class DepositVerify {
+  @IsCurrency(
+    { allow_negatives: false, allow_decimal: true, require_decimal: true },
+    {
+      message: "Balance must be a valid value for deposit.",
+    }
+  )
+  @IsNotZero({ message: "Balance must not be zero." })
+  balance: string;
+}
+
+export class WithdrawVerify {
+  @IsCurrency(
+    { allow_negatives: true, allow_decimal: true, require_decimal: true },
+    {
+      message: "Balance must be a valid value for withdraw.",
+    }
+  )
+  @IsNotZero({ message: "Balance must not be zero." })
+  @Matches(/^-/, { message: "Balance must be a negative value for withdraw." })
+  balance: string;
+}
