@@ -12,6 +12,8 @@ import {
   OperationGenericBankDepositInput,
   OperationGenericBankTransferInput,
   OperationGenericBankWithdrawInput,
+  OperationMoneyDepositInput,
+  OperationMoneyWithdrawInput,
 } from "@/resolvers/operations/inputs/OperationsInputs";
 
 // ============================================================
@@ -723,6 +725,211 @@ describe("OperationGenericBankWithdrawInput", () => {
         OperationGenericBankWithdrawInput,
         payload
       );
+      expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+    });
+  });
+});
+
+// ============================================================
+// OperationMoneyDepositInput  ← NOVO
+// ============================================================
+describe("OperationMoneyDepositInput", () => {
+  const validPayload = {
+    moneyId: UUID,
+    amount: "100.00",
+  };
+
+  describe("caminho feliz", () => {
+    it("não retorna erros com todos os campos válidos", async () => {
+      const errors = await validateInput(
+        OperationMoneyDepositInput,
+        validPayload
+      );
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita valores positivos grandes", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        amount: "1,234,567.89",
+      });
+      expect(constraintsFor(errors, "amount")).toHaveLength(0);
+    });
+  });
+
+  describe("moneyId", () => {
+    it("aceita UUID v4 válido", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        moneyId: UUID,
+      });
+      expect(constraintsFor(errors, "moneyId")).toHaveLength(0);
+    });
+
+    it("rejeita UUID com versão diferente de 4", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        moneyId: "550e8400-e29b-11d4-a716-446655440000",
+      });
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+
+    it("rejeita string não UUID", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        moneyId: "nao-e-uuid",
+      });
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { moneyId, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyDepositInput, payload);
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+
+    it("rejeita null", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        moneyId: null as unknown as string,
+      });
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+  });
+
+  describe("amount", () => {
+    it("rejeita valor negativo (allow_negatives: false)", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        amount: "-100.00",
+      });
+      expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+    });
+
+    it("rejeita zero (isNotZero)", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        amount: "0.00",
+      });
+      expect(constraintsFor(errors, "amount")).toContain("isNotZero");
+    });
+
+    it.each(["100", "abc", "100.5"])(
+      "rejeita formato sem decimais/ inválido: %s",
+      async (value) => {
+        const errors = await validateInput(OperationMoneyDepositInput, {
+          ...validPayload,
+          amount: value,
+        });
+        expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+      }
+    );
+
+    it("rejeita quando ausente", async () => {
+      const { amount, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyDepositInput, payload);
+      expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+    });
+  });
+});
+
+// ============================================================
+// OperationMoneyWithdrawInput  ← NOVO
+// ============================================================
+describe("OperationMoneyWithdrawInput", () => {
+  const validPayload = {
+    moneyId: UUID,
+    amount: "-100.00",
+  };
+
+  describe("caminho feliz", () => {
+    it("não retorna erros com todos os campos válidos", async () => {
+      const errors = await validateInput(
+        OperationMoneyWithdrawInput,
+        validPayload
+      );
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita valores negativos grandes", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        amount: "-1,234,567.89",
+      });
+      expect(constraintsFor(errors, "amount")).toHaveLength(0);
+    });
+  });
+
+  describe("moneyId", () => {
+    it("aceita UUID v4 válido", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        moneyId: UUID,
+      });
+      expect(constraintsFor(errors, "moneyId")).toHaveLength(0);
+    });
+
+    it("rejeita UUID com versão diferente de 4", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        moneyId: "550e8400-e29b-11d4-a716-446655440000",
+      });
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+
+    it("rejeita string não UUID", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        moneyId: "nao-e-uuid",
+      });
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { moneyId, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyWithdrawInput, payload);
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+
+    it("rejeita null", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        moneyId: null as unknown as string,
+      });
+      expect(constraintsFor(errors, "moneyId")).toContain("isUuid");
+    });
+  });
+
+  describe("amount (deve ser negativo)", () => {
+    it("rejeita valor positivo (matches exige hífen)", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        amount: "100.00",
+      });
+      expect(constraintsFor(errors, "amount")).toContain("matches");
+    });
+
+    it("rejeita zero (matches + isNotZero)", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        amount: "0.00",
+      });
+      const constraints = constraintsFor(errors, "amount");
+      expect(constraints).toContain("matches");
+      expect(constraints).toContain("isNotZero");
+    });
+
+    it.each(["100", "abc"])("rejeita formato inválido: %s", async (value) => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        amount: value,
+      });
+      expect(constraintsFor(errors, "amount")).toContain("matches");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { amount, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyWithdrawInput, payload);
       expect(constraintsFor(errors, "amount")).toContain("isCurrency");
     });
   });

@@ -158,3 +158,40 @@ export class OperationGenericBankWithdrawInput {
   @Matches(/^-/, { message: "Amount must be a negative value." })
   amount: string;
 }
+
+@InputType()
+export class OperationMoneyDepositInput {
+  @Field(() => String)
+  @IsUUID("4", { message: "MoneyId must be a valid UUID." })
+  moneyId: string;
+
+  @Field(() => String)
+  @IsNotZero({ message: "Amount must not be zero." })
+  @IsCurrency(
+    {
+      allow_negatives: false,
+      require_decimal: true,
+    },
+    { message: "Amount must be a valid currency value." }
+  )
+  amount: string;
+}
+
+@InputType()
+export class OperationMoneyWithdrawInput {
+  @Field(() => String)
+  @IsUUID("4", { message: "MoneyId must be a valid UUID." })
+  moneyId: string;
+
+  @Field(() => String)
+  @IsNotZero({ message: "Amount must not be zero." })
+  @IsCurrency(
+    {
+      allow_negatives: true,
+      require_decimal: true,
+    },
+    { message: "Amount must be a valid currency value." }
+  )
+  @Matches(/^-/, { message: "Amount must be a negative value." })
+  amount: string;
+}
