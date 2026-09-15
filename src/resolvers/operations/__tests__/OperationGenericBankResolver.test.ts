@@ -4,18 +4,21 @@ import { validate } from "class-validator";
 
 import {
   BALANCE_MUST_BE_POSITIVE,
+  FROM_GENERIC_BANK_ID_MUST_OMITTED_EXTERNAL,
   GENERIC_BANK_BOX_NOT_FOUND,
   GENERIC_BANK_BOX_REQUIRED,
   GENERIC_BANK_NOT_FOUND,
   INSUFFICIENT_BALANCE,
   OPERATION_NOT_FOUND,
   OPERATION_TYPE_INVALID,
+  TO_GENERIC_BANK_ID_REQUIRED,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
 import { GenericBank } from "@/entities/GenericBank";
 import { GenericBankBox } from "@/entities/GenericBankBox";
 import { OperationGenericBank } from "@/entities/OperationGenericBank";
+import { GenericBankTransferEnum } from "@/enums/GenericTransferEnum";
 import { LocalEnum } from "@/enums/LocalEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
 import { OperationError } from "@/errors/OperationError";
@@ -26,8 +29,12 @@ import {
   ListOperationGenericBankInput,
   UpdateOperationGenericBankInput,
 } from "@/resolvers/operations/inputs/OperationGenericBankInputs";
+import {
+  OperationGenericBankDepositInput,
+  OperationGenericBankTransferInput,
+  OperationGenericBankWithdrawInput,
+} from "@/resolvers/operations/inputs/OperationsInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
-import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
 import {
   clearDecimal,
   decimalGreaterThan,
@@ -45,7 +52,6 @@ jest.mock("@/utils/currencyUtil");
 jest.mock("@/utils/randomUUID");
 jest.mock("@/resolvers/operations/dtos/toOperationGenericBankDto");
 jest.mock("@/resolvers/operations/utils/generalQueryFilter");
-jest.mock("@/resolvers/operations/utils/operationUtils");
 jest.mock("@/utils/verifiers/decorators/Protected", () => ({
   Protected: () => () => {},
 }));
@@ -57,7 +63,6 @@ jest.mock("class-validator", () => ({
 const mockedLoggedContext = jest.mocked(loggedContext);
 const mockedToOperationGenericBankDto = jest.mocked(toOperationGenericBankDto);
 const mockedGeneralQueryFilter = jest.mocked(generalQueryFilter);
-const mockedUuidFourVerify = jest.mocked(uuidFourVerify);
 const mockedClearDecimal = jest.mocked(clearDecimal);
 const mockedDecimalGreaterThan = jest.mocked(decimalGreaterThan);
 const mockedDecimalMultiply = jest.mocked(decimalMultiply);
@@ -155,6 +160,36 @@ const makeCreateInput = (
     ...overrides,
   }) as CreateOperationGenericBankInput;
 
+const makeTransferInput = (
+  overrides: Partial<OperationGenericBankTransferInput> = {}
+): OperationGenericBankTransferInput =>
+  ({
+    fromGenericBankId: UUID,
+    toGenericBankId: UUID_2,
+    amount: "100.00",
+    typeOperation: GenericBankTransferEnum.TRANSFER,
+    local: LocalEnum.INTERNAL,
+    ...overrides,
+  }) as OperationGenericBankTransferInput;
+
+const makeDepositInput = (
+  overrides: Partial<OperationGenericBankDepositInput> = {}
+): OperationGenericBankDepositInput =>
+  ({
+    genericBankId: UUID,
+    amount: "100.00",
+    ...overrides,
+  }) as OperationGenericBankDepositInput;
+
+const makeWithdrawInput = (
+  overrides: Partial<OperationGenericBankWithdrawInput> = {}
+): OperationGenericBankWithdrawInput =>
+  ({
+    genericBankId: UUID,
+    amount: "-100.00",
+    ...overrides,
+  }) as OperationGenericBankWithdrawInput;
+
 // ============================================================
 // Suite
 // ============================================================
@@ -190,7 +225,6 @@ describe("OperationGenericBankResolver", () => {
     mockedGeneralQueryFilter.mockReturnValue(
       {} as ReturnType<typeof generalQueryFilter>
     );
-    mockedUuidFourVerify.mockReturnValue(true);
     mockedClearDecimal.mockImplementation((v) => v);
     mockedDecimalGreaterThan.mockReturnValue(false);
     mockedDecimalMultiply.mockReturnValue("100.00");
@@ -295,130 +329,115 @@ describe("OperationGenericBankResolver", () => {
   // operationGenericBankTransfer
   // ============================================================
   describe("operationGenericBankTransfer", () => {
-    it("cria 2 operações em transferência interna entre bancos", async () => {
+    it("cria 2 operações em transferência INTERNAL", async () => {
       const originBank = makeGenericBank({ id: UUID, balance: "1000.00" });
       const destinyBank = makeGenericBank({ id: UUID_2, balance: "500.00" });
       mockEm.findOne
         .mockResolvedValueOnce(originBank)
         .mockResolvedValueOnce(destinyBank);
 
+      // 1ª: BALANCE_MUST_BE_POSITIVE → false
+      // 2ª: status (decimalGreaterThan("0.00", amount)) → false
+      // 3ª: INSUFFICIENT_BALANCE → false
+      mockedDecimalGreaterThan
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false);
+
       const result = await resolver.operationGenericBankTransfer(
         makeContext(),
-        "100.00",
-        OperationEnum.TRANSFER,
-        UUID,
-        UUID_2
+        makeTransferInput({ local: LocalEnum.INTERNAL })
       );
 
       expect(result.total).toBe(2);
       expect(result.items).toHaveLength(2);
       expect(mockEm.save).toHaveBeenCalledTimes(4);
+      expect(mockEm.save).toHaveBeenCalledWith(GenericBank, originBank);
+      expect(mockEm.save).toHaveBeenCalledWith(GenericBank, destinyBank);
     });
 
-    it("cria 1 operação quando destinationId é omitido", async () => {
+    it("cria 1 operação em transferência EXTERNAL (sem toGenericBankId)", async () => {
       const originBank = makeGenericBank({ balance: "1000.00" });
       mockEm.findOne.mockResolvedValueOnce(originBank);
 
+      // 1ª: status → false
+      // 2ª: INSUFFICIENT_BALANCE (EXTERNAL) → false
+      mockedDecimalGreaterThan
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false);
+
       const result = await resolver.operationGenericBankTransfer(
         makeContext(),
-        "100.00",
-        OperationEnum.TRANSFER,
-        UUID
+        makeTransferInput({
+          local: LocalEnum.EXTERNAL,
+          toGenericBankId: undefined,
+        })
       );
 
       expect(result.total).toBe(1);
       expect(result.items).toHaveLength(1);
+      expect(mockEm.save).toHaveBeenCalledWith(GenericBank, originBank);
+    });
+
+    it("lança FROM_GENERIC_BANK_ID_MUST_OMITTED_EXTERNAL quando EXTERNAL com toGenericBankId", async () => {
+      await expect(
+        resolver.operationGenericBankTransfer(
+          makeContext(),
+          makeTransferInput({
+            local: LocalEnum.EXTERNAL,
+            toGenericBankId: UUID_2,
+          })
+        )
+      ).rejects.toThrow(FROM_GENERIC_BANK_ID_MUST_OMITTED_EXTERNAL);
+    });
+
+    it("lança TO_GENERIC_BANK_ID_REQUIRED quando INTERNAL sem toGenericBankId", async () => {
+      await expect(
+        resolver.operationGenericBankTransfer(
+          makeContext(),
+          makeTransferInput({
+            local: LocalEnum.INTERNAL,
+            toGenericBankId: undefined,
+          })
+        )
+      ).rejects.toThrow(TO_GENERIC_BANK_ID_REQUIRED);
+    });
+
+    it("lança BALANCE_MUST_BE_POSITIVE quando INTERNAL e amount negativo", async () => {
+      mockedDecimalGreaterThan.mockReturnValueOnce(true);
+
+      await expect(
+        resolver.operationGenericBankTransfer(
+          makeContext(),
+          makeTransferInput({
+            local: LocalEnum.INTERNAL,
+            amount: "-100.00",
+          })
+        )
+      ).rejects.toThrow(BALANCE_MUST_BE_POSITIVE);
     });
 
     it("lança USER_NOT_AUTHENTICATED quando userId ausente", async () => {
       await expect(
         resolver.operationGenericBankTransfer(
           makeContext({ userId: undefined }),
-          "100.00",
-          OperationEnum.TRANSFER,
-          UUID
+          makeTransferInput()
         )
       ).rejects.toThrow(USER_NOT_AUTHENTICATED);
     });
 
-    it("lança OPERATION_TYPE_INVALID quando typeOperation não é TRANSFER", async () => {
-      await expect(
-        resolver.operationGenericBankTransfer(
-          makeContext(),
-          "100.00",
-          OperationEnum.DEPOSIT,
-          UUID
-        )
-      ).rejects.toThrow(OPERATION_TYPE_INVALID);
-    });
-
-    it("lança erro quando originId não é UUID", async () => {
-      mockedUuidFourVerify.mockReturnValueOnce(false);
-
-      await expect(
-        resolver.operationGenericBankTransfer(
-          makeContext(),
-          "100.00",
-          OperationEnum.TRANSFER,
-          "nao-uuid"
-        )
-      ).rejects.toThrow("Origin Bank ID is not a valid UUID.");
-    });
-
-    it("lança erro quando destinationId não é UUID", async () => {
-      mockedUuidFourVerify.mockReturnValueOnce(true).mockReturnValueOnce(false);
-
-      await expect(
-        resolver.operationGenericBankTransfer(
-          makeContext(),
-          "100.00",
-          OperationEnum.TRANSFER,
-          UUID,
-          "nao-uuid"
-        )
-      ).rejects.toThrow("Destination Bank ID is not a valid UUID.");
-    });
-
-    it("lança BALANCE_MUST_BE_POSITIVE quando o balance é negativo", async () => {
-      mockedDecimalGreaterThan.mockReturnValueOnce(true);
-
-      await expect(
-        resolver.operationGenericBankTransfer(
-          makeContext(),
-          "-100.00",
-          OperationEnum.TRANSFER,
-          UUID
-        )
-      ).rejects.toThrow(BALANCE_MUST_BE_POSITIVE);
-    });
-
-    it("lança OperationError quando validate falha em origin", async () => {
-      mockedValidate.mockResolvedValueOnce([{ property: "balance" }] as never);
-
-      await expect(
-        resolver.operationGenericBankTransfer(
-          makeContext(),
-          "100.00",
-          OperationEnum.TRANSFER,
-          UUID
-        )
-      ).rejects.toBeInstanceOf(OperationError);
-    });
-
-    it("lança GENERIC_BANK_BOX_REQUIRED quando banco de origem não existe", async () => {
+    it("lança GENERIC_BANK_NOT_FOUND quando banco de origem não existe", async () => {
       mockEm.findOne.mockResolvedValueOnce(null);
 
       await expect(
         resolver.operationGenericBankTransfer(
           makeContext(),
-          "100.00",
-          OperationEnum.TRANSFER,
-          UUID
+          makeTransferInput()
         )
-      ).rejects.toThrow(GENERIC_BANK_BOX_REQUIRED);
+      ).rejects.toThrow(GENERIC_BANK_NOT_FOUND);
     });
 
-    it("lança GENERIC_BANK_BOX_REQUIRED quando banco de destino não existe", async () => {
+    it("lança GENERIC_BANK_NOT_FOUND quando banco de destino não existe em INTERNAL", async () => {
       const originBank = makeGenericBank();
       mockEm.findOne
         .mockResolvedValueOnce(originBank)
@@ -427,36 +446,54 @@ describe("OperationGenericBankResolver", () => {
       await expect(
         resolver.operationGenericBankTransfer(
           makeContext(),
-          "100.00",
-          OperationEnum.TRANSFER,
-          UUID,
-          UUID_2
+          makeTransferInput({ local: LocalEnum.INTERNAL })
         )
-      ).rejects.toThrow(GENERIC_BANK_BOX_REQUIRED);
+      ).rejects.toThrow(GENERIC_BANK_NOT_FOUND);
     });
 
-    it("lança INSUFFICIENT_BALANCE quando origem tem saldo insuficiente", async () => {
-      const originBank = makeGenericBank({ id: UUID, balance: "50.00" });
+    it("lança INSUFFICIENT_BALANCE em INTERNAL quando saldo insuficiente", async () => {
+      const originBank = makeGenericBank({ balance: "50.00" });
       const destinyBank = makeGenericBank({ id: UUID_2, balance: "500.00" });
       mockEm.findOne
         .mockResolvedValueOnce(originBank)
         .mockResolvedValueOnce(destinyBank);
 
-      // 1ª: decimalGreaterThan("0.00", "100.00") → false (BALANCE_MUST_BE_POSITIVE passa)
-      // 2ª: decimalGreaterThan("0.00", "-100.00") → true (entra no if)
-      // 3ª: decimalGreaterThan("100.00", "50.00") → true (dispara INSUFFICIENT_BALANCE)
+      // 1ª: BALANCE_MUST_BE_POSITIVE → false
+      // 2ª: status → false
+      // 3ª: INSUFFICIENT_BALANCE → true
       mockedDecimalGreaterThan
         .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(true);
+
+      await expect(
+        resolver.operationGenericBankTransfer(
+          makeContext(),
+          makeTransferInput({ local: LocalEnum.INTERNAL })
+        )
+      ).rejects.toThrow(INSUFFICIENT_BALANCE);
+    });
+
+    it("lança INSUFFICIENT_BALANCE em EXTERNAL quando amount negativo e saldo insuficiente", async () => {
+      const originBank = makeGenericBank({ balance: "50.00" });
+      mockEm.findOne.mockResolvedValueOnce(originBank);
+
+      // 1ª: status (decimalGreaterThan("0.00", "-100.00")) → true (para "Sent.")
+      // 2ª: EXTERNAL check parte 1 (decimalGreaterThan("0.00", "-100.00")) → true
+      // 3ª: EXTERNAL check parte 2 (decimalGreaterThan("100.00", "50.00")) → true
+      mockedDecimalGreaterThan
+        .mockReturnValueOnce(true)
         .mockReturnValueOnce(true)
         .mockReturnValueOnce(true);
 
       await expect(
         resolver.operationGenericBankTransfer(
           makeContext(),
-          "100.00",
-          OperationEnum.TRANSFER,
-          UUID,
-          UUID_2
+          makeTransferInput({
+            local: LocalEnum.EXTERNAL,
+            toGenericBankId: undefined,
+            amount: "-100.00",
+          })
         )
       ).rejects.toThrow(INSUFFICIENT_BALANCE);
     });
@@ -464,23 +501,29 @@ describe("OperationGenericBankResolver", () => {
     it("propaga erro genérico quando em.save falha", async () => {
       const originBank = makeGenericBank();
       mockEm.findOne.mockResolvedValueOnce(originBank);
+
+      mockedDecimalGreaterThan
+        .mockReturnValueOnce(false)
+        .mockReturnValueOnce(false);
+
       mockEm.save.mockRejectedValueOnce(new Error("DB error"));
 
       await expect(
         resolver.operationGenericBankTransfer(
           makeContext(),
-          "100.00",
-          OperationEnum.TRANSFER,
-          UUID
+          makeTransferInput({
+            local: LocalEnum.EXTERNAL,
+            toGenericBankId: undefined,
+          })
         )
-      ).rejects.toThrow("Failed to save generic bank operation trasfer.");
+      ).rejects.toThrow("Bank transfer operation failed.");
     });
   });
 
   // ============================================================
-  // operationGenericBankBoxUpdate
+  // operationGenericBankUpdate
   // ============================================================
-  describe("operationGenericBankBoxUpdate", () => {
+  describe("operationGenericBankUpdate", () => {
     const updateInput: UpdateOperationGenericBankInput = {
       tag: "Nova tag",
       description: "Nova descrição",
@@ -490,7 +533,7 @@ describe("OperationGenericBankResolver", () => {
       const operation = makeOperation();
       mockEm.findOne.mockResolvedValue(operation);
 
-      const result = await resolver.operationGenericBankBoxUpdate(
+      const result = await resolver.operationGenericBankUpdate(
         makeContext(),
         "op-1",
         updateInput
@@ -506,7 +549,7 @@ describe("OperationGenericBankResolver", () => {
       const operation = makeOperation({ description: "Antiga" });
       mockEm.findOne.mockResolvedValue(operation);
 
-      await resolver.operationGenericBankBoxUpdate(makeContext(), "op-1", {
+      await resolver.operationGenericBankUpdate(makeContext(), "op-1", {
         description: null,
       } as UpdateOperationGenericBankInput);
 
@@ -520,7 +563,7 @@ describe("OperationGenericBankResolver", () => {
       });
       mockEm.findOne.mockResolvedValue(operation);
 
-      await resolver.operationGenericBankBoxUpdate(
+      await resolver.operationGenericBankUpdate(
         makeContext(),
         "op-1",
         {} as UpdateOperationGenericBankInput
@@ -532,7 +575,7 @@ describe("OperationGenericBankResolver", () => {
 
     it("lança USER_NOT_AUTHENTICATED quando userId ausente", async () => {
       await expect(
-        resolver.operationGenericBankBoxUpdate(
+        resolver.operationGenericBankUpdate(
           makeContext({ userId: undefined }),
           "op-1",
           updateInput
@@ -544,7 +587,7 @@ describe("OperationGenericBankResolver", () => {
       mockEm.findOne.mockResolvedValue(null);
 
       await expect(
-        resolver.operationGenericBankBoxUpdate(
+        resolver.operationGenericBankUpdate(
           makeContext(),
           "op-inexistente",
           updateInput
@@ -558,11 +601,7 @@ describe("OperationGenericBankResolver", () => {
       mockEm.save.mockRejectedValueOnce(new Error("DB error"));
 
       await expect(
-        resolver.operationGenericBankBoxUpdate(
-          makeContext(),
-          "op-1",
-          updateInput
-        )
+        resolver.operationGenericBankUpdate(makeContext(), "op-1", updateInput)
       ).rejects.toThrow("Failed to update operation generic bank.");
     });
   });
@@ -571,19 +610,15 @@ describe("OperationGenericBankResolver", () => {
   // operationGenericBankDeposit
   // ============================================================
   describe("operationGenericBankDeposit", () => {
-    const validInput: CreateOperationGenericBankInput = makeCreateInput({
-      local: LocalEnum.EXTERNAL,
-      typeOperation: OperationEnum.DEPOSIT,
-      genericBankBoxId: null,
-    });
-
     it("cria operação, soma ao saldo do banco e retorna DTO", async () => {
       const bank = makeGenericBank({ balance: "1000.00" });
       mockEm.findOne.mockResolvedValue(bank);
+      mockedDecimalSum.mockReturnValue("1100.00");
 
-      const result = await resolver.operationGenericBankDeposit(makeContext(), {
-        ...validInput,
-      });
+      const result = await resolver.operationGenericBankDeposit(
+        makeContext(),
+        makeDepositInput()
+      );
 
       expect(bank.balance).toBe("1100.00");
       expect(mockEm.save).toHaveBeenCalledWith(GenericBank, bank);
@@ -592,74 +627,40 @@ describe("OperationGenericBankResolver", () => {
         expect.objectContaining({
           genericBankId: UUID,
           balance: "100.00",
+          typeOperation: OperationEnum.DEPOSIT,
+          local: LocalEnum.EXTERNAL,
+          operationRegister: "reg-uuid-1234",
         })
       );
       expect(result).toBeDefined();
+    });
+
+    it("chama clearDecimal em input.amount", async () => {
+      const bank = makeGenericBank();
+      mockEm.findOne.mockResolvedValue(bank);
+
+      await resolver.operationGenericBankDeposit(
+        makeContext(),
+        makeDepositInput()
+      );
+
+      expect(mockedClearDecimal).toHaveBeenCalledWith("100.00");
     });
 
     it("lança USER_NOT_AUTHENTICATED quando userId ausente", async () => {
       await expect(
         resolver.operationGenericBankDeposit(
           makeContext({ userId: undefined }),
-          { ...validInput }
+          makeDepositInput()
         )
       ).rejects.toThrow(USER_NOT_AUTHENTICATED);
-    });
-
-    it("lança erro quando genericBankBoxId é fornecido", async () => {
-      await expect(
-        resolver.operationGenericBankDeposit(makeContext(), {
-          ...validInput,
-          genericBankBoxId: UUID_2,
-        })
-      ).rejects.toThrow(
-        "GenericBankBoxId should not be provided for this operation."
-      );
-    });
-
-    it("lança OperationError quando validate do genericVerify falha", async () => {
-      mockedValidate.mockResolvedValueOnce([{ property: "balance" }] as never);
-
-      await expect(
-        resolver.operationGenericBankDeposit(makeContext(), { ...validInput })
-      ).rejects.toBeInstanceOf(OperationError);
-    });
-
-    it("lança OperationError quando validate do omitted falha", async () => {
-      mockedValidate
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ property: "discount" }] as never);
-
-      await expect(
-        resolver.operationGenericBankDeposit(makeContext(), { ...validInput })
-      ).rejects.toBeInstanceOf(OperationError);
-    });
-
-    it("lança erro quando local não é EXTERNAL", async () => {
-      await expect(
-        resolver.operationGenericBankDeposit(makeContext(), {
-          ...validInput,
-          local: LocalEnum.INTERNAL,
-        })
-      ).rejects.toThrow("Local must be exactly EXTERNAL for this operation.");
-    });
-
-    it("lança OperationError quando validate do deposit falha", async () => {
-      mockedValidate
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ property: "balance" }] as never);
-
-      await expect(
-        resolver.operationGenericBankDeposit(makeContext(), { ...validInput })
-      ).rejects.toBeInstanceOf(OperationError);
     });
 
     it("lança GENERIC_BANK_NOT_FOUND quando banco não existe", async () => {
       mockEm.findOne.mockResolvedValue(null);
 
       await expect(
-        resolver.operationGenericBankDeposit(makeContext(), { ...validInput })
+        resolver.operationGenericBankDeposit(makeContext(), makeDepositInput())
       ).rejects.toThrow(GENERIC_BANK_NOT_FOUND);
     });
 
@@ -669,8 +670,8 @@ describe("OperationGenericBankResolver", () => {
       mockEm.save.mockRejectedValueOnce(new Error("DB error"));
 
       await expect(
-        resolver.operationGenericBankDeposit(makeContext(), { ...validInput })
-      ).rejects.toThrow("Failed to perform operation generic bank deposit.");
+        resolver.operationGenericBankDeposit(makeContext(), makeDepositInput())
+      ).rejects.toThrow("Failed to deposit into bank.");
     });
   });
 
@@ -678,20 +679,13 @@ describe("OperationGenericBankResolver", () => {
   // operationGenericBankWithdraw
   // ============================================================
   describe("operationGenericBankWithdraw", () => {
-    const validInput: CreateOperationGenericBankInput = makeCreateInput({
-      local: LocalEnum.EXTERNAL,
-      typeOperation: OperationEnum.WITHDRAW,
-      balance: "-100.00",
-      genericBankBoxId: null,
-    });
-
     it("cria operação, subtrai do saldo do banco e retorna DTO", async () => {
       const bank = makeGenericBank({ balance: "1000.00" });
       mockEm.findOne.mockResolvedValue(bank);
 
       const result = await resolver.operationGenericBankWithdraw(
         makeContext(),
-        { ...validInput }
+        makeWithdrawInput()
       );
 
       expect(mockEm.save).toHaveBeenCalledWith(GenericBank, bank);
@@ -699,63 +693,56 @@ describe("OperationGenericBankResolver", () => {
         OperationGenericBank,
         expect.objectContaining({
           balance: "-100.00",
+          typeOperation: OperationEnum.WITHDRAW,
+          local: LocalEnum.EXTERNAL,
         })
       );
       expect(result).toBeDefined();
+    });
+
+    it("chama clearDecimal em input.amount", async () => {
+      const bank = makeGenericBank();
+      mockEm.findOne.mockResolvedValue(bank);
+
+      await resolver.operationGenericBankWithdraw(
+        makeContext(),
+        makeWithdrawInput()
+      );
+
+      expect(mockedClearDecimal).toHaveBeenCalledWith("-100.00");
     });
 
     it("lança USER_NOT_AUTHENTICATED quando userId ausente", async () => {
       await expect(
         resolver.operationGenericBankWithdraw(
           makeContext({ userId: undefined }),
-          { ...validInput }
+          makeWithdrawInput()
         )
       ).rejects.toThrow(USER_NOT_AUTHENTICATED);
-    });
-
-    it("lança erro quando genericBankBoxId é fornecido", async () => {
-      await expect(
-        resolver.operationGenericBankWithdraw(makeContext(), {
-          ...validInput,
-          genericBankBoxId: UUID_2,
-        })
-      ).rejects.toThrow(
-        "GenericBankBoxId should not be provided for this operation."
-      );
-    });
-
-    it("lança OperationError quando validate falha", async () => {
-      mockedValidate.mockResolvedValueOnce([{ property: "balance" }] as never);
-
-      await expect(
-        resolver.operationGenericBankWithdraw(makeContext(), { ...validInput })
-      ).rejects.toBeInstanceOf(OperationError);
-    });
-
-    it("lança erro quando local não é EXTERNAL", async () => {
-      await expect(
-        resolver.operationGenericBankWithdraw(makeContext(), {
-          ...validInput,
-          local: LocalEnum.INTERNAL,
-        })
-      ).rejects.toThrow("Local must be exactly EXTERNAL for this operation.");
     });
 
     it("lança GENERIC_BANK_NOT_FOUND quando banco não existe", async () => {
       mockEm.findOne.mockResolvedValue(null);
 
       await expect(
-        resolver.operationGenericBankWithdraw(makeContext(), { ...validInput })
+        resolver.operationGenericBankWithdraw(
+          makeContext(),
+          makeWithdrawInput()
+        )
       ).rejects.toThrow(GENERIC_BANK_NOT_FOUND);
     });
 
     it("lança INSUFFICIENT_BALANCE quando valor excede o saldo", async () => {
       const bank = makeGenericBank({ balance: "50.00" });
       mockEm.findOne.mockResolvedValue(bank);
+      mockedDecimalMultiply.mockReturnValueOnce("-100.00");
       mockedDecimalGreaterThan.mockReturnValueOnce(true);
 
       await expect(
-        resolver.operationGenericBankWithdraw(makeContext(), { ...validInput })
+        resolver.operationGenericBankWithdraw(
+          makeContext(),
+          makeWithdrawInput()
+        )
       ).rejects.toThrow(INSUFFICIENT_BALANCE);
     });
 
@@ -765,8 +752,11 @@ describe("OperationGenericBankResolver", () => {
       mockEm.save.mockRejectedValueOnce(new Error("DB error"));
 
       await expect(
-        resolver.operationGenericBankWithdraw(makeContext(), { ...validInput })
-      ).rejects.toThrow("Failed to perform operation generic bank withdraw.");
+        resolver.operationGenericBankWithdraw(
+          makeContext(),
+          makeWithdrawInput()
+        )
+      ).rejects.toThrow("Failed to withdraw from bank.");
     });
   });
 

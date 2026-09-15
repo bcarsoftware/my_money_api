@@ -1,10 +1,13 @@
 import {
-  BALANCE_INVALID,
+  BALANCE_MUST_BE_POSITIVE,
   BANK_BOX_NOT_FOUND,
+  BANK_NOT_FOUND,
+  FROM_BANK_ID_MUST_OMITTED_EXTERNAL,
   INSUFFICIENT_BALANCE,
   INVOICE_NOT_FOUND,
   OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX,
   OPERATION_NOT_FOUND,
+  TO_BANK_ID_REQUIRED,
   USER_BANK_NOT_MATCH,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
@@ -29,16 +32,10 @@ import {
 } from "@/resolvers/operations/inputs/OperationBankInputs";
 import {
   BankBoxVerify,
-  BankDepositVerify,
-  BankTransferVerify,
-  BankWithdrawVerify,
   InvoiceVerify,
 } from "@/resolvers/operations/utils/OperationVerify";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
-import {
-  balanceCurrencyVerify,
-  uuidFourVerify,
-} from "@/resolvers/operations/utils/operationUtils";
+import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
 import {
   clearDecimal,
   decimalGreaterThan,
@@ -52,6 +49,11 @@ import { randomUUID } from "@/utils/randomUUID";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { validate } from "class-validator";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import {
+  OperationBankDepositInput,
+  OperationBankTransferInput,
+  OperationBankWithdrawInput,
+} from "./inputs/OperationsInputs";
 
 @Resolver()
 export class OperationBankResolver {
@@ -136,67 +138,50 @@ export class OperationBankResolver {
   @Mutation(() => OperationBankDto)
   async operationBankDeposit(
     @Ctx() context: MyContext,
-    @Arg("bankId", () => String) bankId: string,
-    @Arg("balance", () => String) balance: string
+    @Arg("input", () => OperationBankDepositInput)
+    input: OperationBankDepositInput
   ): Promise<OperationBankDto> {
-    if (!balanceCurrencyVerify(balance)) throw new Error(BALANCE_INVALID);
-
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
-    balance = clearDecimal(balance);
-
-    if (!uuidFourVerify(bankId))
-      throw new Error("Bank ID is not a valid UUID.");
+    input.amount = clearDecimal(input.amount);
 
     return await loggedContext(context, async (em) => {
-      const bank = await em.findOne(Bank, { where: { id: bankId, userId } });
+      const bank = await em.findOne(Bank, {
+        where: { id: input.bankId, userId },
+      });
 
-      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+      if (!bank) throw new Error(BANK_NOT_FOUND);
 
-      const operationRegister = randomUUID(7);
+      bank.balance = decimalSum(bank.balance, input.amount);
 
       const operation: CreateOperationBankInput = {
-        bankId,
-        balance,
+        bankId: input.bankId,
+        balance: input.amount,
         discount: null,
         forfeit: null,
         typeOperation: OperationEnum.DEPOSIT,
         local: LocalEnum.EXTERNAL,
-        tag: `Deposit to bank ${bank.name}.`,
-        description: `Deposit of ${balance} to bank ${bank.name}`,
+        tag: `Deposit into bank ${bank.name}.`,
+        description: `Deposit of ${input.amount} into bank ${bank.name}.`,
       };
 
-      const errorsInitial = await validate(operation);
-
-      if (errorsInitial.length > 0) throw new OperationError(errorsInitial);
-
-      const deposit: BankDepositVerify = {
-        discount: null,
-        forfeit: null,
-        amount: balance,
-        ...operation,
-      };
-
-      const depositErrors = await validate(deposit);
-
-      if (depositErrors.length > 0) throw new OperationError(depositErrors);
+      const registerOperation = randomUUID(7);
 
       try {
+        await em.save(Bank, bank);
+
         const savedOperation = await em.save(OperationBank, {
           ...operation,
-          operationRegister,
+          operationRegister: registerOperation,
         });
-        bank.balance = decimalSum(bank.balance, operation.balance);
-
-        await em.save(Bank, bank);
 
         return toOperationBankDto(savedOperation);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to deposit into bank.", error);
 
-        throw new Error("Failed to deposit to bank.");
+        throw new Error("Failed to deposit into bank.");
       }
     });
   }
@@ -205,70 +190,53 @@ export class OperationBankResolver {
   @Mutation(() => OperationBankDto)
   async operationBankWithdraw(
     @Ctx() context: MyContext,
-    @Arg("bankId", () => String) bankId: string,
-    @Arg("balance", () => String) balance: string
+    @Arg("input", () => OperationBankWithdrawInput)
+    input: OperationBankWithdrawInput
   ): Promise<OperationBankDto> {
-    if (!balanceCurrencyVerify(balance)) throw new Error(BALANCE_INVALID);
-
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
-    balance = clearDecimal(balance);
-
-    if (!uuidFourVerify(bankId))
-      throw new Error("Bank ID is not a valid UUID.");
+    input.amount = clearDecimal(input.amount);
 
     return await loggedContext(context, async (em) => {
-      const bank = await em.findOne(Bank, { where: { id: bankId, userId } });
+      const bank = await em.findOne(Bank, {
+        where: { id: input.bankId, userId },
+      });
 
-      if (!bank) throw new Error(USER_BANK_NOT_MATCH);
+      if (!bank) throw new Error(BANK_NOT_FOUND);
 
-      const operationRegister = randomUUID(7);
+      const amount = decimalMultiply(input.amount, "-1.00");
+
+      if (decimalGreaterThan(amount, bank.balance))
+        throw new Error(INSUFFICIENT_BALANCE);
+
+      bank.balance = decimalSum(bank.balance, input.amount);
 
       const operation: CreateOperationBankInput = {
-        bankId,
-        balance,
+        bankId: input.bankId,
+        balance: input.amount,
         discount: null,
         forfeit: null,
         typeOperation: OperationEnum.WITHDRAW,
         local: LocalEnum.EXTERNAL,
         tag: `Withdraw from bank ${bank.name}.`,
-        description: `Withdraw of ${balance} from bank ${bank.name}`,
+        description: `Withdraw of ${input.amount} from bank ${bank.name}.`,
       };
 
-      const errorsInitial = await validate(operation);
-
-      if (errorsInitial.length > 0) throw new OperationError(errorsInitial);
-
-      const withdraw: BankWithdrawVerify = {
-        discount: null,
-        forfeit: null,
-        amount: balance,
-        ...operation,
-      };
-
-      const withdrawErrors = await validate(withdraw);
-
-      if (withdrawErrors.length > 0) throw new OperationError(withdrawErrors);
-
-      const withdBalance = decimalMultiply(operation.balance, "-1.00");
-
-      if (decimalGreaterThan(withdBalance, bank.balance))
-        throw new Error(INSUFFICIENT_BALANCE);
+      const registerOperation = randomUUID(7);
 
       try {
+        await em.save(Bank, bank);
+
         const savedOperation = await em.save(OperationBank, {
           ...operation,
-          operationRegister,
+          operationRegister: registerOperation,
         });
-        bank.balance = decimalSum(bank.balance, operation.balance);
-
-        await em.save(Bank, bank);
 
         return toOperationBankDto(savedOperation);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to withdraw from bank.", error);
 
         throw new Error("Failed to withdraw from bank.");
       }
@@ -279,167 +247,98 @@ export class OperationBankResolver {
   @Mutation(() => PaginatedOperationBankDto)
   async operationBankTransfer(
     @Ctx() context: MyContext,
-    @Arg("balance", () => String) balance: string,
-    @Arg("typeOperation", () => OperationEnum) typeOperation: OperationEnum,
-    @Arg("originBankId", () => String) originBankId: string,
-    @Arg("destinationBankId", () => String) destinationBankId?: string
+    @Arg("input", () => OperationBankTransferInput)
+    input: OperationBankTransferInput
   ): Promise<PaginatedOperationBankDto> {
-    if (!balanceCurrencyVerify(balance)) throw new Error(BALANCE_INVALID);
-
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
-    balance = clearDecimal(balance);
+    if (input.local === LocalEnum.EXTERNAL && input.toBankId)
+      throw new Error(FROM_BANK_ID_MUST_OMITTED_EXTERNAL);
 
-    if (!uuidFourVerify(originBankId))
-      throw new Error("Origin Bank ID is not a valid UUID.");
+    if (input.local === LocalEnum.INTERNAL && !input.toBankId)
+      throw new Error(TO_BANK_ID_REQUIRED);
 
-    if (destinationBankId && !uuidFourVerify(destinationBankId))
-      throw new Error("Destination Bank ID is not a valid UUID.");
-
-    if (!balanceCurrencyVerify(balance)) throw new Error(BALANCE_INVALID);
-
-    const transfer: BankTransferVerify = {
-      originBankId,
-      destinationBankId,
-      balance,
-      discount: null,
-      forfeit: null,
-      amount: balance,
-      local: destinationBankId ? LocalEnum.INTERNAL : LocalEnum.EXTERNAL,
-      typeOperation,
-    };
-
-    const transferErrors = await validate(transfer);
-
-    if (transferErrors.length > 0) throw new OperationError(transferErrors);
-
-    const operations: Record<string, CreateOperationBankInput | null> = {
-      origin: {
-        ...transfer,
-        tag: "Transference",
-        description: "Transfer from origin to destination bank",
-        bankId: originBankId,
-      } as CreateOperationBankInput,
-      destination:
-        destinationBankId && transfer.local === LocalEnum.INTERNAL
-          ? ({
-              ...transfer,
-              tag: "Transference",
-              description: "Transfer from origin to destination bank",
-              bankId: destinationBankId,
-            } as CreateOperationBankInput)
-          : null,
-    };
-
-    for (const cperation of Object.values(operations)) {
-      if (!cperation) continue;
-
-      const operationErrors = await validate(cperation);
-
-      if (operationErrors.length > 0) throw new OperationError(operationErrors);
-    }
+    if (
+      input.local === LocalEnum.INTERNAL &&
+      decimalGreaterThan("0.00", input.amount)
+    )
+      throw new Error(BALANCE_MUST_BE_POSITIVE);
 
     return await loggedContext(context, async (em) => {
-      const banks: Record<string, Bank | null> = {
-        origin: await em.findOne(Bank, { where: { id: originBankId, userId } }),
-        destination: destinationBankId
-          ? await em.findOne(Bank, { where: { id: destinationBankId, userId } })
-          : null,
-      };
+      const origin = await em.findOne(Bank, {
+        where: { id: input.fromBankId, userId },
+      });
 
-      if (!banks.origin) throw new Error("Origin bank not found.");
-      if (destinationBankId && !banks.destination)
-        throw new Error("Destination bank not found.");
+      if (!origin) throw new Error(BANK_NOT_FOUND);
 
-      if (!operations.origin?.local)
-        throw new Error("Origin operation local is not defined.");
+      const destination: Bank | null = await em.findOne(Bank, {
+        where: { id: input.toBankId, userId },
+      });
 
-      const operationRegister = randomUUID(7);
+      if (input.toBankId && !destination) throw new Error(BANK_NOT_FOUND);
+
+      const amount = input.amount.replace("-", "");
+
+      const status = decimalGreaterThan("0.00", input.amount)
+        ? "Sent."
+        : "Received.";
+
+      const operations: CreateOperationBankInput[] = [
+        {
+          bankId: input.fromBankId,
+          balance: input.amount,
+          typeOperation: OperationEnum[input.typeOperation],
+          local: input.local,
+          tag: `Transfer ${input.amount} ${status} using ${input.typeOperation}.`,
+          description: `Transfer of ${input.amount} from bank ${origin.name}.`,
+        },
+      ];
+
+      switch (input.local) {
+        case LocalEnum.INTERNAL:
+          if (decimalGreaterThan(amount, origin.balance))
+            throw new Error(INSUFFICIENT_BALANCE);
+          origin.balance = decimalSum(origin.balance, input.amount);
+          if (!destination) throw new Error(BANK_NOT_FOUND);
+          destination.balance = decimalSum(destination.balance, amount);
+          operations.push({
+            bankId: destination.id,
+            balance: amount,
+            typeOperation: OperationEnum[input.typeOperation],
+            local: input.local,
+            tag: `Transfer ${amount} Received! Using ${input.typeOperation}.`,
+            description: `Transfer of ${input.amount} to bank ${destination.name}.`,
+          });
+          break;
+        case LocalEnum.EXTERNAL:
+          if (
+            decimalGreaterThan("0.00", input.amount) &&
+            decimalGreaterThan(amount, origin.balance)
+          )
+            throw new Error(INSUFFICIENT_BALANCE);
+          origin.balance = decimalSum(origin.balance, input.amount);
+          break;
+      }
 
       try {
-        if (
-          operations.destination &&
-          operations.origin.local === LocalEnum.INTERNAL &&
-          banks.destination
-        ) {
-          const amount = operations.origin.balance.replace("-", "");
+        await em.save(Bank, origin);
+        if (destination) await em.save(Bank, destination);
 
-          operations.origin.balance = decimalMultiply(amount, "-1.00");
-          operations.destination.balance = amount;
+        const items: OperationBankDto[] = [];
 
-          banks.origin.balance = decimalSum(
-            banks.origin.balance,
-            operations.origin.balance
-          );
-          banks.destination.balance = decimalSum(
-            banks.destination.balance,
-            operations.destination.balance
-          );
-
-          await em.save(Bank, banks.origin);
-          await em.save(Bank, banks.destination);
-
-          const sendOperation = await em.save(OperationBank, {
-            ...operations.origin,
-            userId,
-            tag: `Transfer Sent: ${operations.origin.typeOperation}.`,
-            description: `Transfer Sent. Using ${operations.origin.typeOperation}. Total: ${operations.origin.balance}`,
-            amount: operations.origin.balance,
-            operationRegister,
-          });
-
-          const receiveOperation = await em.save(OperationBank, {
-            ...operations.destination,
-            userId,
-            tag: `Transfer Received: ${operations.origin.typeOperation}.`,
-            description: `Transfer Received. Using ${operations.destination.typeOperation}. Total: ${operations.destination.balance}`,
-            amount: operations.destination.balance,
-            operationRegister: randomUUID(7),
-          });
-
-          const items = [
-            toOperationBankDto(sendOperation),
-            toOperationBankDto(receiveOperation),
-          ];
-
-          return { total: 2, items };
+        for (const operation of operations) {
+          const response = await em.save(OperationBank, operation);
+          if (!response) continue;
+          items.push(toOperationBankDto(response));
         }
 
-        if (decimalGreaterThan(operations.origin.balance, "0.00")) {
-          const amount = operations.origin.balance.replace("-", "");
-
-          if (decimalGreaterThan(amount, banks.origin.balance))
-            throw new Error(INSUFFICIENT_BALANCE);
-        }
-
-        banks.origin.balance = decimalSum(
-          banks.origin.balance,
-          operations.origin.balance
-        );
-
-        await em.save(Bank, banks.origin);
-
-        const tag =
-          operations.origin.balance[0] === "-"
-            ? `Transfer Received: ${operations.origin.typeOperation}.`
-            : `Transfer Sent: ${operations.origin.typeOperation}.`;
-
-        const operationBank = await em.save(OperationBank, {
-          ...operations.origin,
-          userId,
-          tag,
-          description: `${tag} Using ${operations.origin.typeOperation}. Total: ${operations.origin.balance}`,
-          amount: operations.origin.balance,
-          operationRegister,
-        });
-
-        return { total: 1, items: [toOperationBankDto(operationBank)] };
+        return { items, total: items.length };
       } catch (error) {
-        console.error("Error occurred during bank transfer:", error);
+        console.error("Error occurred during bank transfer operation:", error);
 
-        throw new Error("Failed to complete bank operation transfer.");
+        throw new Error("Bank transfer operation failed.");
       }
     });
   }

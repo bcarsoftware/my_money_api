@@ -1,11 +1,13 @@
 import {
   BALANCE_MUST_BE_POSITIVE,
+  FROM_GENERIC_BANK_ID_MUST_OMITTED_EXTERNAL,
   GENERIC_BANK_BOX_NOT_FOUND,
   GENERIC_BANK_BOX_REQUIRED,
   GENERIC_BANK_NOT_FOUND,
   INSUFFICIENT_BALANCE,
   OPERATION_NOT_FOUND,
   OPERATION_TYPE_INVALID,
+  TO_GENERIC_BANK_ID_REQUIRED,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
 import { type MyContext } from "@/context/MyContext";
@@ -26,7 +28,6 @@ import {
   UpdateOperationGenericBankInput,
 } from "@/resolvers/operations/inputs/OperationGenericBankInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
-import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
 import {
   DepositVerify,
   DiscountForfeitOmitted,
@@ -44,6 +45,11 @@ import { randomUUID } from "@/utils/randomUUID";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { validate } from "class-validator";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import {
+  OperationGenericBankDepositInput,
+  OperationGenericBankTransferInput,
+  OperationGenericBankWithdrawInput,
+} from "./inputs/OperationsInputs";
 
 @Resolver()
 export class OperationGenericBankResolver {
@@ -96,159 +102,109 @@ export class OperationGenericBankResolver {
   }
 
   @Protected()
-  @Mutation(() => OperationGenericBankDto)
+  @Mutation(() => PaginatedOperationGenericBankDto)
   async operationGenericBankTransfer(
     @Ctx() context: MyContext,
-    @Arg("balance", () => String) balance: string,
-    @Arg("typeOperation", () => OperationEnum) typeOperation: OperationEnum,
-    @Arg("originId", () => String) originId: string,
-    @Arg("destinationId", () => String) destinationId?: string
+    @Arg("input", () => OperationGenericBankTransferInput)
+    input: OperationGenericBankTransferInput
   ): Promise<PaginatedOperationGenericBankDto> {
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
-    if (typeOperation !== OperationEnum.TRANSFER)
-      throw new Error(OPERATION_TYPE_INVALID);
+    if (input.local === LocalEnum.EXTERNAL && input.toGenericBankId)
+      throw new Error(FROM_GENERIC_BANK_ID_MUST_OMITTED_EXTERNAL);
 
-    if (!uuidFourVerify(originId))
-      throw new Error("Origin Bank ID is not a valid UUID.");
+    if (input.local === LocalEnum.INTERNAL && !input.toGenericBankId)
+      throw new Error(TO_GENERIC_BANK_ID_REQUIRED);
 
-    if (destinationId && !uuidFourVerify(destinationId))
-      throw new Error("Destination Bank ID is not a valid UUID.");
-
-    balance = clearDecimal(balance);
-
-    if (decimalGreaterThan("0.00", balance))
+    if (
+      input.local === LocalEnum.INTERNAL &&
+      decimalGreaterThan("0.00", input.amount)
+    )
       throw new Error(BALANCE_MUST_BE_POSITIVE);
 
-    const local = destinationId ? LocalEnum.INTERNAL : LocalEnum.EXTERNAL;
-
-    const origin: CreateOperationGenericBankInput = {
-      genericBankId: originId,
-      tag: "transfer",
-      description: "transfer",
-      balance,
-      typeOperation,
-      local,
-    };
-
-    let errors = await validate(origin);
-
-    if (errors.length > 0) throw new OperationError(errors);
-
-    let transfer: GenericBankVerify = { ...origin } as GenericBankVerify;
-
-    errors = await validate(transfer);
-
-    if (errors.length > 0) throw new OperationError(errors);
-
-    origin.balance = destinationId ? `-${balance}` : balance;
-
-    const destination: CreateOperationGenericBankInput | undefined =
-      destinationId
-        ? {
-            genericBankId: destinationId,
-            tag: "transfer",
-            description: "transfer",
-            balance,
-            typeOperation,
-            local,
-          }
-        : undefined;
-
-    if (destination) {
-      errors = await validate(destination);
-
-      if (errors.length > 0) throw new OperationError(errors);
-
-      transfer = { ...destination } as GenericBankVerify;
-
-      errors = await validate(transfer);
-
-      if (errors.length > 0) throw new OperationError(errors);
-    }
-
     return await loggedContext(context, async (em) => {
-      const originBank = await em.findOne(GenericBank, {
-        where: { id: origin.genericBankId, userId },
+      const origin = await em.findOne(GenericBank, {
+        where: { id: input.fromGenericBankId, userId },
       });
 
-      if (!originBank) throw new Error(GENERIC_BANK_BOX_REQUIRED);
+      if (!origin) throw new Error(GENERIC_BANK_NOT_FOUND);
 
-      const destinyBank = destination
-        ? await em.findOne(GenericBank, {
-            where: { id: destination.genericBankId, userId },
-          })
-        : undefined;
+      const destination: GenericBank | null = await em.findOne(GenericBank, {
+        where: { id: input.toGenericBankId, userId },
+      });
 
-      if (destination && !destinyBank)
-        throw new Error(GENERIC_BANK_BOX_REQUIRED);
+      if (input.toGenericBankId && !destination)
+        throw new Error(GENERIC_BANK_NOT_FOUND);
 
-      if (destinyBank && destination)
-        destinyBank.balance = decimalSum(
-          destinyBank.balance,
-          destination.balance
-        );
+      const amount = input.amount.replace("-", "");
 
-      if (decimalGreaterThan("0.00", origin.balance))
-        if (decimalGreaterThan(balance, originBank.balance))
-          throw new Error(INSUFFICIENT_BALANCE);
+      const status = decimalGreaterThan("0.00", input.amount)
+        ? "Sent."
+        : "Received.";
 
-      originBank.balance = decimalSum(originBank.balance, origin.balance);
+      const operations: CreateOperationGenericBankInput[] = [
+        {
+          genericBankId: input.fromGenericBankId,
+          balance: input.amount,
+          typeOperation: OperationEnum[input.typeOperation],
+          local: input.local,
+          tag: `Transfer ${input.amount} ${status} using ${input.typeOperation}.`,
+          description: `Transfer of ${input.amount} from bank ${origin.name}.`,
+        },
+      ];
+
+      switch (input.local) {
+        case LocalEnum.INTERNAL:
+          if (decimalGreaterThan(amount, origin.balance))
+            throw new Error(INSUFFICIENT_BALANCE);
+          origin.balance = decimalSum(origin.balance, input.amount);
+          if (!destination) throw new Error(GENERIC_BANK_NOT_FOUND);
+          destination.balance = decimalSum(destination.balance, amount);
+          operations.push({
+            genericBankId: destination.id,
+            balance: amount,
+            typeOperation: OperationEnum[input.typeOperation],
+            local: input.local,
+            tag: `Transfer ${amount} Received! Using ${input.typeOperation}.`,
+            description: `Transfer of ${input.amount} to bank ${destination.name}.`,
+          });
+          break;
+        case LocalEnum.EXTERNAL:
+          if (
+            decimalGreaterThan("0.00", input.amount) &&
+            decimalGreaterThan(amount, origin.balance)
+          )
+            throw new Error(INSUFFICIENT_BALANCE);
+          origin.balance = decimalSum(origin.balance, input.amount);
+          break;
+      }
 
       try {
-        await em.save(GenericBank, originBank);
+        await em.save(GenericBank, origin);
+        if (destination) await em.save(GenericBank, destination);
 
-        if (destinyBank) await em.save(GenericBank, destinyBank);
+        const items: OperationGenericBankDto[] = [];
 
-        const items = [];
-        let total = 0;
-
-        const tag = `${destinationId ? "Transfer sent" : "Transfer received"}. (${origin.typeOperation}).`;
-
-        const originItem = await em.save(OperationGenericBank, {
-          ...origin,
-          tag,
-          description: tag + ` Value: ${origin.balance}.`,
-          amount: origin.balance,
-          operationRegister: randomUUID(7),
-          typeOperation,
-        });
-
-        const destinyItem = destination
-          ? await em.save(OperationGenericBank, {
-              ...destination,
-              tag: `Trasnfer received. (${origin.typeOperation}).`,
-              description: tag + ` Value: ${origin.balance}.`,
-              amount: destination.balance,
-              operationRegister: randomUUID(7),
-              typeOperation,
-            })
-          : undefined;
-
-        if (originItem) {
-          items.push(toOperationGenericBankDto(originItem));
-          total += 1;
+        for (const operation of operations) {
+          const response = await em.save(OperationGenericBank, operation);
+          if (!response) continue;
+          items.push(toOperationGenericBankDto(response));
         }
 
-        if (destinyItem) {
-          items.push(toOperationGenericBankDto(destinyItem));
-          total += 1;
-        }
-
-        return { items, total };
+        return { items, total: items.length };
       } catch (error) {
-        console.error("Failed to save generic bank operation transfer:", error);
+        console.error("Error occurred during bank transfer operation:", error);
 
-        throw new Error("Failed to save generic bank operation trasfer.");
+        throw new Error("Bank transfer operation failed.");
       }
     });
   }
 
   @Protected()
   @Mutation(() => OperationGenericBankDto)
-  async operationGenericBankBoxUpdate(
+  async operationGenericBankUpdate(
     @Ctx() context: MyContext,
     @Arg("id", () => String) id: string,
     @Arg("input", () => UpdateOperationGenericBankInput)
@@ -286,73 +242,50 @@ export class OperationGenericBankResolver {
   @Mutation(() => OperationGenericBankDto)
   async operationGenericBankDeposit(
     @Ctx() context: MyContext,
-    @Arg("input", () => CreateOperationGenericBankInput)
-    input: CreateOperationGenericBankInput
+    @Arg("input", () => OperationGenericBankDepositInput)
+    input: OperationGenericBankDepositInput
   ): Promise<OperationGenericBankDto> {
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
-    if (input.genericBankBoxId)
-      throw new Error(
-        "GenericBankBoxId should not be provided for this operation."
-      );
-
-    input.balance = clearDecimal(input.balance);
-
-    const genericVerify: GenericBankVerify = {
-      ...input,
-    };
-
-    let errors = await validate(genericVerify);
-
-    if (errors.length > 0) throw new OperationError(errors);
-
-    const omitted: DiscountForfeitOmitted = { ...input };
-
-    errors = await validate(omitted);
-
-    if (errors.length > 0) throw new OperationError(errors);
-
-    if (input.local !== LocalEnum.EXTERNAL)
-      throw new Error("Local must be exactly EXTERNAL for this operation.");
-
-    const deposit: DepositVerify = { ...input };
-
-    errors = await validate(deposit);
-
-    if (errors.length > 0) throw new OperationError(errors);
+    input.amount = clearDecimal(input.amount);
 
     return await loggedContext(context, async (em) => {
-      const genericBank = await em.findOne(GenericBank, {
+      const bank = await em.findOne(GenericBank, {
         where: { id: input.genericBankId, userId },
       });
 
-      if (!genericBank) throw new Error(GENERIC_BANK_NOT_FOUND);
+      if (!bank) throw new Error(GENERIC_BANK_NOT_FOUND);
 
-      genericBank.balance = decimalSum(genericBank.balance, input.balance);
+      bank.balance = decimalSum(bank.balance, input.amount);
+
+      const operation: CreateOperationGenericBankInput = {
+        genericBankId: input.genericBankId,
+        balance: input.amount,
+        discount: null,
+        forfeit: null,
+        typeOperation: OperationEnum.DEPOSIT,
+        local: LocalEnum.EXTERNAL,
+        tag: `Deposit into bank ${bank.name}.`,
+        description: `Deposit of ${input.amount} into bank ${bank.name}.`,
+      };
+
+      const registerOperation = randomUUID(7);
 
       try {
-        const operationRegister = randomUUID(7);
+        await em.save(GenericBank, bank);
 
-        await em.save(GenericBank, genericBank);
-
-        const operation = em.create(OperationGenericBank, {
-          ...input,
-          operationRegister,
-          amount: input.balance,
+        const savedOperation = await em.save(OperationGenericBank, {
+          ...operation,
+          operationRegister: registerOperation,
         });
 
-        const newOperation = await em.save(OperationGenericBank, operation);
-
-        return toOperationGenericBankDto(newOperation);
+        return toOperationGenericBankDto(savedOperation);
       } catch (error) {
-        console.error(
-          "Failed to perform operation generic bank deposit:",
-          error
-        );
+        console.error("Failed to deposit into bank.", error);
 
-        throw new Error("Failed to perform operation generic bank deposit.");
+        throw new Error("Failed to deposit into bank.");
       }
     });
   }
@@ -361,78 +294,55 @@ export class OperationGenericBankResolver {
   @Mutation(() => OperationGenericBankDto)
   async operationGenericBankWithdraw(
     @Ctx() context: MyContext,
-    @Arg("input", () => CreateOperationGenericBankInput)
-    input: CreateOperationGenericBankInput
+    @Arg("input", () => OperationGenericBankWithdrawInput)
+    input: OperationGenericBankWithdrawInput
   ): Promise<OperationGenericBankDto> {
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
-    if (input.genericBankBoxId)
-      throw new Error(
-        "GenericBankBoxId should not be provided for this operation."
-      );
-
-    input.balance = clearDecimal(input.balance);
-
-    const genericVerify: GenericBankVerify = {
-      ...input,
-    };
-
-    let errors = await validate(genericVerify);
-
-    if (errors.length > 0) throw new OperationError(errors);
-
-    const omitted: DiscountForfeitOmitted = { ...input };
-
-    errors = await validate(omitted);
-
-    if (errors.length > 0) throw new OperationError(errors);
-
-    if (input.local !== LocalEnum.EXTERNAL)
-      throw new Error("Local must be exactly EXTERNAL for this operation.");
-
-    const withdraw: WithdrawVerify = { ...input };
-
-    errors = await validate(withdraw);
-
-    if (errors.length > 0) throw new OperationError(errors);
+    input.amount = clearDecimal(input.amount);
 
     return await loggedContext(context, async (em) => {
-      const genericBank = await em.findOne(GenericBank, {
+      const bank = await em.findOne(GenericBank, {
         where: { id: input.genericBankId, userId },
       });
 
-      if (!genericBank) throw new Error(GENERIC_BANK_NOT_FOUND);
+      if (!bank) throw new Error(GENERIC_BANK_NOT_FOUND);
 
-      const balance = input.balance.replace("-", "");
+      const amount = decimalMultiply(input.amount, "-1.00");
 
-      if (decimalGreaterThan(balance, genericBank.balance))
+      if (decimalGreaterThan(amount, bank.balance))
         throw new Error(INSUFFICIENT_BALANCE);
 
-      genericBank.balance = decimalSum(genericBank.balance, input.balance);
+      bank.balance = decimalSum(bank.balance, input.amount);
+
+      const operation: CreateOperationGenericBankInput = {
+        genericBankId: input.genericBankId,
+        balance: input.amount,
+        discount: null,
+        forfeit: null,
+        typeOperation: OperationEnum.WITHDRAW,
+        local: LocalEnum.EXTERNAL,
+        tag: `Withdraw from bank ${bank.name}.`,
+        description: `Withdraw of ${input.amount} from bank ${bank.name}.`,
+      };
+
+      const registerOperation = randomUUID(7);
 
       try {
-        const operationRegister = randomUUID(7);
+        await em.save(GenericBank, bank);
 
-        await em.save(GenericBank, genericBank);
-
-        const operation = em.create(OperationGenericBank, {
-          ...input,
-          operationRegister,
-          amount: input.balance,
+        const savedOperation = await em.save(OperationGenericBank, {
+          ...operation,
+          operationRegister: registerOperation,
         });
 
-        const newOperation = await em.save(OperationGenericBank, operation);
-
-        return toOperationGenericBankDto(newOperation);
+        return toOperationGenericBankDto(savedOperation);
       } catch (error) {
-        console.error(
-          "Failed to perform operation generic bank withdraw:",
-          error
-        );
+        console.error("Failed to withdraw from bank.", error);
 
-        throw new Error("Failed to perform operation generic bank withdraw.");
+        throw new Error("Failed to withdraw from bank.");
       }
     });
   }

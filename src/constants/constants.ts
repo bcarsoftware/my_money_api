@@ -30,6 +30,8 @@ export const GENERIC_BANK_NOT_FOUND = "Generic bank not found.";
 
 export const GENERIC_BANK_BOX_NOT_FOUND = "Generic bank box not found.";
 
+export const BANK_NOT_FOUND = "Bank not found.";
+
 export const BANK_BOX_NOT_FOUND = "Bank box not found.";
 
 export const START_DATE_AFTER_END_DATE = "Start date cannot be after end date.";
@@ -49,3 +51,13 @@ export const OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX =
 export const GENERIC_BANK_BOX_REQUIRED = "Generic bank box is required.";
 
 export const BALANCE_MUST_BE_POSITIVE = "Balance must be greater than 0.";
+
+export const FROM_BANK_ID_MUST_OMITTED_EXTERNAL =
+  "From bank ID must be omitted for external transfers.";
+export const TO_BANK_ID_REQUIRED =
+  "To bank ID must be provided for internal transfers.";
+
+export const FROM_GENERIC_BANK_ID_MUST_OMITTED_EXTERNAL =
+  "From generic bank ID must be omitted for external transfers.";
+export const TO_GENERIC_BANK_ID_REQUIRED =
+  "To generic bank ID must be provided for internal transfers.";
