@@ -25,18 +25,22 @@ function constraintsFor(errors: ValidationError[], property: string): string[] {
   return error?.constraints ? Object.keys(error.constraints) : [];
 }
 
+const UUID = "550e8400-e29b-41d4-a716-446655440000";
+const UUID_2 = "550e8400-e29b-41d4-a716-446655440001";
+const UUID_3 = "550e8400-e29b-41d4-a716-446655440002";
+
 // ============================================================
 // CreateOperationBankInput
 // ============================================================
 describe("CreateOperationBankInput", () => {
   const validPayload = {
-    bankId: "550e8400-e29b-41d4-a716-446655440000",
-    bankBoxId: "550e8400-e29b-41d4-a716-446655440001",
-    invoiceId: "550e8400-e29b-41d4-a716-446655440002",
+    bankId: UUID,
+    bankBoxId: UUID_2,
+    invoiceId: UUID_3,
     tag: "Compra",
     description: "Descrição qualquer",
     balance: "100.00",
-    discount: "10.00",
+    discount: "-10.00",
     forfeit: "5.00",
     typeOperation: OperationEnum.PIX,
     local: LocalEnum.INTERNAL,
@@ -80,10 +84,7 @@ describe("CreateOperationBankInput", () => {
 
   describe("bankId (obrigatório)", () => {
     it("aceita UUID v4 válido", async () => {
-      const payload = {
-        ...validPayload,
-        bankId: "550e8400-e29b-41d4-a716-446655440000",
-      };
+      const payload = { ...validPayload, bankId: UUID };
       const errors = await validateInput(CreateOperationBankInput, payload);
       expect(constraintsFor(errors, "bankId")).toHaveLength(0);
     });
@@ -121,10 +122,7 @@ describe("CreateOperationBankInput", () => {
 
   describe("bankBoxId (opcional)", () => {
     it("aceita UUID v4 válido", async () => {
-      const payload = {
-        ...validPayload,
-        bankBoxId: "550e8400-e29b-41d4-a716-446655440000",
-      };
+      const payload = { ...validPayload, bankBoxId: UUID_2 };
       const errors = await validateInput(CreateOperationBankInput, payload);
       expect(constraintsFor(errors, "bankBoxId")).toHaveLength(0);
     });
@@ -159,10 +157,7 @@ describe("CreateOperationBankInput", () => {
 
   describe("invoiceId (opcional)", () => {
     it("aceita UUID v4 válido", async () => {
-      const payload = {
-        ...validPayload,
-        invoiceId: "550e8400-e29b-41d4-a716-446655440000",
-      };
+      const payload = { ...validPayload, invoiceId: UUID_3 };
       const errors = await validateInput(CreateOperationBankInput, payload);
       expect(constraintsFor(errors, "invoiceId")).toHaveLength(0);
     });
@@ -171,6 +166,12 @@ describe("CreateOperationBankInput", () => {
       const payload = { ...validPayload, invoiceId: "nao-e-uuid" };
       const errors = await validateInput(CreateOperationBankInput, payload);
       expect(constraintsFor(errors, "invoiceId")).toContain("isUuid");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const { invoiceId, ...payload } = validPayload;
+      const errors = await validateInput(CreateOperationBankInput, payload);
+      expect(constraintsFor(errors, "invoiceId")).toHaveLength(0);
     });
 
     it("aceita null", async () => {
@@ -235,19 +236,20 @@ describe("CreateOperationBankInput", () => {
     });
   });
 
-  describe("balance (obrigatório, permite negativos)", () => {
-    it.each([
-      "100.00",
-      "0.00",
-      "1,234.56",
-      "50.00",
-      "100",
-      "-50.00",
-      "-100.00",
-    ])("aceita formato de moeda válido: %s", async (value) => {
-      const payload = { ...validPayload, balance: value };
+  describe("balance (obrigatório, permite negativos, exige decimais)", () => {
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "-50.00", "-100.00"])(
+      "aceita formato de moeda válido: %s",
+      async (value) => {
+        const payload = { ...validPayload, balance: value };
+        const errors = await validateInput(CreateOperationBankInput, payload);
+        expect(constraintsFor(errors, "balance")).toHaveLength(0);
+      }
+    );
+
+    it("rejeita valor sem decimais (require_decimal: true)", async () => {
+      const payload = { ...validPayload, balance: "100" };
       const errors = await validateInput(CreateOperationBankInput, payload);
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
 
     it.each(["não é moeda", "", "100.5", "100.000"])(
@@ -275,15 +277,30 @@ describe("CreateOperationBankInput", () => {
     });
   });
 
-  describe("discount (opcional, permite negativos)", () => {
-    it.each(["100.00", "0.00", "-50.00", "1,234.56"])(
-      "aceita formato de moeda válido: %s",
+  describe("discount (opcional, DEVE ser negativo, exige decimais)", () => {
+    it.each(["-50.00", "-0.01", "-1,234.56"])(
+      "aceita formato negativo válido: %s",
       async (value) => {
         const payload = { ...validPayload, discount: value };
         const errors = await validateInput(CreateOperationBankInput, payload);
         expect(constraintsFor(errors, "discount")).toHaveLength(0);
       }
     );
+
+    it.each(["100.00", "0.00", "50.00", "1,234.56"])(
+      "rejeita valor não negativo (Matches exige hífen): %s",
+      async (value) => {
+        const payload = { ...validPayload, discount: value };
+        const errors = await validateInput(CreateOperationBankInput, payload);
+        expect(constraintsFor(errors, "discount")).toContain("matches");
+      }
+    );
+
+    it("rejeita valor negativo sem decimais (require_decimal: true)", async () => {
+      const payload = { ...validPayload, discount: "-100" };
+      const errors = await validateInput(CreateOperationBankInput, payload);
+      expect(constraintsFor(errors, "discount")).toContain("isCurrency");
+    });
 
     it("rejeita formato inválido", async () => {
       const payload = { ...validPayload, discount: "não é moeda" };
@@ -304,8 +321,8 @@ describe("CreateOperationBankInput", () => {
     });
   });
 
-  describe("forfeit (opcional)", () => {
-    it.each(["100.00", "0.00", "50.00"])(
+  describe("forfeit (opcional, NÃO permite negativos, exige decimais)", () => {
+    it.each(["100.00", "0.00", "50.00", "1,234.56"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const payload = { ...validPayload, forfeit: value };
@@ -314,14 +331,26 @@ describe("CreateOperationBankInput", () => {
       }
     );
 
-    it("rejeita valor negativo (allow_negatives padrão = false)", async () => {
+    it("rejeita valor negativo (allow_negatives: false)", async () => {
       const payload = { ...validPayload, forfeit: "-50.00" };
+      const errors = await validateInput(CreateOperationBankInput, payload);
+      expect(constraintsFor(errors, "forfeit")).toContain("isCurrency");
+    });
+
+    it("rejeita valor sem decimais (require_decimal: true)", async () => {
+      const payload = { ...validPayload, forfeit: "100" };
       const errors = await validateInput(CreateOperationBankInput, payload);
       expect(constraintsFor(errors, "forfeit")).toContain("isCurrency");
     });
 
     it("aceita null", async () => {
       const payload = { ...validPayload, forfeit: null };
+      const errors = await validateInput(CreateOperationBankInput, payload);
+      expect(constraintsFor(errors, "forfeit")).toHaveLength(0);
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const { forfeit, ...payload } = validPayload;
       const errors = await validateInput(CreateOperationBankInput, payload);
       expect(constraintsFor(errors, "forfeit")).toHaveLength(0);
     });
@@ -400,14 +429,22 @@ describe("CreateOperationBankInput", () => {
       const payload = {
         bankId: "uuid-invalido",
         tag: "a".repeat(65),
-        balance: "-10.00x",
+        balance: "não é moeda",
+        discount: "10.00",
         typeOperation: "INVALIDO" as unknown as OperationEnum,
         local: "INVALIDO" as unknown as LocalEnum,
       };
       const errors = await validateInput(CreateOperationBankInput, payload);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "bankId", "local", "tag", "typeOperation"].sort()
+        [
+          "balance",
+          "bankId",
+          "discount",
+          "local",
+          "tag",
+          "typeOperation",
+        ].sort()
       );
     });
   });
@@ -501,9 +538,9 @@ describe("ListOperationBankInput", () => {
   const validPayload = {
     limit: 10,
     offset: 0,
-    bankId: "550e8400-e29b-41d4-a716-446655440000",
-    bankBoxId: "550e8400-e29b-41d4-a716-446655440001",
-    invoiceId: "550e8400-e29b-41d4-a716-446655440002",
+    bankId: UUID,
+    bankBoxId: UUID_2,
+    invoiceId: UUID_3,
     tag: "Compra",
     typeOperation: OperationEnum.PIX,
     local: LocalEnum.INTERNAL,
@@ -597,7 +634,7 @@ describe("ListOperationBankInput", () => {
   describe("bankId (obrigatório)", () => {
     it("aceita UUID v4 válido", async () => {
       const errors = await validateInput(ListOperationBankInput, {
-        bankId: "550e8400-e29b-41d4-a716-446655440000",
+        bankId: UUID,
       });
       expect(constraintsFor(errors, "bankId")).toHaveLength(0);
     });
@@ -626,7 +663,7 @@ describe("ListOperationBankInput", () => {
     it("aceita UUID v4 válido", async () => {
       const errors = await validateInput(ListOperationBankInput, {
         bankId: validPayload.bankId,
-        bankBoxId: "550e8400-e29b-41d4-a716-446655440000",
+        bankBoxId: UUID_2,
       });
       expect(constraintsFor(errors, "bankBoxId")).toHaveLength(0);
     });
@@ -652,7 +689,7 @@ describe("ListOperationBankInput", () => {
     it("aceita UUID v4 válido", async () => {
       const errors = await validateInput(ListOperationBankInput, {
         bankId: validPayload.bankId,
-        invoiceId: "550e8400-e29b-41d4-a716-446655440000",
+        invoiceId: UUID_3,
       });
       expect(constraintsFor(errors, "invoiceId")).toHaveLength(0);
     });
@@ -663,6 +700,14 @@ describe("ListOperationBankInput", () => {
         invoiceId: "nao-e-uuid",
       });
       expect(constraintsFor(errors, "invoiceId")).toContain("isUuid");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const errors = await validateInput(ListOperationBankInput, {
+        bankId: validPayload.bankId,
+        invoiceId: undefined,
+      });
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -681,6 +726,14 @@ describe("ListOperationBankInput", () => {
         tag: "a".repeat(65),
       });
       expect(constraintsFor(errors, "tag")).toContain("maxLength");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const errors = await validateInput(ListOperationBankInput, {
+        bankId: validPayload.bankId,
+        tag: undefined,
+      });
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -702,6 +755,14 @@ describe("ListOperationBankInput", () => {
       });
       expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
     });
+
+    it("aceita undefined (omitido)", async () => {
+      const errors = await validateInput(ListOperationBankInput, {
+        bankId: validPayload.bankId,
+        typeOperation: undefined,
+      });
+      expect(errors).toHaveLength(0);
+    });
   });
 
   describe("local (opcional)", () => {
@@ -721,6 +782,14 @@ describe("ListOperationBankInput", () => {
         local: "INVALIDO" as unknown as LocalEnum,
       });
       expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const errors = await validateInput(ListOperationBankInput, {
+        bankId: validPayload.bankId,
+        local: undefined,
+      });
+      expect(errors).toHaveLength(0);
     });
   });
 
@@ -750,6 +819,15 @@ describe("ListOperationBankInput", () => {
         endDate: "32/01/2026",
       });
       expect(constraintsFor(errors, "endDate")).toContain("isDateString");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const errors = await validateInput(ListOperationBankInput, {
+        bankId: validPayload.bankId,
+        startDate: undefined,
+        endDate: undefined,
+      });
+      expect(errors).toHaveLength(0);
     });
   });
 

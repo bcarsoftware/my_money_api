@@ -25,16 +25,18 @@ function constraintsFor(errors: ValidationError[], property: string): string[] {
   return error?.constraints ? Object.keys(error.constraints) : [];
 }
 
+const UUID = "550e8400-e29b-41d4-a716-446655440000";
+
 // ============================================================
 // CreateOperationMoneyInput
 // ============================================================
 describe("CreateOperationMoneyInput", () => {
   const validPayload = {
-    moneyId: "550e8400-e29b-41d4-a716-446655440000",
+    moneyId: UUID,
     tag: "Compra",
     description: "Descrição qualquer",
     balance: "100.00",
-    discount: "10.00",
+    discount: "-10.00",
     forfeit: "5.00",
     typeOperation: OperationEnum.PIX,
     local: LocalEnum.INTERNAL,
@@ -69,10 +71,7 @@ describe("CreateOperationMoneyInput", () => {
 
   describe("moneyId (obrigatório)", () => {
     it("aceita UUID v4 válido", async () => {
-      const payload = {
-        ...validPayload,
-        moneyId: "550e8400-e29b-41d4-a716-446655440000",
-      };
+      const payload = { ...validPayload, moneyId: UUID };
       const errors = await validateInput(CreateOperationMoneyInput, payload);
       expect(constraintsFor(errors, "moneyId")).toHaveLength(0);
     });
@@ -163,19 +162,20 @@ describe("CreateOperationMoneyInput", () => {
     });
   });
 
-  describe("balance (obrigatório, permite negativos)", () => {
-    it.each([
-      "100.00",
-      "0.00",
-      "1,234.56",
-      "50.00",
-      "100",
-      "-50.00",
-      "-100.00",
-    ])("aceita formato de moeda válido: %s", async (value) => {
-      const payload = { ...validPayload, balance: value };
+  describe("balance (obrigatório, permite negativos, exige decimais)", () => {
+    it.each(["100.00", "0.00", "1,234.56", "50.00", "-50.00", "-100.00"])(
+      "aceita formato de moeda válido: %s",
+      async (value) => {
+        const payload = { ...validPayload, balance: value };
+        const errors = await validateInput(CreateOperationMoneyInput, payload);
+        expect(constraintsFor(errors, "balance")).toHaveLength(0);
+      }
+    );
+
+    it("rejeita valor sem decimais (require_decimal: true)", async () => {
+      const payload = { ...validPayload, balance: "100" };
       const errors = await validateInput(CreateOperationMoneyInput, payload);
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
 
     it.each(["não é moeda", "", "100.5", "100.000"])(
@@ -203,15 +203,30 @@ describe("CreateOperationMoneyInput", () => {
     });
   });
 
-  describe("discount (opcional, permite negativos)", () => {
-    it.each(["100.00", "0.00", "-50.00", "1,234.56"])(
-      "aceita formato de moeda válido: %s",
+  describe("discount (opcional, DEVE ser negativo, exige decimais)", () => {
+    it.each(["-50.00", "-0.01", "-1,234.56"])(
+      "aceita formato negativo válido: %s",
       async (value) => {
         const payload = { ...validPayload, discount: value };
         const errors = await validateInput(CreateOperationMoneyInput, payload);
         expect(constraintsFor(errors, "discount")).toHaveLength(0);
       }
     );
+
+    it.each(["100.00", "0.00", "50.00", "1,234.56"])(
+      "rejeita valor não negativo (Matches exige hífen): %s",
+      async (value) => {
+        const payload = { ...validPayload, discount: value };
+        const errors = await validateInput(CreateOperationMoneyInput, payload);
+        expect(constraintsFor(errors, "discount")).toContain("matches");
+      }
+    );
+
+    it("rejeita valor negativo sem decimais (require_decimal: true)", async () => {
+      const payload = { ...validPayload, discount: "-100" };
+      const errors = await validateInput(CreateOperationMoneyInput, payload);
+      expect(constraintsFor(errors, "discount")).toContain("isCurrency");
+    });
 
     it("rejeita formato inválido", async () => {
       const payload = { ...validPayload, discount: "não é moeda" };
@@ -232,8 +247,8 @@ describe("CreateOperationMoneyInput", () => {
     });
   });
 
-  describe("forfeit (opcional, NÃO permite negativos)", () => {
-    it.each(["100.00", "0.00", "50.00"])(
+  describe("forfeit (opcional, NÃO permite negativos, exige decimais)", () => {
+    it.each(["100.00", "0.00", "50.00", "1,234.56"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const payload = { ...validPayload, forfeit: value };
@@ -244,6 +259,12 @@ describe("CreateOperationMoneyInput", () => {
 
     it("rejeita valor negativo (allow_negatives: false)", async () => {
       const payload = { ...validPayload, forfeit: "-50.00" };
+      const errors = await validateInput(CreateOperationMoneyInput, payload);
+      expect(constraintsFor(errors, "forfeit")).toContain("isCurrency");
+    });
+
+    it("rejeita valor sem decimais (require_decimal: true)", async () => {
+      const payload = { ...validPayload, forfeit: "100" };
       const errors = await validateInput(CreateOperationMoneyInput, payload);
       expect(constraintsFor(errors, "forfeit")).toContain("isCurrency");
     });
@@ -335,13 +356,21 @@ describe("CreateOperationMoneyInput", () => {
         moneyId: "uuid-invalido",
         tag: "a".repeat(65),
         balance: "não é moeda",
+        discount: "10.00",
         typeOperation: "INVALIDO" as unknown as OperationEnum,
         local: "INVALIDO" as unknown as LocalEnum,
       };
       const errors = await validateInput(CreateOperationMoneyInput, payload);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "local", "moneyId", "tag", "typeOperation"].sort()
+        [
+          "balance",
+          "discount",
+          "local",
+          "moneyId",
+          "tag",
+          "typeOperation",
+        ].sort()
       );
     });
   });
@@ -435,7 +464,7 @@ describe("ListOperationMoneyInput", () => {
   const validPayload = {
     limit: 10,
     offset: 0,
-    moneyId: "550e8400-e29b-41d4-a716-446655440000",
+    moneyId: UUID,
     tag: "Compra",
     typeOperation: OperationEnum.PIX,
     local: LocalEnum.INTERNAL,
@@ -529,7 +558,7 @@ describe("ListOperationMoneyInput", () => {
   describe("moneyId (obrigatório)", () => {
     it("aceita UUID v4 válido", async () => {
       const errors = await validateInput(ListOperationMoneyInput, {
-        moneyId: "550e8400-e29b-41d4-a716-446655440000",
+        moneyId: UUID,
       });
       expect(constraintsFor(errors, "moneyId")).toHaveLength(0);
     });

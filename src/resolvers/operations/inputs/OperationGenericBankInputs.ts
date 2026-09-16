@@ -7,6 +7,7 @@ import {
   IsInt,
   IsOptional,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
 } from "class-validator";
@@ -36,7 +37,7 @@ export class CreateOperationGenericBankInput {
 
   @Field(() => String)
   @IsCurrency(
-    { allow_negatives: true },
+    { allow_negatives: true, require_decimal: true, allow_decimal: true },
     { message: "Balance must be a valid currency amount." }
   )
   balance: string;
@@ -44,15 +45,16 @@ export class CreateOperationGenericBankInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsCurrency(
-    { allow_negatives: true },
+    { allow_negatives: true, require_decimal: true, allow_decimal: true },
     { message: "Discount must be a valid currency amount." }
   )
+  @Matches(/^-/, { message: "Discount must be a negative currency amount." })
   discount?: string | null;
 
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsCurrency(
-    { allow_negatives: false },
+    { allow_negatives: false, require_decimal: true, allow_decimal: true },
     { message: "Forfeit must be a valid currency amount." }
   )
   forfeit?: string | null;

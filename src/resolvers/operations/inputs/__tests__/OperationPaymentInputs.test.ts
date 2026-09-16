@@ -38,9 +38,8 @@ describe("CreateOperationPaymentInput", () => {
     tag: "Pagamento",
     description: "Descrição qualquer",
     balance: "100.00",
-    discount: "10.00",
+    discount: "-10.00",
     forfeit: "5.00",
-    typeOperation: OperationEnum.PAYMENT,
     local: LocalEnum.INTERNAL,
   };
 
@@ -65,6 +64,17 @@ describe("CreateOperationPaymentInput", () => {
         description: null,
         discount: null,
         forfeit: null,
+      };
+      const errors = await validateInput(CreateOperationPaymentInput, payload);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("não retorna erros com bankId/genericBankId/moneyId preenchidos", async () => {
+      const payload = {
+        ...validPayload,
+        bankId: UUID,
+        genericBankId: UUID_2,
+        moneyId: UUID_3,
       };
       const errors = await validateInput(CreateOperationPaymentInput, payload);
       expect(errors).toHaveLength(0);
@@ -287,21 +297,35 @@ describe("CreateOperationPaymentInput", () => {
     });
   });
 
-  describe("balance (obrigatório, permite negativos)", () => {
-    it.each([
-      "100.00",
-      "0.00",
-      "1,234.56",
-      "50.00",
-      "100",
-      "-50.00",
-      "-100.00",
-    ])("aceita formato de moeda válido: %s", async (value) => {
+  describe("balance (obrigatório, NÃO permite negativos, exige decimais)", () => {
+    it.each(["100.00", "0.00", "1,234.56", "50.00"])(
+      "aceita formato de moeda válido: %s",
+      async (value) => {
+        const errors = await validateInput(CreateOperationPaymentInput, {
+          ...validPayload,
+          balance: value,
+        });
+        expect(constraintsFor(errors, "balance")).toHaveLength(0);
+      }
+    );
+
+    it.each(["-50.00", "-100.00"])(
+      "rejeita valor negativo (allow_negatives: false): %s",
+      async (value) => {
+        const errors = await validateInput(CreateOperationPaymentInput, {
+          ...validPayload,
+          balance: value,
+        });
+        expect(constraintsFor(errors, "balance")).toContain("isCurrency");
+      }
+    );
+
+    it("rejeita valor sem decimais (require_decimal: true)", async () => {
       const errors = await validateInput(CreateOperationPaymentInput, {
         ...validPayload,
-        balance: value,
+        balance: "100",
       });
-      expect(constraintsFor(errors, "balance")).toHaveLength(0);
+      expect(constraintsFor(errors, "balance")).toContain("isCurrency");
     });
 
     it.each(["não é moeda", "", "100.5", "100.000"])(
@@ -330,9 +354,9 @@ describe("CreateOperationPaymentInput", () => {
     });
   });
 
-  describe("discount (opcional, permite negativos)", () => {
-    it.each(["100.00", "0.00", "-50.00", "1,234.56", "100"])(
-      "aceita formato de moeda válido: %s",
+  describe("discount (opcional, DEVE ser negativo)", () => {
+    it.each(["-50.00", "-0.01", "-1,234.56", "-100.00"])(
+      "aceita formato negativo válido: %s",
       async (value) => {
         const errors = await validateInput(CreateOperationPaymentInput, {
           ...validPayload,
@@ -342,7 +366,26 @@ describe("CreateOperationPaymentInput", () => {
       }
     );
 
-    it.each(["não é moeda", "", "100.5", "100.000"])(
+    it.each(["100.00", "0.00", "50.00", "1,234.56"])(
+      "rejeita valor não negativo (Matches exige hífen): %s",
+      async (value) => {
+        const errors = await validateInput(CreateOperationPaymentInput, {
+          ...validPayload,
+          discount: value,
+        });
+        expect(constraintsFor(errors, "discount")).toContain("matches");
+      }
+    );
+
+    it("rejeita valor negativo sem decimais (require_decimal: true)", async () => {
+      const errors = await validateInput(CreateOperationPaymentInput, {
+        ...validPayload,
+        discount: "-100",
+      });
+      expect(constraintsFor(errors, "discount")).toContain("isCurrency");
+    });
+
+    it.each(["não é moeda", "", "-100.5", "-100.000"])(
       "rejeita formato de moeda inválido: %s",
       async (value) => {
         const errors = await validateInput(CreateOperationPaymentInput, {
@@ -370,8 +413,8 @@ describe("CreateOperationPaymentInput", () => {
     });
   });
 
-  describe("forfeit (opcional, NÃO permite negativos)", () => {
-    it.each(["100.00", "0.00", "50.00", "1,234.56", "100"])(
+  describe("forfeit (opcional, NÃO permite negativos, exige decimais)", () => {
+    it.each(["100.00", "0.00", "50.00", "1,234.56"])(
       "aceita formato de moeda válido: %s",
       async (value) => {
         const errors = await validateInput(CreateOperationPaymentInput, {
@@ -386,6 +429,14 @@ describe("CreateOperationPaymentInput", () => {
       const errors = await validateInput(CreateOperationPaymentInput, {
         ...validPayload,
         forfeit: "-50.00",
+      });
+      expect(constraintsFor(errors, "forfeit")).toContain("isCurrency");
+    });
+
+    it("rejeita valor sem decimais (require_decimal: true)", async () => {
+      const errors = await validateInput(CreateOperationPaymentInput, {
+        ...validPayload,
+        forfeit: "100",
       });
       expect(constraintsFor(errors, "forfeit")).toContain("isCurrency");
     });
@@ -415,40 +466,6 @@ describe("CreateOperationPaymentInput", () => {
         forfeit: undefined,
       });
       expect(constraintsFor(errors, "forfeit")).toHaveLength(0);
-    });
-  });
-
-  describe("typeOperation (obrigatório)", () => {
-    it("aceita todos os valores do enum OperationEnum", async () => {
-      for (const value of Object.values(OperationEnum)) {
-        const errors = await validateInput(CreateOperationPaymentInput, {
-          ...validPayload,
-          typeOperation: value,
-        });
-        expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
-      }
-    });
-
-    it("rejeita valor inválido", async () => {
-      const errors = await validateInput(CreateOperationPaymentInput, {
-        ...validPayload,
-        typeOperation: "INVALIDO" as unknown as OperationEnum,
-      });
-      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
-    });
-
-    it("rejeita quando ausente", async () => {
-      const { typeOperation, ...payload } = validPayload;
-      const errors = await validateInput(CreateOperationPaymentInput, payload);
-      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
-    });
-
-    it("rejeita null", async () => {
-      const errors = await validateInput(CreateOperationPaymentInput, {
-        ...validPayload,
-        typeOperation: null,
-      } as unknown as CreateOperationPaymentInput);
-      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
     });
   });
 
@@ -492,13 +509,12 @@ describe("CreateOperationPaymentInput", () => {
         paymentId: "uuid-invalido",
         tag: "a".repeat(65),
         balance: "não é moeda",
-        typeOperation: "INVALIDO" as unknown as OperationEnum,
         local: "INVALIDO" as unknown as LocalEnum,
       };
       const errors = await validateInput(CreateOperationPaymentInput, payload);
       const properties = errors.map((e) => e.property).sort();
       expect(properties).toEqual(
-        ["balance", "local", "paymentId", "tag", "typeOperation"].sort()
+        ["balance", "local", "paymentId", "tag"].sort()
       );
     });
   });

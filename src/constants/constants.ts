@@ -61,6 +61,8 @@ export const TO_GENERIC_BANK_ID_REQUIRED =
   "To generic bank ID must be provided for internal transfers.";
 
 export const MONEY_NOT_FOUND = "Money not found.";
+export const MONEY_OR_BANK_ACCOUNT_NOT_FOUND =
+  "Money or Bank Account not found.";
 
 export const AMOUNT_INVALID_FOR_SEND = "Amount invalid for SEND operation.";
 
@@ -69,3 +71,5 @@ export const AMOUNT_INVALID_FOR_RECEIVE =
 
 export const TO_MONEY_ID_OMITTED_FOR_EXTERNAL =
   "To money ID must be omitted for external transfers.";
+
+export const ONLY_ONE_ID_MUST_BE_PROVIDED = "Only one ID must be provided.";
