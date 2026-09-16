@@ -38,8 +38,6 @@ export const START_DATE_AFTER_END_DATE = "Start date cannot be after end date.";
 export const MIN_AMOUNT_GREATER_THAN_MAX_AMOUNT =
   "Min amount cannot be greater than max amount.";
 
-export const BALANCE_INVALID = "Balance is not a valid currency.";
-
 export const INSUFFICIENT_BALANCE = "Insufficient balance.";
 
 export const OPERATION_NOT_FOUND = "Operation not found.";
