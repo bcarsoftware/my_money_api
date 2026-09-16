@@ -11,86 +11,6 @@ import {
   Matches,
 } from "class-validator";
 
-export class MoneySendVerify {
-  @IsCurrency(
-    { allow_negatives: true, allow_decimal: true },
-    {
-      message: "Balance must be a valid currency balance and not positive.",
-    }
-  )
-  @IsNotZero({ message: "Balance must not be zero." })
-  @Matches(/^-/, { message: "Balance must be less than zero." })
-  balance: string;
-
-  @IsIn([null, undefined], {
-    message: "Discount must be either null or undefined.",
-  })
-  discount?: string | null;
-
-  @IsIn([null, undefined], {
-    message: "Forfeit must be either null or undefined.",
-  })
-  forfeit?: string | null;
-
-  @IsCurrency(
-    { allow_negatives: true, allow_decimal: true },
-    {
-      message: "Amount must be a valid currency amount and not positive.",
-    }
-  )
-  @IsNotZero({ message: "Amount must not be zero." })
-  @Matches(/^-/, { message: "Amount must be less than zero." })
-  amount: string;
-
-  @IsEnum(OperationEnum, {
-    message: "Operation type must be a valid OperationEnum value.",
-  })
-  @Equals(OperationEnum.SEND, {
-    message: "Operation type must be exactly SEND.",
-  })
-  typeOperation: OperationEnum;
-}
-
-export class MoneyReceiveVerify {
-  @IsCurrency(
-    { allow_negatives: false, allow_decimal: true },
-    {
-      message: "Balance must be a valid currency balance and not negative.",
-    }
-  )
-  @IsNotZero({ message: "Balance must not be zero." })
-  @Matches(/^\d/, { message: "Balance must be greater than zero." })
-  balance: string;
-
-  @IsIn([null, undefined], {
-    message: "Discount must be either null or undefined.",
-  })
-  discount?: string | null;
-
-  @IsIn([null, undefined], {
-    message: "Forfeit must be either null or undefined.",
-  })
-  forfeit?: string | null;
-
-  @IsCurrency(
-    { allow_negatives: false, allow_decimal: true },
-    {
-      message: "Amount must be a valid currency amount and not negative.",
-    }
-  )
-  @IsNotZero({ message: "Amount must not be zero." })
-  @Matches(/^\d/, { message: "Amount must be greater than zero." })
-  amount: string;
-
-  @IsEnum(OperationEnum, {
-    message: "Operation type must be a valid OperationEnum value.",
-  })
-  @Equals(OperationEnum.RECEIVE, {
-    message: "Operation type must be exactly RECEIVE.",
-  })
-  typeOperation: OperationEnum;
-}
-
 export class PaymentVerify {
   @IsCurrency(
     { allow_negatives: false, allow_decimal: true },
@@ -234,21 +154,6 @@ export class BankBoxVerify {
     message: "Local must be exactly INTERNAL.",
   })
   local: LocalEnum;
-}
-
-export class MoneyVerify {
-  @IsIn(
-    [
-      OperationEnum.SEND,
-      OperationEnum.RECEIVE,
-      OperationEnum.TRANSFER,
-      OperationEnum.PAYMENT,
-    ],
-    {
-      message: "Operation type must be one of the valid money operation types.",
-    }
-  )
-  typeOperation: OperationEnum;
 }
 
 export class GenericBankVerify {
