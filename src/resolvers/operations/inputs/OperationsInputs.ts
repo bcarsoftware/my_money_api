@@ -1,6 +1,7 @@
 import { BankTransferEnum } from "@/enums/BankTrasnferEnum";
 import { GenericBankTransferEnum } from "@/enums/GenericTransferEnum";
 import { LocalEnum } from "@/enums/LocalEnum";
+import { MoneyTransferEnum } from "@/enums/MoneyTrasnferEnum";
 import { IsNotZero } from "@/utils/verifiers/decorators/IsNotZero";
 import {
   IsCurrency,
@@ -17,6 +18,10 @@ registerEnumType(BankTransferEnum, {
 
 registerEnumType(GenericBankTransferEnum, {
   name: "GenericBankTransferEnum",
+});
+
+registerEnumType(MoneyTransferEnum, {
+  name: "MoneyTransferEnum",
 });
 
 @InputType()
@@ -160,6 +165,39 @@ export class OperationGenericBankWithdrawInput {
 }
 
 @InputType()
+export class OperationMoneyTransferInput {
+  @Field(() => String)
+  @IsUUID("4", { message: "FromMoneyId must be a valid UUID." })
+  fromMoneyId: string;
+
+  @Field(() => String)
+  @IsOptional()
+  @IsUUID("4", { message: "ToMoneyId must be a valid UUID." })
+  toMoneyId?: string;
+
+  @Field(() => String)
+  @IsNotZero({ message: "Amount must not be zero." })
+  @IsCurrency(
+    {
+      allow_negatives: true,
+      require_decimal: true,
+    },
+    { message: "Amount must be a valid currency value." }
+  )
+  amount: string;
+
+  @Field(() => MoneyTransferEnum)
+  @IsEnum(MoneyTransferEnum, {
+    message: "TypeOperation must be SEND or RECEIVE.",
+  })
+  typeOperation: MoneyTransferEnum;
+
+  @Field(() => LocalEnum)
+  @IsEnum(LocalEnum, { message: "Local must be INTERNAL or EXTERNAL." })
+  local: LocalEnum;
+}
+
+@InputType()
 export class OperationMoneyDepositInput {
   @Field(() => String)
   @IsUUID("4", { message: "MoneyId must be a valid UUID." })
@@ -175,6 +213,10 @@ export class OperationMoneyDepositInput {
     { message: "Amount must be a valid currency value." }
   )
   amount: string;
+
+  @Field(() => LocalEnum)
+  @IsEnum(LocalEnum, { message: "Local must be INTERNAL or EXTERNAL." })
+  local: LocalEnum;
 }
 
 @InputType()
@@ -194,4 +236,8 @@ export class OperationMoneyWithdrawInput {
   )
   @Matches(/^-/, { message: "Amount must be a negative value." })
   amount: string;
+
+  @Field(() => LocalEnum)
+  @IsEnum(LocalEnum, { message: "Local must be INTERNAL or EXTERNAL." })
+  local: LocalEnum;
 }

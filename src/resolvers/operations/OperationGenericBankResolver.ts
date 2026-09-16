@@ -27,6 +27,11 @@ import {
   ListOperationGenericBankInput,
   UpdateOperationGenericBankInput,
 } from "@/resolvers/operations/inputs/OperationGenericBankInputs";
+import {
+  OperationGenericBankDepositInput,
+  OperationGenericBankTransferInput,
+  OperationGenericBankWithdrawInput,
+} from "@/resolvers/operations/inputs/OperationsInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
 import {
   DepositVerify,
@@ -45,11 +50,6 @@ import { randomUUID } from "@/utils/randomUUID";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { validate } from "class-validator";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
-import {
-  OperationGenericBankDepositInput,
-  OperationGenericBankTransferInput,
-  OperationGenericBankWithdrawInput,
-} from "./inputs/OperationsInputs";
 
 @Resolver()
 export class OperationGenericBankResolver {
@@ -111,6 +111,8 @@ export class OperationGenericBankResolver {
     const { userId } = context;
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    input.amount = clearDecimal(input.amount);
 
     if (input.local === LocalEnum.EXTERNAL && input.toGenericBankId)
       throw new Error(FROM_GENERIC_BANK_ID_MUST_OMITTED_EXTERNAL);

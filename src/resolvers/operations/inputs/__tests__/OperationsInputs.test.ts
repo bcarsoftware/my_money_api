@@ -5,6 +5,7 @@ import { validate, ValidationError } from "class-validator";
 import { BankTransferEnum } from "@/enums/BankTrasnferEnum";
 import { GenericBankTransferEnum } from "@/enums/GenericTransferEnum";
 import { LocalEnum } from "@/enums/LocalEnum";
+import { MoneyTransferEnum } from "@/enums/MoneyTrasnferEnum";
 import {
   OperationBankDepositInput,
   OperationBankTransferInput,
@@ -13,6 +14,7 @@ import {
   OperationGenericBankTransferInput,
   OperationGenericBankWithdrawInput,
   OperationMoneyDepositInput,
+  OperationMoneyTransferInput,
   OperationMoneyWithdrawInput,
 } from "@/resolvers/operations/inputs/OperationsInputs";
 
@@ -731,12 +733,13 @@ describe("OperationGenericBankWithdrawInput", () => {
 });
 
 // ============================================================
-// OperationMoneyDepositInput  ← NOVO
+// OperationMoneyDepositInput
 // ============================================================
 describe("OperationMoneyDepositInput", () => {
   const validPayload = {
     moneyId: UUID,
     amount: "100.00",
+    local: LocalEnum.EXTERNAL,
   };
 
   describe("caminho feliz", () => {
@@ -754,6 +757,16 @@ describe("OperationMoneyDepositInput", () => {
         amount: "1,234,567.89",
       });
       expect(constraintsFor(errors, "amount")).toHaveLength(0);
+    });
+
+    it("aceita todos os valores do enum LocalEnum", async () => {
+      for (const local of Object.values(LocalEnum)) {
+        const errors = await validateInput(OperationMoneyDepositInput, {
+          ...validPayload,
+          local,
+        });
+        expect(constraintsFor(errors, "local")).toHaveLength(0);
+      }
     });
   });
 
@@ -831,15 +844,45 @@ describe("OperationMoneyDepositInput", () => {
       expect(constraintsFor(errors, "amount")).toContain("isCurrency");
     });
   });
+
+  describe("local", () => {
+    it("rejeita valor fora do enum", async () => {
+      const errors = await validateInput(OperationMoneyDepositInput, {
+        ...validPayload,
+        local: "INVALIDO" as unknown as LocalEnum,
+      });
+      expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { local, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyDepositInput, payload);
+      expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+  });
+
+  describe("múltiplos erros simultâneos", () => {
+    it("acumula erros de diferentes campos", async () => {
+      const payload = {
+        moneyId: "nao-e-uuid",
+        amount: "0.00",
+        local: "INVALIDO" as unknown as LocalEnum,
+      };
+      const errors = await validateInput(OperationMoneyDepositInput, payload);
+      const properties = errors.map((e) => e.property).sort();
+      expect(properties).toEqual(["amount", "local", "moneyId"].sort());
+    });
+  });
 });
 
 // ============================================================
-// OperationMoneyWithdrawInput  ← NOVO
+// OperationMoneyWithdrawInput
 // ============================================================
 describe("OperationMoneyWithdrawInput", () => {
   const validPayload = {
     moneyId: UUID,
     amount: "-100.00",
+    local: LocalEnum.EXTERNAL,
   };
 
   describe("caminho feliz", () => {
@@ -857,6 +900,16 @@ describe("OperationMoneyWithdrawInput", () => {
         amount: "-1,234,567.89",
       });
       expect(constraintsFor(errors, "amount")).toHaveLength(0);
+    });
+
+    it("aceita todos os valores do enum LocalEnum", async () => {
+      for (const local of Object.values(LocalEnum)) {
+        const errors = await validateInput(OperationMoneyWithdrawInput, {
+          ...validPayload,
+          local,
+        });
+        expect(constraintsFor(errors, "local")).toHaveLength(0);
+      }
     });
   });
 
@@ -931,6 +984,292 @@ describe("OperationMoneyWithdrawInput", () => {
       const { amount, ...payload } = validPayload;
       const errors = await validateInput(OperationMoneyWithdrawInput, payload);
       expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+    });
+  });
+
+  describe("local", () => {
+    it("rejeita valor fora do enum", async () => {
+      const errors = await validateInput(OperationMoneyWithdrawInput, {
+        ...validPayload,
+        local: "INVALIDO" as unknown as LocalEnum,
+      });
+      expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { local, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyWithdrawInput, payload);
+      expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+  });
+
+  describe("múltiplos erros simultâneos", () => {
+    it("acumula erros de diferentes campos", async () => {
+      const payload = {
+        moneyId: "nao-e-uuid",
+        amount: "100.00",
+        local: "INVALIDO" as unknown as LocalEnum,
+      };
+      const errors = await validateInput(OperationMoneyWithdrawInput, payload);
+      const properties = errors.map((e) => e.property).sort();
+      expect(properties).toEqual(["amount", "local", "moneyId"].sort());
+    });
+  });
+});
+
+// ============================================================
+// OperationMoneyTransferInput
+// ============================================================
+describe("OperationMoneyTransferInput", () => {
+  const validPayload = {
+    fromMoneyId: UUID,
+    toMoneyId: UUID_2,
+    amount: "-100.00",
+    typeOperation: MoneyTransferEnum.SEND,
+    local: LocalEnum.INTERNAL,
+  };
+
+  describe("caminho feliz", () => {
+    it("não retorna erros com todos os campos válidos", async () => {
+      const errors = await validateInput(
+        OperationMoneyTransferInput,
+        validPayload
+      );
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita toMoneyId omitido (opcional)", async () => {
+      const { toMoneyId, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyTransferInput, payload);
+      expect(errors).toHaveLength(0);
+    });
+
+    it("aceita todos os valores do enum MoneyTransferEnum", async () => {
+      for (const typeOperation of Object.values(MoneyTransferEnum)) {
+        const errors = await validateInput(OperationMoneyTransferInput, {
+          ...validPayload,
+          typeOperation,
+        });
+        expect(constraintsFor(errors, "typeOperation")).toHaveLength(0);
+      }
+    });
+
+    it("aceita todos os valores do enum LocalEnum", async () => {
+      for (const local of Object.values(LocalEnum)) {
+        const errors = await validateInput(OperationMoneyTransferInput, {
+          ...validPayload,
+          local,
+        });
+        expect(constraintsFor(errors, "local")).toHaveLength(0);
+      }
+    });
+
+    it("aceita amount negativo (allow_negatives: true)", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        amount: "-100.00",
+      });
+      expect(constraintsFor(errors, "amount")).toHaveLength(0);
+    });
+
+    it("aceita amount positivo (allow_negatives: true)", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        amount: "100.00",
+      });
+      expect(constraintsFor(errors, "amount")).toHaveLength(0);
+    });
+  });
+
+  describe("fromMoneyId", () => {
+    it("aceita UUID v4 válido", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        fromMoneyId: UUID,
+      });
+      expect(constraintsFor(errors, "fromMoneyId")).toHaveLength(0);
+    });
+
+    it("rejeita UUID com versão diferente de 4", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        fromMoneyId: "550e8400-e29b-11d4-a716-446655440000",
+      });
+      expect(constraintsFor(errors, "fromMoneyId")).toContain("isUuid");
+    });
+
+    it("rejeita string não UUID", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        fromMoneyId: "nao-e-uuid",
+      });
+      expect(constraintsFor(errors, "fromMoneyId")).toContain("isUuid");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { fromMoneyId, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyTransferInput, payload);
+      expect(constraintsFor(errors, "fromMoneyId")).toContain("isUuid");
+    });
+
+    it("rejeita null", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        fromMoneyId: null as unknown as string,
+      });
+      expect(constraintsFor(errors, "fromMoneyId")).toContain("isUuid");
+    });
+  });
+
+  describe("toMoneyId (opcional)", () => {
+    it("aceita UUID v4 válido", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        toMoneyId: UUID_2,
+      });
+      expect(constraintsFor(errors, "toMoneyId")).toHaveLength(0);
+    });
+
+    it("rejeita UUID com versão diferente de 4", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        toMoneyId: "550e8400-e29b-11d4-a716-446655440000",
+      });
+      expect(constraintsFor(errors, "toMoneyId")).toContain("isUuid");
+    });
+
+    it("rejeita string não UUID quando presente", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        toMoneyId: "nao-e-uuid",
+      });
+      expect(constraintsFor(errors, "toMoneyId")).toContain("isUuid");
+    });
+
+    it("aceita undefined (omitido)", async () => {
+      const { toMoneyId, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyTransferInput, payload);
+      expect(constraintsFor(errors, "toMoneyId")).toHaveLength(0);
+    });
+
+    it("aceita null (opcional)", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        toMoneyId: null as unknown as string,
+      });
+      expect(constraintsFor(errors, "toMoneyId")).toHaveLength(0);
+    });
+  });
+
+  describe("amount", () => {
+    it.each(["100.00", "0.01", "-100.00", "1,234.56"])(
+      "aceita formato de moeda válido: %s",
+      async (value) => {
+        const errors = await validateInput(OperationMoneyTransferInput, {
+          ...validPayload,
+          amount: value,
+        });
+        expect(constraintsFor(errors, "amount")).not.toContain("isCurrency");
+        expect(constraintsFor(errors, "amount")).not.toContain("isNotZero");
+      }
+    );
+
+    it("rejeita zero (isNotZero)", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        amount: "0.00",
+      });
+      expect(constraintsFor(errors, "amount")).toContain("isNotZero");
+    });
+
+    it.each(["não é moeda", "", "100", "100.5"])(
+      "rejeita formato de moeda inválido: %s",
+      async (value) => {
+        const errors = await validateInput(OperationMoneyTransferInput, {
+          ...validPayload,
+          amount: value,
+        });
+        expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+      }
+    );
+
+    it("rejeita quando ausente", async () => {
+      const { amount, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyTransferInput, payload);
+      expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+    });
+
+    it("rejeita null", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        amount: null as unknown as string,
+      });
+      expect(constraintsFor(errors, "amount")).toContain("isCurrency");
+    });
+  });
+
+  describe("typeOperation", () => {
+    it("rejeita valor fora do enum", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        typeOperation: "INVALIDO" as unknown as MoneyTransferEnum,
+      });
+      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { typeOperation, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyTransferInput, payload);
+      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
+    });
+
+    it("rejeita null", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        typeOperation: null as unknown as MoneyTransferEnum,
+      });
+      expect(constraintsFor(errors, "typeOperation")).toContain("isEnum");
+    });
+  });
+
+  describe("local", () => {
+    it("rejeita valor fora do enum", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        local: "INVALIDO" as unknown as LocalEnum,
+      });
+      expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+
+    it("rejeita quando ausente", async () => {
+      const { local, ...payload } = validPayload;
+      const errors = await validateInput(OperationMoneyTransferInput, payload);
+      expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+
+    it("rejeita null", async () => {
+      const errors = await validateInput(OperationMoneyTransferInput, {
+        ...validPayload,
+        local: null as unknown as LocalEnum,
+      });
+      expect(constraintsFor(errors, "local")).toContain("isEnum");
+    });
+  });
+
+  describe("múltiplos erros simultâneos", () => {
+    it("acumula erros de diferentes campos", async () => {
+      const payload = {
+        fromMoneyId: "nao-e-uuid",
+        toMoneyId: "nao-e-uuid",
+        amount: "0.00",
+        typeOperation: "INVALIDO" as unknown as MoneyTransferEnum,
+        local: "INVALIDO" as unknown as LocalEnum,
+      };
+      const errors = await validateInput(OperationMoneyTransferInput, payload);
+      const properties = errors.map((e) => e.property).sort();
+      expect(properties).toEqual(
+        ["amount", "fromMoneyId", "local", "toMoneyId", "typeOperation"].sort()
+      );
     });
   });
 });
