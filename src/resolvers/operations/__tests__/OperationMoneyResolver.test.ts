@@ -4,7 +4,9 @@ import {
   AMOUNT_INVALID_FOR_RECEIVE,
   AMOUNT_INVALID_FOR_SEND,
   INSUFFICIENT_BALANCE,
+  INVALID_OPERATION_ID,
   MONEY_NOT_FOUND,
+  OPERATION_NOT_FOUND,
   TO_MONEY_ID_OMITTED_FOR_EXTERNAL,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
@@ -16,13 +18,17 @@ import { MoneyTransferEnum } from "@/enums/MoneyTrasnferEnum";
 import { OperationEnum } from "@/enums/OperationEnum";
 import { OperationMoneyResolver } from "@/resolvers/operations/OperationMoneyResolver";
 import { toOperationMoneyDto } from "@/resolvers/operations/dtos/toOperationMoneyDto";
-import { ListOperationMoneyInput } from "@/resolvers/operations/inputs/OperationMoneyInputs";
+import {
+  ListOperationMoneyInput,
+  UpdateOperationMoneyInput,
+} from "@/resolvers/operations/inputs/OperationMoneyInputs";
 import {
   OperationMoneyDepositInput,
   OperationMoneyTransferInput,
   OperationMoneyWithdrawInput,
 } from "@/resolvers/operations/inputs/OperationsInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
+import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
 import {
   clearDecimal,
   decimalGreaterThan,
@@ -40,6 +46,7 @@ jest.mock("@/utils/currencyUtil");
 jest.mock("@/utils/randomUUID");
 jest.mock("@/resolvers/operations/dtos/toOperationMoneyDto");
 jest.mock("@/resolvers/operations/utils/generalQueryFilter");
+jest.mock("@/resolvers/operations/utils/operationUtils");
 jest.mock("@/utils/verifiers/decorators/Protected", () => ({
   Protected: () => () => {},
 }));
@@ -52,6 +59,7 @@ const mockedDecimalGreaterThan = jest.mocked(decimalGreaterThan);
 const mockedDecimalMultiply = jest.mocked(decimalMultiply);
 const mockedDecimalSum = jest.mocked(decimalSum);
 const mockedRandomUUID = jest.mocked(randomUUID);
+const mockedUuidFourVerify = jest.mocked(uuidFourVerify);
 
 // ============================================================
 // Helpers
@@ -205,6 +213,7 @@ describe("OperationMoneyResolver", () => {
     mockedDecimalMultiply.mockReturnValue("100.00");
     mockedDecimalSum.mockReturnValue("1100.00");
     mockedRandomUUID.mockReturnValue("reg-uuid-1234");
+    mockedUuidFourVerify.mockReturnValue(true);
   });
 
   // ============================================================
@@ -284,6 +293,111 @@ describe("OperationMoneyResolver", () => {
       await expect(
         resolver.operationMoneyList(makeContext(), listInput)
       ).rejects.toThrow("Failed to fetch operation money list.");
+    });
+  });
+
+  // ============================================================
+  // operationMoneyUpdate
+  // ============================================================
+  describe("operationMoneyUpdate", () => {
+    const updateInput: UpdateOperationMoneyInput = {
+      tag: "Nova tag",
+      description: "Nova descrição",
+    };
+
+    it("atualiza os campos fornecidos, salva via em.save e retorna o DTO", async () => {
+      const operation = makeOperation();
+      mockEm.findOne.mockResolvedValue(operation);
+
+      const result = await resolver.operationMoneyUpdate(
+        makeContext(),
+        "op-1",
+        updateInput
+      );
+
+      expect(operation.tag).toBe("Nova tag");
+      expect(operation.description).toBe("Nova descrição");
+      expect(mockEm.save).toHaveBeenCalledWith(OperationMoney, operation);
+      expect(result).toBeDefined();
+    });
+
+    it("permite atualizar description para null", async () => {
+      const operation = makeOperation({ description: "Antiga" });
+      mockEm.findOne.mockResolvedValue(operation);
+
+      await resolver.operationMoneyUpdate(makeContext(), "op-1", {
+        description: null,
+      });
+
+      expect(operation.description).toBeNull();
+    });
+
+    it("ignora campos undefined (mantém originais)", async () => {
+      const operation = makeOperation({
+        tag: "Original",
+        description: "Desc",
+      });
+      mockEm.findOne.mockResolvedValue(operation);
+
+      await resolver.operationMoneyUpdate(makeContext(), "op-1", {});
+
+      expect(operation.tag).toBe("Original");
+      expect(operation.description).toBe("Desc");
+    });
+
+    it("busca a operação pelo id e userId", async () => {
+      const operation = makeOperation();
+      mockEm.findOne.mockResolvedValue(operation);
+
+      await resolver.operationMoneyUpdate(makeContext(), "op-1", updateInput);
+
+      expect(mockEm.findOne).toHaveBeenCalledWith(OperationMoney, {
+        where: { id: "op-1", userId: "user-1" },
+      });
+    });
+
+    it("lança USER_NOT_AUTHENTICATED quando userId ausente", async () => {
+      await expect(
+        resolver.operationMoneyUpdate(
+          makeContext({ userId: undefined }),
+          "op-1",
+          updateInput
+        )
+      ).rejects.toThrow(USER_NOT_AUTHENTICATED);
+    });
+
+    it("lança INVALID_OPERATION_ID quando o id não é UUID v4", async () => {
+      mockedUuidFourVerify.mockReturnValueOnce(false);
+
+      await expect(
+        resolver.operationMoneyUpdate(makeContext(), "nao-uuid", updateInput)
+      ).rejects.toThrow(INVALID_OPERATION_ID);
+
+      expect(mockEm.findOne).not.toHaveBeenCalled();
+    });
+
+    it("lança OPERATION_NOT_FOUND quando a operação não existe", async () => {
+      mockEm.findOne.mockResolvedValue(null);
+
+      await expect(
+        resolver.operationMoneyUpdate(
+          makeContext(),
+          "op-inexistente",
+          updateInput
+        )
+      ).rejects.toThrow(OPERATION_NOT_FOUND);
+
+      expect(mockEm.save).not.toHaveBeenCalled();
+    });
+
+    it("propaga erro genérico quando em.save falha", async () => {
+      const operation = makeOperation();
+      mockEm.findOne.mockResolvedValue(operation);
+      mockEm.save.mockRejectedValueOnce(new Error("DB error"));
+
+      await expect(
+        resolver.operationMoneyUpdate(makeContext(), "op-1", updateInput)
+      ).rejects.toThrow("Failed to update operation money.");
     });
   });
 

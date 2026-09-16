@@ -73,3 +73,6 @@ export const TO_MONEY_ID_OMITTED_FOR_EXTERNAL =
   "To money ID must be omitted for external transfers.";
 
 export const ONLY_ONE_ID_MUST_BE_PROVIDED = "Only one ID must be provided.";
+
+export const INVALID_PAYMENT_ID = "Invalid payment ID.";
+export const INVALID_OPERATION_ID = "Invalid operation ID.";

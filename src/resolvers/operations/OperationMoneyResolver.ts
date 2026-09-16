@@ -2,7 +2,9 @@ import {
   AMOUNT_INVALID_FOR_RECEIVE,
   AMOUNT_INVALID_FOR_SEND,
   INSUFFICIENT_BALANCE,
+  INVALID_OPERATION_ID,
   MONEY_NOT_FOUND,
+  OPERATION_NOT_FOUND,
   TO_MONEY_ID_OMITTED_FOR_EXTERNAL,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
@@ -20,6 +22,7 @@ import { toOperationMoneyDto } from "@/resolvers/operations/dtos/toOperationMone
 import {
   CreateOperationMoneyInput,
   ListOperationMoneyInput,
+  UpdateOperationMoneyInput,
 } from "@/resolvers/operations/inputs/OperationMoneyInputs";
 import {
   OperationMoneyDepositInput,
@@ -27,6 +30,7 @@ import {
   OperationMoneyWithdrawInput,
 } from "@/resolvers/operations/inputs/OperationsInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
+import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
 import {
   clearDecimal,
   decimalGreaterThan,
@@ -78,6 +82,46 @@ export class OperationMoneyResolver {
         console.error(error);
 
         throw new Error("Failed to fetch operation money list.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationMoneyDto)
+  async operationMoneyUpdate(
+    @Ctx() context: MyContext,
+    @Arg("operationId", () => String)
+    operationId: string,
+    @Arg("input", () => UpdateOperationMoneyInput)
+    input: UpdateOperationMoneyInput
+  ): Promise<OperationMoneyDto> {
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    if (!uuidFourVerify(operationId)) throw new Error(INVALID_OPERATION_ID);
+
+    return await loggedContext(context, async (em) => {
+      const operation = await em.findOne(OperationMoney, {
+        where: { id: operationId, userId },
+      });
+
+      if (!operation) throw new Error(OPERATION_NOT_FOUND);
+
+      operation.tag = input.tag ?? operation.tag;
+      operation.description =
+        input.description !== undefined
+          ? input.description
+          : operation.description;
+
+      try {
+        const newOperation = await em.save(OperationMoney, operation);
+
+        return toOperationMoneyDto(newOperation);
+      } catch (error) {
+        console.error("Failed to update operation money:", error);
+
+        throw new Error("Failed to update operation money.");
       }
     });
   }

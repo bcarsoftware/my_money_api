@@ -1,7 +1,9 @@
 import {
   INSUFFICIENT_BALANCE,
+  INVALID_OPERATION_ID,
   MONEY_OR_BANK_ACCOUNT_NOT_FOUND,
   ONLY_ONE_ID_MUST_BE_PROVIDED,
+  OPERATION_NOT_FOUND,
   PAYMENT_NOT_FOUND,
   USER_NOT_AUTHENTICATED,
 } from "@/constants/constants";
@@ -19,6 +21,7 @@ import {
 import {
   CreateOperationPaymentInput,
   ListOperationPaymentInput,
+  UpdateOperationPaymentInput,
 } from "@/resolvers/operations/inputs/OperationPaymentInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
 import {
@@ -32,6 +35,7 @@ import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { EntityManager } from "typeorm";
 import { toOperationPaymentDto } from "./dtos/toOperationPaymentDto";
+import { uuidFourVerify } from "./utils/operationUtils";
 
 interface Identity {
   bankId?: string | null;
@@ -85,7 +89,47 @@ export class OperationPaymentResolver {
 
   @Protected()
   @Mutation(() => OperationPaymentDto)
-  async operationPayPayment(
+  async operationPaymentUpdate(
+    @Ctx() context: MyContext,
+    @Arg("operationId", () => String)
+    operationId: string,
+    @Arg("input", () => UpdateOperationPaymentInput)
+    input: UpdateOperationPaymentInput
+  ): Promise<OperationPaymentDto> {
+    const { userId } = context;
+
+    if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
+
+    if (!uuidFourVerify(operationId)) throw new Error(INVALID_OPERATION_ID);
+
+    return await loggedContext(context, async (em) => {
+      const operation = await em.findOne(OperationPayment, {
+        where: { id: operationId, userId },
+      });
+
+      if (!operation) throw new Error(OPERATION_NOT_FOUND);
+
+      operation.tag = input.tag ?? operation.tag;
+      operation.description =
+        input.description !== undefined
+          ? input.description
+          : operation.description;
+
+      try {
+        const newOperation = await em.save(OperationPayment, operation);
+
+        return toOperationPaymentDto(newOperation);
+      } catch (error) {
+        console.error("Failed to update operation payment:", error);
+
+        throw new Error("Failed to update operation payment.");
+      }
+    });
+  }
+
+  @Protected()
+  @Mutation(() => OperationPaymentDto)
+  async operationMakePayment(
     @Ctx() context: MyContext,
     @Arg("input", () => CreateOperationPaymentInput)
     input: CreateOperationPaymentInput
@@ -132,6 +176,8 @@ export class OperationPaymentResolver {
 
         const operation = await em.save(OperationPayment, {
           userId,
+          tag: input.tag,
+          description: input.description ?? null,
           paymentId: input.paymentId,
           bankId: input.bankId,
           genericBankId: input.genericBankId,
@@ -139,7 +185,8 @@ export class OperationPaymentResolver {
           balance: input.balance ?? null,
           discount: input.discount ?? null,
           forfeit: input.forfeit ?? null,
-          typeOpertion: OperationEnum.PAYMENT,
+          typeOperation: OperationEnum.PAYMENT,
+          local: input.local,
           amount,
           operationRegister,
         });
