@@ -9,6 +9,7 @@ import {
   GENERIC_BANK_BOX_REQUIRED,
   GENERIC_BANK_NOT_FOUND,
   INSUFFICIENT_BALANCE,
+  INVALID_OPERATION_ID,
   OPERATION_NOT_FOUND,
   OPERATION_TYPE_INVALID,
   TO_GENERIC_BANK_ID_REQUIRED,
@@ -35,6 +36,7 @@ import {
   OperationGenericBankWithdrawInput,
 } from "@/resolvers/operations/inputs/OperationsInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
+import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
 import {
   clearDecimal,
   decimalGreaterThan,
@@ -52,6 +54,7 @@ jest.mock("@/utils/currencyUtil");
 jest.mock("@/utils/randomUUID");
 jest.mock("@/resolvers/operations/dtos/toOperationGenericBankDto");
 jest.mock("@/resolvers/operations/utils/generalQueryFilter");
+jest.mock("@/resolvers/operations/utils/operationUtils"); // 👈 FIX
 jest.mock("@/utils/verifiers/decorators/Protected", () => ({
   Protected: () => () => {},
 }));
@@ -63,6 +66,7 @@ jest.mock("class-validator", () => ({
 const mockedLoggedContext = jest.mocked(loggedContext);
 const mockedToOperationGenericBankDto = jest.mocked(toOperationGenericBankDto);
 const mockedGeneralQueryFilter = jest.mocked(generalQueryFilter);
+const mockedUuidFourVerify = jest.mocked(uuidFourVerify); // 👈 FIX
 const mockedClearDecimal = jest.mocked(clearDecimal);
 const mockedDecimalGreaterThan = jest.mocked(decimalGreaterThan);
 const mockedDecimalMultiply = jest.mocked(decimalMultiply);
@@ -225,6 +229,7 @@ describe("OperationGenericBankResolver", () => {
     mockedGeneralQueryFilter.mockReturnValue(
       {} as ReturnType<typeof generalQueryFilter>
     );
+    mockedUuidFourVerify.mockReturnValue(true); // 👈 FIX — destrava todo o bloco de update
     mockedClearDecimal.mockImplementation((v) => v);
     mockedDecimalGreaterThan.mockReturnValue(false);
     mockedDecimalMultiply.mockReturnValue("100.00");
@@ -336,9 +341,6 @@ describe("OperationGenericBankResolver", () => {
         .mockResolvedValueOnce(originBank)
         .mockResolvedValueOnce(destinyBank);
 
-      // 1ª: BALANCE_MUST_BE_POSITIVE → false
-      // 2ª: status (decimalGreaterThan("0.00", amount)) → false
-      // 3ª: INSUFFICIENT_BALANCE → false
       mockedDecimalGreaterThan
         .mockReturnValueOnce(false)
         .mockReturnValueOnce(false)
@@ -360,8 +362,6 @@ describe("OperationGenericBankResolver", () => {
       const originBank = makeGenericBank({ balance: "1000.00" });
       mockEm.findOne.mockResolvedValueOnce(originBank);
 
-      // 1ª: status → false
-      // 2ª: INSUFFICIENT_BALANCE (EXTERNAL) → false
       mockedDecimalGreaterThan
         .mockReturnValueOnce(false)
         .mockReturnValueOnce(false);
@@ -458,9 +458,6 @@ describe("OperationGenericBankResolver", () => {
         .mockResolvedValueOnce(originBank)
         .mockResolvedValueOnce(destinyBank);
 
-      // 1ª: BALANCE_MUST_BE_POSITIVE → false
-      // 2ª: status → false
-      // 3ª: INSUFFICIENT_BALANCE → true
       mockedDecimalGreaterThan
         .mockReturnValueOnce(false)
         .mockReturnValueOnce(false)
@@ -478,9 +475,6 @@ describe("OperationGenericBankResolver", () => {
       const originBank = makeGenericBank({ balance: "50.00" });
       mockEm.findOne.mockResolvedValueOnce(originBank);
 
-      // 1ª: status (decimalGreaterThan("0.00", "-100.00")) → true (para "Sent.")
-      // 2ª: EXTERNAL check parte 1 (decimalGreaterThan("0.00", "-100.00")) → true
-      // 3ª: EXTERNAL check parte 2 (decimalGreaterThan("100.00", "50.00")) → true
       mockedDecimalGreaterThan
         .mockReturnValueOnce(true)
         .mockReturnValueOnce(true)
@@ -581,6 +575,18 @@ describe("OperationGenericBankResolver", () => {
           updateInput
         )
       ).rejects.toThrow(USER_NOT_AUTHENTICATED);
+    });
+
+    it("lança INVALID_OPERATION_ID quando uuidFourVerify retorna false", async () => {
+      mockedUuidFourVerify.mockReturnValueOnce(false);
+
+      await expect(
+        resolver.operationGenericBankUpdate(
+          makeContext(),
+          "invalid-uuid",
+          updateInput
+        )
+      ).rejects.toThrow(INVALID_OPERATION_ID);
     });
 
     it("lança OPERATION_NOT_FOUND quando operação não existe", async () => {

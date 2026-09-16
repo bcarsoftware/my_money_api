@@ -5,6 +5,7 @@ import {
   GENERIC_BANK_BOX_REQUIRED,
   GENERIC_BANK_NOT_FOUND,
   INSUFFICIENT_BALANCE,
+  INVALID_OPERATION_ID,
   OPERATION_NOT_FOUND,
   OPERATION_TYPE_INVALID,
   TO_GENERIC_BANK_ID_REQUIRED,
@@ -33,6 +34,7 @@ import {
   OperationGenericBankWithdrawInput,
 } from "@/resolvers/operations/inputs/OperationsInputs";
 import { generalQueryFilter } from "@/resolvers/operations/utils/generalQueryFilter";
+import { uuidFourVerify } from "@/resolvers/operations/utils/operationUtils";
 import {
   DepositVerify,
   DiscountForfeitOmitted,
@@ -208,7 +210,7 @@ export class OperationGenericBankResolver {
   @Mutation(() => OperationGenericBankDto)
   async operationGenericBankUpdate(
     @Ctx() context: MyContext,
-    @Arg("id", () => String) id: string,
+    @Arg("operationId", () => String) operationId: string,
     @Arg("input", () => UpdateOperationGenericBankInput)
     input: UpdateOperationGenericBankInput
   ): Promise<OperationGenericBankDto> {
@@ -216,9 +218,11 @@ export class OperationGenericBankResolver {
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
+    if (!uuidFourVerify(operationId)) throw new Error(INVALID_OPERATION_ID);
+
     return await loggedContext(context, async (em) => {
       const operation = await em.findOne(OperationGenericBank, {
-        where: { id, userId },
+        where: { id: operationId, userId },
       });
 
       if (!operation) throw new Error(OPERATION_NOT_FOUND);

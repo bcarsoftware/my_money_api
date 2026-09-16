@@ -4,6 +4,7 @@ import {
   BANK_NOT_FOUND,
   FROM_BANK_ID_MUST_OMITTED_EXTERNAL,
   INSUFFICIENT_BALANCE,
+  INVALID_OPERATION_ID,
   INVOICE_NOT_FOUND,
   OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX,
   OPERATION_NOT_FOUND,
@@ -104,7 +105,7 @@ export class OperationBankResolver {
   @Mutation(() => OperationBankDto)
   async operationBankUpdate(
     @Ctx() context: MyContext,
-    @Arg("id", () => String) id: string,
+    @Arg("operationId", () => String) operationId: string,
     @Arg("input", () => UpdateOperationBankInput)
     input: UpdateOperationBankInput
   ): Promise<OperationBankDto> {
@@ -112,9 +113,11 @@ export class OperationBankResolver {
 
     if (!userId) throw new Error(USER_NOT_AUTHENTICATED);
 
+    if (!uuidFourVerify(operationId)) throw new Error(INVALID_OPERATION_ID);
+
     return await loggedContext(context, async (em) => {
       const operation = await em.findOne(OperationBank, {
-        where: { id, userId },
+        where: { id: operationId, userId },
       });
 
       if (!operation) throw new Error(OPERATION_NOT_FOUND);
@@ -507,7 +510,7 @@ export class OperationBankResolver {
 
         const operation = em.create(OperationBank, {
           ...input,
-          registerOperation,
+          operationRegister: registerOperation,
           userId,
           amount: input.balance,
         });

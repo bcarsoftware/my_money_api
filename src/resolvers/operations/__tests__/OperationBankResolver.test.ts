@@ -8,6 +8,7 @@ import {
   BANK_NOT_FOUND,
   FROM_BANK_ID_MUST_OMITTED_EXTERNAL,
   INSUFFICIENT_BALANCE,
+  INVALID_OPERATION_ID,
   INVOICE_NOT_FOUND,
   OPERATION_BANK_INVALID_BALANCE_TO_BANK_BOX,
   OPERATION_NOT_FOUND,
@@ -227,7 +228,6 @@ describe("OperationBankResolver", () => {
   });
 
   beforeEach(() => {
-    // ⚠️ resetAllMocks limpa filas de `Once` pendentes — evita vazamento entre testes.
     jest.resetAllMocks();
 
     resolver = new OperationBankResolver();
@@ -408,6 +408,14 @@ describe("OperationBankResolver", () => {
       ).rejects.toThrow(USER_NOT_AUTHENTICATED);
     });
 
+    it("lança INVALID_OPERATION_ID quando uuidFourVerify retorna false", async () => {
+      mockedUuidFourVerify.mockReturnValueOnce(false);
+
+      await expect(
+        resolver.operationBankUpdate(makeContext(), "invalid-uuid", updateInput)
+      ).rejects.toThrow(INVALID_OPERATION_ID);
+    });
+
     it("lança OPERATION_NOT_FOUND quando operação não existe", async () => {
       mockEm.findOne.mockResolvedValue(null);
 
@@ -458,6 +466,21 @@ describe("OperationBankResolver", () => {
         })
       );
       expect(result).toBeDefined();
+    });
+
+    it("gera tag e description com o nome do banco", async () => {
+      const bank = makeBank({ name: "Banco X" });
+      mockEm.findOne.mockResolvedValue(bank);
+
+      await resolver.operationBankDeposit(makeContext(), makeDepositInput());
+
+      expect(mockEm.save).toHaveBeenCalledWith(
+        OperationBank,
+        expect.objectContaining({
+          tag: "Deposit into bank Banco X.",
+          description: "Deposit of 100.00 into bank Banco X.",
+        })
+      );
     });
 
     it("chama clearDecimal em input.amount", async () => {
@@ -515,6 +538,7 @@ describe("OperationBankResolver", () => {
         expect.objectContaining({
           typeOperation: OperationEnum.WITHDRAW,
           local: LocalEnum.EXTERNAL,
+          operationRegister: "reg-uuid-1234",
         })
       );
       expect(mockEm.save).toHaveBeenCalledWith(Bank, bank);
@@ -580,8 +604,6 @@ describe("OperationBankResolver", () => {
         .mockResolvedValueOnce(originBank)
         .mockResolvedValueOnce(destinationBank);
 
-      // Internal: 1ª checagem (BALANCE_MUST_BE_POSITIVE) → false
-      // Internal: 2ª (INSUFFICIENT_BALANCE) → false
       mockedDecimalGreaterThan
         .mockReturnValueOnce(false)
         .mockReturnValueOnce(false);
@@ -612,6 +634,56 @@ describe("OperationBankResolver", () => {
       expect(result.total).toBe(1);
       expect(result.items).toHaveLength(1);
       expect(mockEm.save).toHaveBeenCalledWith(Bank, originBank);
+    });
+
+    it("gera tag com 'Received.' quando amount é positivo (EXTERNAL)", async () => {
+      const originBank = makeBank({ balance: "1000.00" });
+      mockEm.findOne.mockResolvedValueOnce(originBank);
+
+      await resolver.operationBankTransfer(
+        makeContext(),
+        makeTransferInput({
+          local: LocalEnum.EXTERNAL,
+          toBankId: undefined,
+          amount: "100.00",
+        })
+      );
+
+      expect(mockEm.save).toHaveBeenCalledWith(
+        OperationBank,
+        expect.objectContaining({
+          tag: expect.stringContaining("Received."),
+        })
+      );
+    });
+
+    it("gera tag com 'Sent.' quando amount é negativo (EXTERNAL)", async () => {
+      const originBank = makeBank({ balance: "1000.00" });
+      mockEm.findOne.mockResolvedValueOnce(originBank);
+
+      // 1ª: status → true ("Sent.")
+      // 2ª: EXTERNAL check parte 1 → true
+      // 3ª: EXTERNAL check parte 2 → false (não estoura saldo)
+      mockedDecimalGreaterThan
+        .mockReturnValueOnce(true)
+        .mockReturnValueOnce(true)
+        .mockReturnValueOnce(false);
+
+      await resolver.operationBankTransfer(
+        makeContext(),
+        makeTransferInput({
+          local: LocalEnum.EXTERNAL,
+          toBankId: undefined,
+          amount: "-100.00",
+        })
+      );
+
+      expect(mockEm.save).toHaveBeenCalledWith(
+        OperationBank,
+        expect.objectContaining({
+          tag: expect.stringContaining("Sent."),
+        })
+      );
     });
 
     it("lança FROM_BANK_ID_MUST_OMITTED_EXTERNAL quando EXTERNAL com toBankId", async () => {
@@ -690,9 +762,6 @@ describe("OperationBankResolver", () => {
         .mockResolvedValueOnce(originBank)
         .mockResolvedValueOnce(destinationBank);
 
-      // 1ª: BALANCE_MUST_BE_POSITIVE → false
-      // 2ª: status → false (para "Received.")
-      // 3ª: INSUFFICIENT_BALANCE (amount > origin.balance) → true
       mockedDecimalGreaterThan
         .mockReturnValueOnce(false)
         .mockReturnValueOnce(false)
@@ -710,9 +779,6 @@ describe("OperationBankResolver", () => {
       const originBank = makeBank({ balance: "50.00" });
       mockEm.findOne.mockResolvedValueOnce(originBank);
 
-      // 1ª: status (decimalGreaterThan("0.00", "-100.00")) → true (para "Sent.")
-      // 2ª: EXTERNAL check parte 1 (decimalGreaterThan("0.00", "-100.00")) → true
-      // 3ª: EXTERNAL check parte 2 (decimalGreaterThan("100.00", "50.00")) → true
       mockedDecimalGreaterThan
         .mockReturnValueOnce(true)
         .mockReturnValueOnce(true)
@@ -788,6 +854,16 @@ describe("OperationBankResolver", () => {
         expect.any(Object)
       );
       expect(result).toBeDefined();
+    });
+
+    it("incrementa creditLimit do banco com o saldo da fatura", async () => {
+      const bank = makeBank({ balance: "1000.00", creditLimit: "5000.00" });
+      const invoice = makeInvoice({ balance: "100.00" });
+      mockEm.findOne.mockResolvedValueOnce(bank).mockResolvedValueOnce(invoice);
+
+      await resolver.operationBankPayInvoice(makeContext(), { ...validInput });
+
+      expect(bank.creditLimit).toBe("5100.00");
     });
 
     it("incrementa paidInstallments em cada pagamento", async () => {
@@ -973,7 +1049,12 @@ describe("OperationBankResolver", () => {
       expect(bank.balance).toBe("1100.00");
       expect(mockEm.save).toHaveBeenCalledWith(
         OperationBank,
-        expect.any(Object)
+        expect.objectContaining({
+          operationRegister: "reg-uuid-1234",
+          amount: "-100.00",
+          userId: "user-1",
+          bankId: UUID,
+        })
       );
       expect(result).toBeDefined();
     });
@@ -995,7 +1076,12 @@ describe("OperationBankResolver", () => {
       expect(bank.balance).toBe("900.00");
       expect(mockEm.save).toHaveBeenCalledWith(
         OperationBank,
-        expect.any(Object)
+        expect.objectContaining({
+          operationRegister: "reg-uuid-1234",
+          amount: "100.00",
+          userId: "user-1",
+          bankId: UUID,
+        })
       );
       expect(result).toBeDefined();
     });
