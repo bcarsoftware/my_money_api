@@ -11,7 +11,9 @@ function makeBank(overrides: Partial<Bank> = {}): Bank {
     accountType: AccountEnum.CHECKING,
     accountNumber: "12345-6",
     agency: "0001",
-    balance: 1500.75,
+    balance: "1500.75",
+    creditLimit: "2500.00",
+    actualLimit: "1000.00",
     createdAt: new Date("2025-01-01T10:00:00Z"),
     updatedAt: new Date("2025-01-02T12:00:00Z"),
     ...overrides,
@@ -32,6 +34,8 @@ describe("toBankDto", () => {
       accountNumber: mockBank.accountNumber,
       agency: mockBank.agency,
       balance: mockBank.balance,
+      creditLimit: mockBank.creditLimit,
+      actualLimit: mockBank.actualLimit,
       createdAt: mockBank.createdAt.toISOString(),
     });
   });
@@ -48,6 +52,8 @@ describe("toBankDto", () => {
     expect(dto.accountNumber).toBe(mockBank.accountNumber);
     expect(dto.agency).toBe(mockBank.agency);
     expect(dto.balance).toBe(mockBank.balance);
+    expect(dto.creditLimit).toBe(mockBank.creditLimit);
+    expect(dto.actualLimit).toBe(mockBank.actualLimit);
     expect(dto.createdAt).toBe(mockBank.createdAt.toISOString());
   });
 
@@ -83,9 +89,15 @@ describe("toBankDto", () => {
     expect(dto.createdAt).toBe(pastDate.toISOString());
   });
 
-  it("deve preservar o tipo numérico do balance", () => {
+  it("deve preservar o tipo string do balance", () => {
     const mockBank = makeBank();
     const dto = toBankDto(mockBank);
-    expect(typeof dto.balance).toBe("number");
+    expect(typeof dto.balance).toBe("string");
+  });
+
+  it("deve preservar o tipo string do creditLimit", () => {
+    const mockBank = makeBank();
+    const dto = toBankDto(mockBank);
+    expect(typeof dto.creditLimit).toBe("string");
   });
 });

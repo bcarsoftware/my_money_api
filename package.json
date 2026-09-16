@@ -36,13 +36,15 @@
     "tsx": "^4.23.12",
     "type-graphql": "^2.0.0-rc.3",
     "typeorm": "^1.1.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "uuid": "^14.0.2"
   },
   "devDependencies": {
     "@swc/core": "^1.16.1",
     "@swc/jest": "^0.2.39",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.2.0",
+    "@types/uuid": "^11.0.0",
     "jest": "^30.4.2",
     "prettier": "3.9.6",
     "ts-node": "^10.9.2",

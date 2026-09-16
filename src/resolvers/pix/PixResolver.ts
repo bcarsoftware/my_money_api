@@ -1,19 +1,19 @@
 import { type MyContext } from "@/context/MyContext";
 import { Pix } from "@/entities/Pix";
+import { MessageResponse } from "@/resolvers/MessageResponse";
 import { PaginatedPixDto, PixDto } from "@/resolvers/pix/dto/PixDto";
+import { toPixDto } from "@/resolvers/pix/dto/toPixDto";
 import {
   CreatePixInput,
   ListPixInput,
   UpdatePixInput,
 } from "@/resolvers/pix/PixInputs";
+import { pixChecker } from "@/resolvers/pix/pixUtils";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
-import { MessageResponse } from "../MessageResponse";
-import { pixChecker } from "./pixUtils";
-import { toPixDto } from "./dto/toPixDto";
 
 @Resolver()
 export class PixResolver {
@@ -88,7 +88,7 @@ export class PixResolver {
 
         pix.bankId = input.bankId ?? pix.bankId;
         pix.tag = input.tag ?? pix.tag;
-        pix.description = updatableFieldResolve<string>(
+        pix.description = updatableFieldResolver<string>(
           input.description,
           pix.description
         );

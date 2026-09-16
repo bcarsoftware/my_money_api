@@ -21,8 +21,8 @@ export class GenericBankDto {
   @Field(() => String)
   userId: string;
 
-  @Field(() => String)
-  bankId: string;
+  @Field(() => String, { nullable: true })
+  bankId?: string | null;
 
   @Field(() => String)
   name: string;
@@ -32,6 +32,9 @@ export class GenericBankDto {
 
   @Field(() => String)
   balance: string;
+
+  @Field(() => String, { nullable: true })
+  creditLimit?: string | null;
 
   @Field(() => [GenBankInfoDto], { nullable: true })
   bankInfo?: GenBankInfoDto[] | null;

@@ -43,6 +43,22 @@ export class Bank extends BaseEntity {
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: string;
 
+  @Column({
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    name: "credit_limit",
+  })
+  creditLimit: string = "0.00";
+
+  @Column({
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    name: "actual_limit",
+  })
+  actualLimit: string = "0.00";
+
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 

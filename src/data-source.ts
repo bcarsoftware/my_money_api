@@ -10,7 +10,10 @@ import { GenericBankBox } from "@/entities/GenericBankBox";
 import { GenericBankInfo } from "@/entities/GenericBankInfo";
 import { Invoice } from "@/entities/Invoice";
 import { Money } from "@/entities/Money";
-import { Operation } from "@/entities/Operation";
+import { OperationBank } from "@/entities/OperationBank";
+import { OperationGenericBank } from "@/entities/OperationGenericBank";
+import { OperationMoney } from "@/entities/OperationMoney";
+import { OperationPayment } from "@/entities/OperationPayment";
 import { Payment } from "@/entities/Payment";
 import { Pix } from "@/entities/Pix";
 import { User } from "@/entities/User";
@@ -26,8 +29,13 @@ import { CreatePayment1787414478068 } from "@/migrations/1787414478068-CreatePay
 import { CreateGenericBank1787414685365 } from "@/migrations/1787414685365-CreateGenericBank";
 import { CreateGenericBankBox1787415068662 } from "@/migrations/1787415068662-CreateGenericBankBox";
 import { CreateGenericBankInfo1787415282084 } from "@/migrations/1787415282084-CreateGenericBankInfo";
-import { CreateOperation1787415560149 } from "@/migrations/1787415560149-CreateOperation";
 import { AddIndexGenericBankInfo1788806787561 } from "@/migrations/1788806787561-AddIndexGenericBankInfo";
+import { AddCreditLimitToBank1789085195409 } from "@/migrations/1789085195409-AddCreditLimitToBank";
+import { AddCreditLimitToGenericBank1789085342041 } from "@/migrations/1789085342041-AddCreditLimitToGenericBank";
+import { CreateOperationBank1789091625348 } from "@/migrations/1789091625348-CreateOperationBank";
+import { CreateOperationGenericBank1789092353575 } from "@/migrations/1789092353575-CreateOperationGenericBank";
+import { CreateOperationMoney1789092836106 } from "@/migrations/1789092836106-CreateOperationMoney";
+import { CreateOperationPayment1789093434886 } from "@/migrations/1789093434886-CreateOperationPayment";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -49,7 +57,10 @@ export const AppDataSource = new DataSource({
     GenericBank,
     GenericBankBox,
     GenericBankInfo,
-    Operation,
+    OperationBank,
+    OperationGenericBank,
+    OperationMoney,
+    OperationPayment,
   ],
   migrations: [
     CreateUser1787412038436,
@@ -63,8 +74,13 @@ export const AppDataSource = new DataSource({
     CreateGenericBank1787414685365,
     CreateGenericBankBox1787415068662,
     CreateGenericBankInfo1787415282084,
-    CreateOperation1787415560149,
     AddIndexGenericBankInfo1788806787561,
+    AddCreditLimitToBank1789085195409,
+    AddCreditLimitToGenericBank1789085342041,
+    CreateOperationBank1789091625348,
+    CreateOperationGenericBank1789092353575,
+    CreateOperationMoney1789092836106,
+    CreateOperationPayment1789093434886,
   ],
   migrationsTransactionMode: "each",
   extra: {

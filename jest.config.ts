@@ -26,6 +26,7 @@ const config: Config = {
       },
     ],
   },
+  transformIgnorePatterns: ["node_modules/(?!(uuid|@another-esm)/)"],
   testMatch: ["**/*.spec.ts", "**/*.test.ts"],
   clearMocks: true,
 };

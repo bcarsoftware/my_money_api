@@ -42,6 +42,7 @@ export class CreateInvoiceInput {
   repeat: RepeatEnum;
 
   @Field(() => Number)
+  @IsInt({ message: "Installments must be an integer." })
   @Min(1, { message: "Installments must be at least 1." })
   installments: number;
 
@@ -51,13 +52,6 @@ export class CreateInvoiceInput {
     { message: "Balance must be a valid currency value." }
   )
   balance: string;
-
-  @Field(() => String)
-  @IsCurrency(
-    { allow_negatives: false },
-    { message: "Total must be a valid currency value." }
-  )
-  total: string;
 }
 
 @InputType()
@@ -76,7 +70,7 @@ export class UpdateInvoiceInput {
 }
 
 @InputType()
-export class InvoicePayInput {
+export class InvoiceRefundInput {
   @Field(() => String)
   @IsUUID("4", { message: "Id must be a valid UUID." })
   id: string;
@@ -84,14 +78,6 @@ export class InvoicePayInput {
   @Field(() => String)
   @IsUUID("4", { message: "BankId must be a valid UUID." })
   bankId: string;
-
-  @Field(() => Boolean)
-  @IsBoolean({ message: "PayInvoice must be a boolean value." })
-  payInvoice: boolean;
-
-  @Field(() => Boolean)
-  @IsBoolean({ message: "IsRefund must be a boolean value." })
-  isRefund: boolean;
 }
 
 @InputType()
