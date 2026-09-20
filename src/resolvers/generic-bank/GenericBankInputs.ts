@@ -43,9 +43,10 @@ export class UpdateBankInfoInput {
 
 @InputType()
 export class CreateGenericBankInput {
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  @IsOptional()
   @IsUUID("4", { message: "Bank ID must be a valid UUID." })
-  bankId: string;
+  bankId?: string | null;
 
   @Field(() => String)
   @MaxLength(64, { message: "Name must be at most 64 characters long." })
@@ -66,6 +67,14 @@ export class CreateGenericBankInput {
     { message: "Balance must be a valid currency amount." }
   )
   balance: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Credit limit must be a valid currency amount." }
+  )
+  creditLimit?: string | null;
 }
 
 @InputType()
@@ -109,4 +118,12 @@ export class UpdateGenericBankInput {
   @IsOptional()
   @ValidateNested({ each: true })
   bankInfo?: UpdateBankInfoInput[] | null;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsCurrency(
+    { allow_negatives: false },
+    { message: "Credit limit must be a valid currency amount." }
+  )
+  creditLimit?: string | null;
 }

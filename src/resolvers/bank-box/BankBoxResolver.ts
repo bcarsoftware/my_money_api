@@ -6,6 +6,7 @@ import {
 import { type MyContext } from "@/context/MyContext";
 import { Bank } from "@/entities/Bank";
 import { BankBox } from "@/entities/BankBox";
+import { MessageResponse } from "@/resolvers/MessageResponse";
 import {
   CreateBankBoxInput,
   ListBankBoxInput,
@@ -15,14 +16,13 @@ import {
   BankBoxDto,
   PaginatedBankBoxDto,
 } from "@/resolvers/bank-box/dto/BankBoxDto";
+import { toBankBoxDto } from "@/resolvers/bank-box/dto/toBankBoxDto";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
-import { updatableFieldResolve } from "@/utils/updatableFieldResolve";
+import { updatableFieldResolver } from "@/utils/updatableFieldResolver";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
-import { MessageResponse } from "../MessageResponse";
-import { toBankBoxDto } from "./dto/toBankBoxDto";
 
 @Resolver()
 export class BankBoxResolver {
@@ -116,11 +116,11 @@ export class BankBoxResolver {
 
       try {
         bankBox.tag = input.tag ?? bankBox.tag;
-        bankBox.description = updatableFieldResolve<string>(
+        bankBox.description = updatableFieldResolver<string>(
           input.description,
           bankBox.description
         );
-        bankBox.objective = updatableFieldResolve<string>(
+        bankBox.objective = updatableFieldResolver<string>(
           input.objective,
           bankBox.objective
         );

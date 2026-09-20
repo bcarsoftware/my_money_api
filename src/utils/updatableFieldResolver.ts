@@ -1,4 +1,4 @@
-export function updatableFieldResolve<T>(
+export function updatableFieldResolver<T>(
   newValue: T | null | undefined,
   currentValue: T | null | undefined
 ): T | null | undefined {

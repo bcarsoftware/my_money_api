@@ -154,6 +154,12 @@ describe("GenericBankBoxResolver", () => {
     jest.clearAllMocks();
 
     mockedToGenericBankBoxDto.mockImplementation((box) => makeDto(box));
+
+    jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   // ============================================================

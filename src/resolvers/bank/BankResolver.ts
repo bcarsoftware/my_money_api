@@ -4,13 +4,13 @@ import { ILike } from "typeorm";
 import { type MyContext } from "@/context/MyContext";
 import { Bank } from "@/entities/Bank";
 import { CreateBankInput, UpdateBankInput } from "@/resolvers/bank/BankInputs";
+import { BankDto, PaginatedBankDto } from "@/resolvers/bank/dto/BankDto";
+import { toBankDto } from "@/resolvers/bank/dto/toBankDto";
+import { MessageResponse } from "@/resolvers/MessageResponse";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
-import { MessageResponse } from "../MessageResponse";
 import { ListBankInput } from "./BankInputs";
-import { BankDto, PaginatedBankDto } from "./dto/BankDto";
-import { toBankDto } from "./dto/toBankDto";
 
 @Resolver()
 export class BankResolver {
@@ -58,9 +58,13 @@ export class BankResolver {
 
     return await loggedContext(context, async (em) => {
       try {
+        const creditLimit = clearDecimal(input.creditLimit);
+
         const bank = em.create(Bank, {
           ...input,
           balance: clearDecimal(input.balance),
+          creditLimit,
+          actualLimit: creditLimit,
           userId,
         });
         const newBank = await em.save(bank);
@@ -90,6 +94,9 @@ export class BankResolver {
         bank.accountType = input.accountType ?? bank.accountType;
         bank.accountNumber = input.accountNumber ?? bank.accountNumber;
         bank.agency = input.agency ?? bank.agency;
+        bank.creditLimit = input.creditLimit
+          ? clearDecimal(input.creditLimit)
+          : bank.creditLimit;
 
         const uptBank = await em.save(bank);
         return toBankDto(uptBank);

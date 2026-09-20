@@ -5,18 +5,18 @@ import {
   GenericBankDto,
   PaginatedGenericBankDto,
 } from "@/resolvers/generic-bank/dto/GenericBankDto";
+import { toGenericBankDto } from "@/resolvers/generic-bank/dto/toGenericBankDto";
 import {
   CreateGenericBankInput,
   ListGenericBankInput,
   UpdateGenericBankInput,
 } from "@/resolvers/generic-bank/GenericBankInputs";
+import { MessageResponse } from "@/resolvers/MessageResponse";
 import { clearDecimal } from "@/utils/currencyUtil";
 import { loggedContext } from "@/utils/loggedContext";
 import { Protected } from "@/utils/verifiers/decorators/Protected";
 import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { ILike } from "typeorm";
-import { MessageResponse } from "@/resolvers/MessageResponse";
-import { toGenericBankDto } from "@/resolvers/generic-bank/dto/toGenericBankDto";
 
 @Resolver()
 export class GenericBankResolver {
@@ -73,6 +73,9 @@ export class GenericBankResolver {
             name: input.name,
             currency: input.currency,
             balance: clearDecimal(input.balance),
+            creditLimit: input.creditLimit
+              ? clearDecimal(input.creditLimit)
+              : input.creditLimit,
           })
           .save();
 
@@ -113,6 +116,12 @@ export class GenericBankResolver {
         });
 
         genericBank.name = input.name ?? genericBank.name;
+
+        if (input.creditLimit !== undefined) {
+          genericBank.creditLimit = input.creditLimit
+            ? clearDecimal(input.creditLimit)
+            : input.creditLimit;
+        }
 
         for (const info of input.bankInfo ?? []) {
           const existingInfo = genericBank.bankInfo.find(

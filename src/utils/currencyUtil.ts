@@ -33,11 +33,28 @@ function stringToCents(amount: string): number {
   return Number(integerPart + decimal);
 }
 
+export function decimalGreaterThan(amount1: string, amount2: string): boolean {
+  const cents1 = stringToCents(amount1);
+  const cents2 = stringToCents(amount2);
+  return cents1 > cents2;
+}
+
 export function decimalSum(amount1: string, amount2: string): string {
   const cents1 = stringToCents(amount1);
   const cents2 = stringToCents(amount2);
   const sum = cents1 + cents2;
   return (sum / 100).toFixed(2);
+}
+
+export function decimalSumSequence(amounts: string[]): string {
+  return amounts.reduce((acc, curr) => decimalSum(acc, curr), "0.00");
+}
+
+export function decimalSubtract(amount1: string, amount2: string): string {
+  const cents1 = stringToCents(amount1);
+  const cents2 = stringToCents(amount2);
+  const difference = cents1 - cents2;
+  return (difference / 100).toFixed(2);
 }
 
 export function decimalMultiply(amount: string, multiplier: string): string {

@@ -27,12 +27,12 @@ export class GenericBank extends BaseEntity {
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: User;
 
-  @Column({ type: "uuid", name: "bank_id" })
-  bankId: string;
+  @Column({ type: "uuid", name: "bank_id", nullable: true })
+  bankId?: string | null;
 
   @ManyToOne(() => Bank, (bank) => bank.id)
   @JoinColumn({ name: "bank_id", referencedColumnName: "id" })
-  bank: Bank;
+  bank?: Bank | null;
 
   @Column({ type: "varchar", length: 64 })
   name: string;
@@ -42,6 +42,15 @@ export class GenericBank extends BaseEntity {
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   balance: string;
+
+  @Column({
+    type: "decimal",
+    precision: 10,
+    scale: 2,
+    name: "credit_limit",
+    nullable: true,
+  })
+  creditLimit?: string | null;
 
   @OneToMany(
     () => GenericBankInfo,
